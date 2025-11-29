@@ -1,39 +1,57 @@
-# Learning App - Live Quiz Platform
+# CrowdSpark - Real-time Quiz & Poll Platform
 
-A real-time interactive quiz platform similar to Kahoot.
+**CrowdSpark** is a real-time interactive audience engagement platform similar to Kahoot. Create quizzes and polls, host live sessions, and engage your audience instantly.
 
-## Tech Stack
-- **Frontend:** Vite + React + Tailwind (via CSS variables)
+## 🚀 Tech Stack
+- **Frontend:** Vite + React + Modern CSS (Glassmorphism)
 - **Backend:** Node.js + Express + Socket.io
+- **Database:** MongoDB (Mongoose)
 - **Real-time:** Socket.io for bi-directional communication
 
-## Features
-- **Host:** Create quizzes, generate session codes (QR), control live game flow.
-- **Participant:** Join via code/QR, answer in real-time.
-- **Live Results:** Real-time bar charts and leaderboards.
+## ✨ Features
+- **Create & Manage:** Design custom quizzes and polls with a beautiful "Midnight Glass" UI.
+- **Live Hosting:** Generate session codes, control game flow, and see live responses.
+- **Real-time Analytics:** Watch results stream in with animated bar charts and leaderboards.
+- **Persistent Storage:** All quizzes and response history are saved to MongoDB.
+- **Export Data:** Download session results as CSV files for analysis.
 
-## How to Run
+## 🛠️ How to Run
 
 ### Prerequisites
 - Node.js installed.
+- MongoDB Atlas account (or local MongoDB).
 
-### 1. Start the Server (Backend)
+### 1. Setup Environment
+Create a `.env` file in the `server` directory:
+```env
+MONGODB_URI=your_mongodb_connection_string
+PORT=3000
+```
+
+### 2. Start the App (Development)
+You can run both client and server with one command from the root:
+```bash
+npm install
+npm run dev
+```
+
+Or run them separately:
+
+**Server:**
 ```bash
 cd server
 npm install
 npm start
 ```
-Runs on `http://localhost:3001`.
 
-### 2. Start the Client (Frontend)
+**Client:**
 ```bash
 cd client
 npm install
 npm run dev
 ```
-Runs on `http://localhost:5173`.
 
-## Usage
-1. Open `http://localhost:5173` in your browser.
-2. **Host:** Click "Create & Host" -> "Create Session" to start a lobby.
-3. **Participant:** Open `http://localhost:5173` in another tab/device, enter the Session ID (displayed on Host screen), and join.
+## 📦 Deployment
+This app is ready for deployment on platforms like Render, Heroku, or Railway.
+- **Build Command:** `npm run build`
+- **Start Command:** `npm start`
