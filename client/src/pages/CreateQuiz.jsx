@@ -184,14 +184,14 @@ export default function CreateQuiz() {
             let response;
             if (editingQuiz && editingQuiz._id) {
                 // Update existing quiz
-                response = await fetch(`http://localhost:3000/api/quizzes/${editingQuiz._id}`, {
+                response = await fetch(`/api/quizzes/${editingQuiz._id}`, {
                     method: 'PUT',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(quizData)
                 });
             } else {
                 // Create new quiz
-                response = await fetch('http://localhost:3000/api/quizzes', {
+                response = await fetch('/api/quizzes', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(quizData)

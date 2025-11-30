@@ -19,7 +19,7 @@ export default function Dashboard() {
         setUser(JSON.parse(currentUser));
 
         // Load quizzes from MongoDB API
-        fetch('http://localhost:3000/api/quizzes')
+        fetch('/api/quizzes')
             .then(res => res.json())
             .then(data => {
                 setQuizzes(data);
@@ -44,18 +44,37 @@ export default function Dashboard() {
         navigate('/create-quiz', { state: { quiz } });
     };
 
-    const handleDeleteQuiz = (quizId) => {
-        if (confirm('Are you sure you want to delete this quiz/poll?')) {
-            // Optimistic update
-            const updatedQuizzes = quizzes.filter(q => (q._id || q.id) !== quizId);
+    const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+    const [quizToDelete, setQuizToDelete] = useState(null);
+
+    const handleDeleteClick = (quizId) => {
+        setQuizToDelete(quizId);
+        setDeleteModalOpen(true);
+    };
+
+    const confirmDelete = async () => {
+        if (!quizToDelete) return;
+
+        try {
+            // Delete from backend first
+            const response = await fetch(`/api/quizzes/${quizToDelete}`, {
+                method: 'DELETE'
+            });
+
+            if (!response.ok) {
+                const error = await response.json();
+                throw new Error(error.error || 'Failed to delete quiz');
+            }
+
+            // Update UI only after successful deletion
+            const updatedQuizzes = quizzes.filter(q => (q._id || q.id) !== quizToDelete);
             setQuizzes(updatedQuizzes);
 
-            // Delete from backend
-            fetch(`http://localhost:3000/api/quizzes/${quizId}`, { method: 'DELETE' })
-                .catch(err => {
-                    console.error('Error deleting quiz:', err);
-                    // Revert if failed (optional)
-                });
+            setDeleteModalOpen(false);
+            setQuizToDelete(null);
+        } catch (err) {
+            console.error('Error deleting quiz:', err);
+            alert('Failed to delete quiz: ' + err.message);
         }
     };
 
@@ -67,7 +86,7 @@ export default function Dashboard() {
             createdAt: new Date().toISOString()
         };
 
-        fetch('http://localhost:3000/api/quizzes', {
+        fetch('/api/quizzes', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(duplicated)
@@ -454,7 +473,7 @@ export default function Dashboard() {
                                         <Download size={16} style={{ transform: 'rotate(180deg)' }} />
                                     </button>
                                     <button
-                                        onClick={() => handleDeleteQuiz(quiz._id || quiz.id)}
+                                        onClick={() => handleDeleteClick(quiz._id || quiz.id)}
                                         className="btn"
                                         style={{ padding: '0.5rem', background: 'rgba(255,255,255,0.05)', color: '#f87171', borderRadius: '0.75rem' }}
                                         title="Delete"
@@ -469,6 +488,91 @@ export default function Dashboard() {
                     </div>
                 )}
             </div>
+
+            {/* Delete Confirmation Modal */}
+            {deleteModalOpen && (
+                <div style={{
+                    position: 'fixed',
+                    top: 0,
+                    left: 0,
+                    right: 0,
+                    bottom: 0,
+                    background: 'rgba(0, 0, 0, 0.7)',
+                    backdropFilter: 'blur(5px)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    zIndex: 1000,
+                    animation: 'fadeIn 0.2s ease-out'
+                }}>
+                    <div style={{
+                        background: '#1e293b',
+                        padding: '2rem',
+                        borderRadius: '1rem',
+                        maxWidth: '400px',
+                        width: '90%',
+                        border: '1px solid rgba(255, 255, 255, 0.1)',
+                        boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.5), 0 10px 10px -5px rgba(0, 0, 0, 0.04)',
+                        transform: 'scale(1)',
+                        animation: 'scaleIn 0.2s ease-out'
+                    }}>
+                        <div style={{
+                            width: '48px',
+                            height: '48px',
+                            background: 'rgba(239, 68, 68, 0.1)',
+                            borderRadius: '50%',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            marginBottom: '1rem',
+                            color: '#ef4444'
+                        }}>
+                            <Trash2 size={24} />
+                        </div>
+                        <h3 style={{ fontSize: '1.25rem', fontWeight: '600', color: '#f1f5f9', marginBottom: '0.5rem' }}>Delete Quiz?</h3>
+                        <p style={{ color: '#94a3b8', marginBottom: '1.5rem', lineHeight: 1.5 }}>
+                            Are you sure you want to delete this quiz? This action cannot be undone.
+                        </p>
+                        <div style={{ display: 'flex', gap: '1rem', justifyContent: 'flex-end' }}>
+                            <button
+                                onClick={() => setDeleteModalOpen(false)}
+                                style={{
+                                    padding: '0.75rem 1.5rem',
+                                    borderRadius: '0.5rem',
+                                    background: 'transparent',
+                                    border: '1px solid rgba(255, 255, 255, 0.1)',
+                                    color: '#e2e8f0',
+                                    cursor: 'pointer',
+                                    fontWeight: '500',
+                                    transition: 'all 0.2s'
+                                }}
+                                onMouseEnter={e => e.target.style.background = 'rgba(255, 255, 255, 0.05)'}
+                                onMouseLeave={e => e.target.style.background = 'transparent'}
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                onClick={confirmDelete}
+                                style={{
+                                    padding: '0.75rem 1.5rem',
+                                    borderRadius: '0.5rem',
+                                    background: '#ef4444',
+                                    border: 'none',
+                                    color: 'white',
+                                    cursor: 'pointer',
+                                    fontWeight: '500',
+                                    transition: 'all 0.2s',
+                                    boxShadow: '0 4px 6px -1px rgba(239, 68, 68, 0.3)'
+                                }}
+                                onMouseEnter={e => e.target.style.background = '#dc2626'}
+                                onMouseLeave={e => e.target.style.background = '#ef4444'}
+                            >
+                                Delete
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }

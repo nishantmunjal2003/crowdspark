@@ -1,4 +1,4 @@
-require('dotenv').config();
+require('dotenv').config({ path: __dirname + '/.env' });
 const express = require('express');
 const http = require('http');
 const { Server } = require('socket.io');
@@ -23,23 +23,85 @@ const io = new Server(server, {
 });
 
 // Connect to MongoDB
-mongoose.connect(process.env.MONGODB_URI)
-  .then(() => console.log('Connected to MongoDB'))
-  .catch(err => console.error('MongoDB connection error:', err));
+const MONGODB_URI = process.env.MONGODB_URI;
+
+if (!MONGODB_URI) {
+  console.error('ERROR: MONGODB_URI environment variable is not set!');
+  console.error('Please create a .env file in the server directory with:');
+  console.error('MONGODB_URI=mongodb://localhost:27017/crowdspark');
+  console.error('or your MongoDB Atlas connection string');
+  process.exit(1);
+}
+
+console.log('Connecting to MongoDB...');
+console.log('Connection string:', MONGODB_URI.replace(/\/\/([^:]+):([^@]+)@/, '//$1:****@')); // Hide password in logs
+
+mongoose.connect(MONGODB_URI)
+  .then(() => {
+    console.log('✓ Connected to MongoDB successfully');
+    console.log('  Database:', mongoose.connection.name);
+    console.log('  Host:', mongoose.connection.host);
+  })
+  .catch(err => {
+    console.error('✗ MongoDB connection error:', err.message);
+    console.error('  Please ensure MongoDB is running and the connection string is correct');
+    console.error('  Connection string:', MONGODB_URI.replace(/\/\/([^:]+):([^@]+)@/, '//$1:****@'));
+  });
+
+// Handle MongoDB connection events
+mongoose.connection.on('disconnected', () => {
+  console.warn('⚠ MongoDB disconnected');
+});
+
+mongoose.connection.on('reconnected', () => {
+  console.log('✓ MongoDB reconnected');
+});
 
 // In-memory storage for active sessions (for speed)
 const sessions = {}; // { sessionId: { quizData, currentQuestionIndex, participants: {}, state: 'waiting'|'active'|'finished' } }
 
 // --- API Endpoints ---
 
+// Health check endpoint
+app.get('/api/health', (req, res) => {
+  const mongoStatus = mongoose.connection.readyState;
+  const statusMap = {
+    0: 'disconnected',
+    1: 'connected',
+    2: 'connecting',
+    3: 'disconnecting'
+  };
+
+  res.json({
+    status: 'ok',
+    mongodb: {
+      status: statusMap[mongoStatus] || 'unknown',
+      readyState: mongoStatus
+    },
+    timestamp: new Date().toISOString()
+  });
+});
+
 // Save a new quiz
 app.post('/api/quizzes', async (req, res) => {
   try {
+    console.log('Received quiz data:', JSON.stringify(req.body, null, 2));
+    console.log('MongoDB connection state:', mongoose.connection.readyState);
+
     const quiz = new Quiz(req.body);
+    console.log('Quiz model created, attempting to save...');
+
     await quiz.save();
+    console.log('Quiz saved successfully:', quiz._id);
+
     res.status(201).json(quiz);
   } catch (err) {
-    res.status(400).json({ error: err.message });
+    console.error('Error saving quiz:', err);
+    res.status(400).json({
+      error: err.message,
+      details: err.stack,
+      mongoStatus: mongoose.connection.readyState
+    });
   }
 });
 
@@ -78,10 +140,16 @@ app.put('/api/quizzes/:id', async (req, res) => {
 // Delete a quiz
 app.delete('/api/quizzes/:id', async (req, res) => {
   try {
+    console.log('Deleting quiz with ID:', req.params.id);
     const quiz = await Quiz.findByIdAndDelete(req.params.id);
-    if (!quiz) return res.status(404).json({ error: 'Quiz not found' });
+    if (!quiz) {
+      console.log('Quiz not found:', req.params.id);
+      return res.status(404).json({ error: 'Quiz not found' });
+    }
+    console.log('Quiz deleted successfully:', req.params.id);
     res.json({ message: 'Quiz deleted successfully' });
   } catch (err) {
+    console.error('Error deleting quiz:', err);
     res.status(500).json({ error: err.message });
   }
 });

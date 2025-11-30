@@ -6,10 +6,7 @@ const QuestionSchema = new mongoose.Schema({
     options: [String],
     correctAnswer: String, // Optional for polls
     timeLimit: { type: Number, default: 30 },
-    media: {
-        type: { type: String, enum: ['image', 'video', 'none'], default: 'none' },
-        url: String
-    }
+    media: mongoose.Schema.Types.Mixed // Allow flexible media structure (null, base64, or URL)
 });
 
 const QuizSchema = new mongoose.Schema({
