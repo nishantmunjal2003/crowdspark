@@ -5,6 +5,7 @@ const { Server } = require('socket.io');
 const cors = require('cors');
 const mongoose = require('mongoose');
 const { v4: uuidv4 } = require('uuid');
+const path = require('path');
 
 // Models
 const Quiz = require('./models/Quiz');
@@ -13,6 +14,42 @@ const Response = require('./models/Response');
 const app = express();
 app.use(cors());
 app.use(express.json()); // Enable JSON body parsing
+app.use('/uploads', express.static(path.join(__dirname, 'uploads'))); // Serve uploaded files
+
+// Multer Configuration for File Uploads
+const multer = require('multer');
+const fs = require('fs');
+
+// Ensure uploads directory exists
+const uploadDir = path.join(__dirname, 'uploads');
+if (!fs.existsSync(uploadDir)) {
+  fs.mkdirSync(uploadDir);
+}
+
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, uploadDir);
+  },
+  filename: (req, file, cb) => {
+    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+    cb(null, uniqueSuffix + path.extname(file.originalname));
+  }
+});
+
+const upload = multer({
+  storage: storage,
+  limits: { fileSize: 10 * 1024 * 1024 } // 10MB limit
+});
+
+// Upload Endpoint
+app.post('/api/upload', upload.single('file'), (req, res) => {
+  if (!req.file) {
+    return res.status(400).json({ error: 'No file uploaded' });
+  }
+  // Return the URL to access the file
+  const fileUrl = `/uploads/${req.file.filename}`;
+  res.json({ url: fileUrl, filename: req.file.filename, originalname: req.file.originalname });
+});
 
 const server = http.createServer(app);
 const io = new Server(server, {
@@ -169,7 +206,8 @@ io.on('connection', (socket) => {
       quizData: quizData,
       currentQuestionIndex: -1, // -1 means waiting room
       participants: {}, // { socketId: { name, score, answers: {} } }
-      state: 'waiting'
+      state: 'waiting',
+      questionActive: false
     };
     socket.join(sessionId);
     callback({ sessionId });
@@ -181,6 +219,7 @@ io.on('connection', (socket) => {
     if (session && session.hostId === socket.id) {
       session.state = 'active';
       session.currentQuestionIndex = 0;
+      session.questionActive = true;
       io.to(sessionId).emit('quiz_started');
       io.to(sessionId).emit('new_question', session.quizData.questions[0]);
       console.log(`Quiz started: ${sessionId}`);
@@ -192,6 +231,7 @@ io.on('connection', (socket) => {
     if (session && session.hostId === socket.id) {
       session.currentQuestionIndex++;
       if (session.currentQuestionIndex < session.quizData.questions.length) {
+        session.questionActive = true;
         io.to(sessionId).emit('new_question', session.quizData.questions[session.currentQuestionIndex]);
       } else {
         session.state = 'finished';
@@ -214,6 +254,7 @@ io.on('connection', (socket) => {
         }
       });
 
+      session.questionActive = false; // Stop accepting answers
       io.to(sessionId).emit('question_results', stats);
     }
   });
@@ -233,7 +274,14 @@ io.on('connection', (socket) => {
       // Notify host of new participant
       io.to(session.hostId).emit('participant_joined', { name, total: Object.keys(session.participants).length });
 
-      callback({ success: true, state: session.state });
+      callback({
+        success: true,
+        state: session.state,
+        theme: {
+          backgroundImage: session.quizData.backgroundImage,
+          // music: session.quizData.music // Optional: don't play music on participant devices by default
+        }
+      });
       console.log(`${name} joined session ${sessionId}`);
     } else {
       callback({ success: false, message: 'Session not found' });
@@ -243,6 +291,8 @@ io.on('connection', (socket) => {
   socket.on('submit_answer', async ({ sessionId, answer }) => {
     const session = sessions[sessionId];
     if (session && session.participants[socket.id]) {
+      if (!session.questionActive) return; // Prevent answering if question is closed
+
       const currentQIndex = session.currentQuestionIndex;
       const participant = session.participants[socket.id];
 
@@ -373,8 +423,6 @@ app.get('/api/export/:sessionId', async (req, res) => {
 });
 
 // --- Production Setup ---
-
-const path = require('path');
 
 // Serve static files from the React app
 app.use(express.static(path.join(__dirname, '../client/dist')));

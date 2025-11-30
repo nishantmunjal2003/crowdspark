@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { Plus, Trash2, Save, ArrowLeft, Check, Upload, Download, Image, Video, X } from 'lucide-react';
+import { Plus, Trash2, Save, ArrowLeft, Check, Upload, Download, Image, Video, X, Music, Palette } from 'lucide-react';
 
 export default function CreateQuiz() {
     const navigate = useNavigate();
@@ -10,6 +10,8 @@ export default function CreateQuiz() {
 
     const [quizTitle, setQuizTitle] = useState(editingQuiz?.title || '');
     const [questions, setQuestions] = useState(editingQuiz?.questions || []);
+    const [backgroundImage, setBackgroundImage] = useState(editingQuiz?.backgroundImage || '');
+    const [music, setMusic] = useState(editingQuiz?.music || '');
     const [error, setError] = useState('');
 
     useEffect(() => {
@@ -140,6 +142,38 @@ export default function CreateQuiz() {
         setQuestions(updated);
     };
 
+    const handleFileUpload = async (e, type) => {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        if (file.size > 10 * 1024 * 1024) {
+            setError('File size must be less than 10MB');
+            return;
+        }
+
+        const formData = new FormData();
+        formData.append('file', file);
+
+        try {
+            const response = await fetch('/api/upload', {
+                method: 'POST',
+                body: formData
+            });
+
+            if (!response.ok) throw new Error('Upload failed');
+
+            const data = await response.json();
+            if (type === 'background') {
+                setBackgroundImage(data.url);
+            } else if (type === 'music') {
+                setMusic(data.url);
+            }
+            setError('');
+        } catch (err) {
+            setError('Error uploading file: ' + err.message);
+        }
+    };
+
     const handleSave = async () => {
         setError('');
 
@@ -177,7 +211,9 @@ export default function CreateQuiz() {
         const quizData = {
             title: quizTitle,
             questions: questions,
-            type: quizType
+            type: quizType,
+            backgroundImage,
+            music
         };
 
         try {
@@ -252,6 +288,79 @@ export default function CreateQuiz() {
                         onChange={e => setQuizTitle(e.target.value)}
                         style={{ fontSize: '1.125rem', padding: '1rem' }}
                     />
+                </div>
+
+                {/* Customization Section */}
+                <div className="card animate-fade-in" style={{ marginBottom: '2rem' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1.5rem' }}>
+                        <div style={{ padding: '0.5rem', borderRadius: '0.5rem', background: 'rgba(139, 92, 246, 0.1)', color: '#8b5cf6' }}>
+                            <Palette size={24} />
+                        </div>
+                        <h2 style={{ fontSize: '1.25rem', fontWeight: 'bold', margin: 0 }}>Customize Appearance</h2>
+                    </div>
+
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '2rem' }}>
+                        {/* Background Image */}
+                        <div>
+                            <label style={{ display: 'block', marginBottom: '0.75rem', fontSize: '0.875rem', fontWeight: '600' }}>
+                                Background Image
+                            </label>
+                            {backgroundImage ? (
+                                <div style={{ position: 'relative', borderRadius: '0.5rem', overflow: 'hidden', height: '150px', border: '1px solid rgba(255,255,255,0.1)' }}>
+                                    <img src={backgroundImage} alt="Background" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                                    <button
+                                        onClick={() => setBackgroundImage('')}
+                                        style={{
+                                            position: 'absolute',
+                                            top: '0.5rem',
+                                            right: '0.5rem',
+                                            background: 'rgba(239, 68, 68, 0.9)',
+                                            border: 'none',
+                                            borderRadius: '50%',
+                                            width: '28px',
+                                            height: '28px',
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            justifyContent: 'center',
+                                            cursor: 'pointer'
+                                        }}
+                                    >
+                                        <X size={16} color="white" />
+                                    </button>
+                                </div>
+                            ) : (
+                                <label className="btn btn-secondary" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.5rem', padding: '2rem', border: '2px dashed rgba(255,255,255,0.1)', cursor: 'pointer' }}>
+                                    <Image size={32} style={{ opacity: 0.5 }} />
+                                    <span style={{ fontSize: '0.875rem' }}>Upload Background Image</span>
+                                    <input type="file" accept="image/*" onChange={(e) => handleFileUpload(e, 'background')} style={{ display: 'none' }} />
+                                </label>
+                            )}
+                        </div>
+
+                        {/* Background Music */}
+                        <div>
+                            <label style={{ display: 'block', marginBottom: '0.75rem', fontSize: '0.875rem', fontWeight: '600' }}>
+                                Background Music
+                            </label>
+                            {music ? (
+                                <div style={{ padding: '1rem', background: 'var(--bg-secondary)', borderRadius: '0.5rem', display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                                    <audio controls src={music} style={{ height: '32px', flex: 1 }} />
+                                    <button
+                                        onClick={() => setMusic('')}
+                                        style={{ background: 'none', border: 'none', color: '#ef4444', cursor: 'pointer' }}
+                                    >
+                                        <Trash2 size={18} />
+                                    </button>
+                                </div>
+                            ) : (
+                                <label className="btn btn-secondary" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.5rem', padding: '2rem', border: '2px dashed rgba(255,255,255,0.1)', cursor: 'pointer' }}>
+                                    <Music size={32} style={{ opacity: 0.5 }} />
+                                    <span style={{ fontSize: '0.875rem' }}>Upload Lite Music (MP3)</span>
+                                    <input type="file" accept="audio/*" onChange={(e) => handleFileUpload(e, 'music')} style={{ display: 'none' }} />
+                                </label>
+                            )}
+                        </div>
+                    </div>
                 </div>
 
                 {/* Questions */}

@@ -14,6 +14,9 @@ const QuizSchema = new mongoose.Schema({
     description: String,
     type: { type: String, enum: ['quiz', 'poll'], default: 'quiz' },
     questions: [QuestionSchema],
+    backgroundImage: String,
+    music: String,
+    theme: { type: String, default: 'default' }, // For future preset themes
     createdAt: { type: Date, default: Date.now },
     updatedAt: { type: Date, default: Date.now }
     // In a real app, we would add: creatorId: { type: mongoose.Schema.Types.ObjectId, ref: 'User' }
