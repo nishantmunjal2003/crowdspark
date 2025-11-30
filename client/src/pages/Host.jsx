@@ -3,7 +3,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { QRCodeSVG } from 'qrcode.react';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from 'recharts';
 import { socket } from '../socket';
-import { Play, ChevronRight, Trophy, Users, BarChart2, ArrowLeft, CheckCircle } from 'lucide-react';
+import { Play, ChevronRight, Trophy, Users, BarChart2, ArrowLeft, CheckCircle, Clock } from 'lucide-react';
 
 export default function Host() {
     const navigate = useNavigate();
@@ -16,6 +16,7 @@ export default function Host() {
     const [stats, setStats] = useState({ A: 0, B: 0, C: 0, D: 0 });
     const [leaderboard, setLeaderboard] = useState([]);
     const [showAnswer, setShowAnswer] = useState(false);
+    const [timer, setTimer] = useState(0);
 
     useEffect(() => {
         const quiz = location.state?.quiz;
@@ -32,10 +33,28 @@ export default function Host() {
     }, [navigate, location]);
 
     useEffect(() => {
+        let interval;
+        if (step === 'game' && !showAnswer && timer > 0) {
+            interval = setInterval(() => {
+                setTimer(prev => {
+                    if (prev <= 1) {
+                        clearInterval(interval);
+                        revealAnswer();
+                        return 0;
+                    }
+                    return prev - 1;
+                });
+            }, 1000);
+        }
+        return () => clearInterval(interval);
+    }, [step, showAnswer, timer]);
+
+    useEffect(() => {
         socket.on('participant_joined', (data) => {
             setParticipants(prev => [...prev, data]);
         });
 
+        // ... rest of socket listeners
         socket.on('live_stats_update', (newStats) => {
             setStats(newStats);
         });
@@ -63,13 +82,18 @@ export default function Host() {
         setCurrentQuestionIndex(0);
         setShowAnswer(false);
         setStats({ A: 0, B: 0, C: 0, D: 0 });
+        setTimer(quizData.questions[0].timeLimit || 10);
     };
 
     const nextQuestion = () => {
         socket.emit('next_question', { sessionId });
-        setCurrentQuestionIndex(prev => prev + 1);
+        const nextIndex = currentQuestionIndex + 1;
+        setCurrentQuestionIndex(nextIndex);
         setShowAnswer(false);
         setStats({ A: 0, B: 0, C: 0, D: 0 });
+        if (quizData.questions[nextIndex]) {
+            setTimer(quizData.questions[nextIndex].timeLimit || 10);
+        }
     };
 
     const revealAnswer = () => {
@@ -159,7 +183,22 @@ export default function Host() {
                 <div className="container" style={{ paddingTop: '2rem', height: '100vh', display: 'flex', flexDirection: 'column' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
                         <span className="subtitle" style={{ margin: 0 }}>Question {currentQuestionIndex + 1} / {quizData.questions.length}</span>
-                        <div className="subtitle" style={{ margin: 0 }}>Session: {sessionId}</div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                            <div style={{
+                                padding: '0.5rem 1rem',
+                                background: timer <= 5 ? 'rgba(239, 68, 68, 0.2)' : 'rgba(139, 92, 246, 0.2)',
+                                borderRadius: '2rem',
+                                display: 'flex', alignItems: 'center', gap: '0.5rem',
+                                color: timer <= 5 ? '#ef4444' : '#a78bfa',
+                                fontWeight: 'bold',
+                                fontSize: '1.25rem',
+                                transition: 'all 0.3s'
+                            }}>
+                                <Clock size={24} />
+                                {timer}s
+                            </div>
+                            <div className="subtitle" style={{ margin: 0 }}>Session: {sessionId}</div>
+                        </div>
                     </div>
 
                     <h1 className="title" style={{ fontSize: '2.5rem', textAlign: 'center', marginBottom: '1.5rem' }}>

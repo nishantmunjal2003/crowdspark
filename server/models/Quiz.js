@@ -5,7 +5,7 @@ const QuestionSchema = new mongoose.Schema({
     text: String,
     options: [String],
     correctAnswer: String, // Optional for polls
-    timeLimit: { type: Number, default: 30 },
+    timeLimit: { type: Number, default: 10 },
     media: mongoose.Schema.Types.Mixed // Allow flexible media structure (null, base64, or URL)
 });
 

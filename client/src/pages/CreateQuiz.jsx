@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { Plus, Trash2, Save, ArrowLeft, Check, Upload, Download, Image, Video, X, Music, Palette } from 'lucide-react';
+import { Plus, Trash2, Save, ArrowLeft, Check, Upload, Download, Image, Video, X, Music, Palette, Clock } from 'lucide-react';
 
 export default function CreateQuiz() {
     const navigate = useNavigate();
@@ -12,6 +12,7 @@ export default function CreateQuiz() {
     const [questions, setQuestions] = useState(editingQuiz?.questions || []);
     const [backgroundImage, setBackgroundImage] = useState(editingQuiz?.backgroundImage || '');
     const [music, setMusic] = useState(editingQuiz?.music || '');
+    const [timeLimit, setTimeLimit] = useState(editingQuiz?.questions?.[0]?.timeLimit || 10);
     const [error, setError] = useState('');
 
     useEffect(() => {
@@ -27,7 +28,10 @@ export default function CreateQuiz() {
             id: Date.now(),
             text: '',
             options: ['', '', '', ''],
-            correctAnswer: ''
+            text: '',
+            options: ['', '', '', ''],
+            correctAnswer: '',
+            timeLimit: timeLimit
         }]);
     };
 
@@ -213,7 +217,8 @@ export default function CreateQuiz() {
             questions: questions,
             type: quizType,
             backgroundImage,
-            music
+            music,
+            questions: questions.map(q => ({ ...q, timeLimit })) // Apply global time limit to all questions
         };
 
         try {
@@ -287,6 +292,28 @@ export default function CreateQuiz() {
                         value={quizTitle}
                         onChange={e => setQuizTitle(e.target.value)}
                         style={{ fontSize: '1.125rem', padding: '1rem' }}
+                    />
+                </div>
+
+                {/* Time Limit */}
+                <div className="card animate-fade-in" style={{ marginBottom: '2rem' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1rem' }}>
+                        <div style={{ padding: '0.5rem', borderRadius: '0.5rem', background: 'rgba(234, 179, 8, 0.1)', color: '#eab308' }}>
+                            <Clock size={24} />
+                        </div>
+                        <h2 style={{ fontSize: '1.25rem', fontWeight: 'bold', margin: 0 }}>Time Limit</h2>
+                    </div>
+                    <label style={{ display: 'block', marginBottom: '0.75rem', fontSize: '1rem', fontWeight: '600' }}>
+                        Time per Question (seconds)
+                    </label>
+                    <input
+                        className="input"
+                        type="number"
+                        min="5"
+                        max="300"
+                        value={timeLimit}
+                        onChange={e => setTimeLimit(parseInt(e.target.value) || 10)}
+                        style={{ fontSize: '1.125rem', padding: '1rem', width: '100%' }}
                     />
                 </div>
 

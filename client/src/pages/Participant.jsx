@@ -15,6 +15,7 @@ export default function Participant() {
     const [theme, setTheme] = useState(null);
     const [feedback, setFeedback] = useState(null); // correct/incorrect
     const [questionActive, setQuestionActive] = useState(true);
+    const [timeLeft, setTimeLeft] = useState(0);
 
     useEffect(() => {
         if (!sessionId) {
@@ -33,6 +34,7 @@ export default function Participant() {
             setFeedback(null);
             setGameState('active');
             setQuestionActive(true);
+            setTimeLeft(question.timeLimit || 10);
         });
 
         socket.on('question_results', () => {
@@ -50,6 +52,16 @@ export default function Participant() {
             socket.off('quiz_finished');
         };
     }, [sessionId, navigate]);
+
+    useEffect(() => {
+        let interval;
+        if (gameState === 'active' && questionActive && timeLeft > 0) {
+            interval = setInterval(() => {
+                setTimeLeft(prev => prev > 0 ? prev - 1 : 0);
+            }, 1000);
+        }
+        return () => clearInterval(interval);
+    }, [gameState, questionActive, timeLeft]);
 
     const joinSession = (e) => {
         e.preventDefault();
@@ -167,15 +179,16 @@ export default function Participant() {
                 <div style={{ position: 'relative', zIndex: 1, flex: 1, display: 'flex', flexDirection: 'column' }}>
                     <div style={{ marginBottom: '2rem', textAlign: 'center' }}>
                         <span style={{
-                            background: 'rgba(139, 92, 246, 0.2)',
                             padding: '0.5rem 1rem',
                             borderRadius: '2rem',
                             fontSize: '0.875rem',
                             fontWeight: 'bold',
                             color: '#a78bfa',
-                            border: '1px solid rgba(139, 92, 246, 0.3)'
+                            border: '1px solid rgba(139, 92, 246, 0.3)',
+                            display: 'inline-flex', alignItems: 'center', gap: '0.5rem'
                         }}>
-                            LIVE QUESTION
+                            <Clock size={16} />
+                            {timeLeft}s
                         </span>
                         <h2 style={{
                             fontSize: '1.75rem',
