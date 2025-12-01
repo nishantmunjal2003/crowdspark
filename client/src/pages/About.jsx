@@ -1,40 +1,94 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Users, Presentation, Zap, BarChart2, Smartphone, ArrowRight } from 'lucide-react';
+import { Users, Presentation, Zap, BarChart2, Smartphone, ArrowRight, Menu, X } from 'lucide-react';
 import Footer from '../components/Footer';
-
 import ThemeToggle from '../components/ThemeToggle';
 
 export default function About() {
     const navigate = useNavigate();
+    const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
     return (
         <div className="about-page" style={{ minHeight: '100vh', paddingBottom: '4rem' }}>
             {/* Navigation Bar */}
-            <nav style={{ padding: '1.5rem 2rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', backdropFilter: 'blur(10px)', position: 'sticky', top: 0, zIndex: 100, borderBottom: '1px solid var(--border-color)', background: 'rgba(15, 23, 42, 0.8)' }}>
+            <nav style={{
+                padding: '1rem 1.5rem',
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                backdropFilter: 'blur(10px)',
+                position: 'sticky',
+                top: 0,
+                zIndex: 100,
+                borderBottom: '1px solid var(--border-color)',
+                background: 'rgba(15, 23, 42, 0.8)'
+            }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer' }} onClick={() => navigate('/')}>
                     <Zap size={24} color="#fbbf24" fill="#fbbf24" />
                     <span style={{ fontSize: '1.25rem', fontWeight: '700', letterSpacing: '-0.02em' }}>CrowdSpark</span>
                 </div>
-                <div style={{ display: 'flex', gap: '1.5rem', alignItems: 'center' }}>
+
+                {/* Desktop Menu */}
+                <div className="desktop-menu" style={{ display: 'flex', gap: '1.5rem', alignItems: 'center' }}>
                     <span onClick={() => navigate('/pricing')} style={{ cursor: 'pointer', color: 'var(--text-secondary)', fontWeight: '500' }}>Pricing</span>
                     <ThemeToggle />
                     <button onClick={() => navigate('/login')} className="btn btn-secondary" style={{ padding: '0.5rem 1rem', fontSize: '0.9rem' }}>Host Login</button>
                     <button onClick={() => navigate('/')} className="btn btn-primary" style={{ padding: '0.5rem 1rem', fontSize: '0.9rem' }}>Join Session</button>
                 </div>
+
+                {/* Mobile Menu Button */}
+                <button
+                    className="mobile-menu-btn"
+                    onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+                    style={{
+                        display: 'none',
+                        background: 'none',
+                        border: 'none',
+                        color: 'var(--text-primary)',
+                        cursor: 'pointer',
+                        padding: '0.5rem'
+                    }}
+                >
+                    {mobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
+                </button>
             </nav>
 
+            {/* Mobile Menu Dropdown */}
+            {mobileMenuOpen && (
+                <div className="mobile-menu-dropdown" style={{
+                    position: 'fixed',
+                    top: '60px',
+                    left: 0,
+                    right: 0,
+                    background: 'rgba(15, 23, 42, 0.98)',
+                    backdropFilter: 'blur(10px)',
+                    borderBottom: '1px solid var(--border-color)',
+                    padding: '1.5rem',
+                    zIndex: 99,
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '1rem'
+                }}>
+                    <span onClick={() => { navigate('/pricing'); setMobileMenuOpen(false); }} style={{ cursor: 'pointer', color: 'var(--text-secondary)', fontWeight: '500', padding: '0.5rem' }}>Pricing</span>
+                    <div style={{ display: 'flex', justifyContent: 'center', padding: '0.5rem' }}>
+                        <ThemeToggle />
+                    </div>
+                    <button onClick={() => { navigate('/login'); setMobileMenuOpen(false); }} className="btn btn-secondary" style={{ padding: '0.75rem 1rem', fontSize: '0.9rem', width: '100%' }}>Host Login</button>
+                    <button onClick={() => { navigate('/'); setMobileMenuOpen(false); }} className="btn btn-primary" style={{ padding: '0.75rem 1rem', fontSize: '0.9rem', width: '100%' }}>Join Session</button>
+                </div>
+            )}
+
             {/* Hero Section */}
-            <header style={{ textAlign: 'center', padding: '6rem 1.5rem', position: 'relative', overflow: 'hidden' }}>
+            <header className="about-hero" style={{ textAlign: 'center', padding: '4rem 1.5rem', position: 'relative', overflow: 'hidden' }}>
                 <div className="blob blob-1" style={{ top: '10%', left: '20%', opacity: 0.15 }}></div>
                 <div className="blob blob-2" style={{ bottom: '10%', right: '20%', opacity: 0.15 }}></div>
 
                 <div style={{ position: 'relative', zIndex: 10, maxWidth: '800px', margin: '0 auto' }}>
-                    <h1 className="title" style={{ fontSize: '3.5rem', marginBottom: '1.5rem' }}>
-                        Spark Engagement in <br />
+                    <h1 className="title about-title" style={{ fontSize: '3.5rem', marginBottom: '1.5rem' }}>
+                        Spark Engagement in <br className="hide-mobile" />
                         <span style={{ color: 'var(--accent)' }}>Real-Time</span>
                     </h1>
-                    <p className="subtitle" style={{ fontSize: '1.25rem', lineHeight: '1.8' }}>
+                    <p className="subtitle about-subtitle" style={{ fontSize: '1.25rem', lineHeight: '1.8' }}>
                         CrowdSpark is the ultimate platform for live interactive quizzes and polls.
                         Whether you're in a classroom, a conference, or a team meeting,
                         we make it easy to connect and get instant feedback.
@@ -43,8 +97,8 @@ export default function About() {
             </header>
 
             {/* Features / How it Works */}
-            <section className="container">
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '2rem', marginBottom: '6rem' }}>
+            <section className="container" style={{ padding: '0 1rem' }}>
+                <div className="feature-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '2rem', marginBottom: '6rem' }}>
                     <FeatureCard
                         icon={<Presentation size={32} />}
                         title="Create & Host"
@@ -66,28 +120,28 @@ export default function About() {
                 </div>
 
                 {/* Who is it for */}
-                <div style={{ background: 'var(--bg-card)', borderRadius: '2rem', padding: '4rem 2rem', border: '1px solid var(--border-color)', marginBottom: '6rem' }}>
-                    <h2 style={{ textAlign: 'center', fontSize: '2.5rem', marginBottom: '3rem', fontWeight: '800' }}>Who is CrowdSpark for?</h2>
+                <div className="who-section" style={{ background: 'var(--bg-card)', borderRadius: '2rem', padding: '3rem 1.5rem', border: '1px solid var(--border-color)', marginBottom: '6rem' }}>
+                    <h2 className="who-title" style={{ textAlign: 'center', fontSize: '2.5rem', marginBottom: '3rem', fontWeight: '800' }}>Who is CrowdSpark for?</h2>
 
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '3rem' }}>
-                        <div style={{ padding: '2rem' }}>
-                            <h3 style={{ fontSize: '1.75rem', marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                    <div className="who-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '2rem' }}>
+                        <div style={{ padding: '1.5rem' }}>
+                            <h3 style={{ fontSize: '1.5rem', marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
                                 <span style={{ background: 'rgba(99, 102, 241, 0.2)', padding: '0.5rem', borderRadius: '0.5rem' }}><Presentation size={24} color="var(--accent)" /></span>
                                 Educators & Speakers
                             </h3>
-                            <ul style={{ listStyle: 'none', color: 'var(--text-secondary)', fontSize: '1.1rem', space: 'y-4' }}>
+                            <ul style={{ listStyle: 'none', color: 'var(--text-secondary)', fontSize: '1rem' }}>
                                 <li style={{ marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}><ArrowRight size={16} color="var(--accent)" /> Check attendance and understanding</li>
                                 <li style={{ marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}><ArrowRight size={16} color="var(--accent)" /> Gamify lectures to boost attention</li>
                                 <li style={{ marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}><ArrowRight size={16} color="var(--accent)" /> Gather opinions instantly</li>
                             </ul>
                         </div>
 
-                        <div style={{ padding: '2rem', borderLeft: '1px solid var(--border-color)' }}>
-                            <h3 style={{ fontSize: '1.75rem', marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                        <div className="who-divider" style={{ padding: '1.5rem', borderLeft: '1px solid var(--border-color)' }}>
+                            <h3 style={{ fontSize: '1.5rem', marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
                                 <span style={{ background: 'rgba(52, 211, 153, 0.2)', padding: '0.5rem', borderRadius: '0.5rem' }}><Users size={24} color="var(--success)" /></span>
                                 Students & Teams
                             </h3>
-                            <ul style={{ listStyle: 'none', color: 'var(--text-secondary)', fontSize: '1.1rem' }}>
+                            <ul style={{ listStyle: 'none', color: 'var(--text-secondary)', fontSize: '1rem' }}>
                                 <li style={{ marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}><ArrowRight size={16} color="var(--success)" /> Anonymous participation</li>
                                 <li style={{ marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}><ArrowRight size={16} color="var(--success)" /> Compete on the leaderboard</li>
                                 <li style={{ marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}><ArrowRight size={16} color="var(--success)" /> Fun and interactive learning</li>
@@ -97,8 +151,8 @@ export default function About() {
                 </div>
 
                 {/* Visual Showcase (CSS Mockups) */}
-                <h2 style={{ textAlign: 'center', fontSize: '2.5rem', marginBottom: '3rem', fontWeight: '800' }}>See it in Action</h2>
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '2rem', alignItems: 'center' }}>
+                <h2 className="showcase-title" style={{ textAlign: 'center', fontSize: '2.5rem', marginBottom: '3rem', fontWeight: '800' }}>See it in Action</h2>
+                <div className="mockup-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '2rem', alignItems: 'center' }}>
 
                     {/* Mockup 1: Host View */}
                     <div className="mockup-window" style={{ background: '#1e293b', borderRadius: '1rem', overflow: 'hidden', border: '1px solid var(--border-color)', boxShadow: '0 20px 50px rgba(0,0,0,0.5)' }}>
@@ -146,8 +200,8 @@ export default function About() {
             </section>
 
             {/* CTA Footer */}
-            <footer style={{ textAlign: 'center', marginTop: '4rem', padding: '4rem 1.5rem', background: 'linear-gradient(to top, rgba(99, 102, 241, 0.1), transparent)' }}>
-                <h2 style={{ fontSize: '2.5rem', marginBottom: '1.5rem', fontWeight: '800' }}>Ready to get started?</h2>
+            <footer className="cta-footer" style={{ textAlign: 'center', marginTop: '4rem', padding: '3rem 1.5rem', background: 'linear-gradient(to top, rgba(99, 102, 241, 0.1), transparent)' }}>
+                <h2 className="cta-title" style={{ fontSize: '2.5rem', marginBottom: '1.5rem', fontWeight: '800' }}>Ready to get started?</h2>
                 <div style={{ display: 'flex', gap: '1rem', justifyContent: 'center', flexWrap: 'wrap' }}>
                     <button onClick={() => navigate('/login')} className="btn btn-primary" style={{ padding: '1rem 2rem', fontSize: '1.1rem' }}>Create a Quiz</button>
                     <button onClick={() => navigate('/')} className="btn btn-secondary" style={{ padding: '1rem 2rem', fontSize: '1.1rem' }}>Join a Session</button>
@@ -155,6 +209,55 @@ export default function About() {
             </footer>
 
             <Footer />
+
+            {/* Mobile Responsive Styles */}
+            <style>{`
+                @media (max-width: 768px) {
+                    .desktop-menu {
+                        display: none !important;
+                    }
+                    .mobile-menu-btn {
+                        display: block !important;
+                    }
+                    .about-hero {
+                        padding: 3rem 1rem !important;
+                    }
+                    .about-title {
+                        font-size: 2rem !important;
+                    }
+                    .about-subtitle {
+                        font-size: 1rem !important;
+                    }
+                    .who-title, .showcase-title, .cta-title {
+                        font-size: 1.75rem !important;
+                    }
+                    .who-section {
+                        padding: 2rem 1rem !important;
+                    }
+                    .who-divider {
+                        border-left: none !important;
+                        border-top: 1px solid var(--border-color) !important;
+                        padding-top: 2rem !important;
+                    }
+                    .feature-grid, .who-grid, .mockup-grid {
+                        grid-template-columns: 1fr !important;
+                    }
+                    .cta-footer {
+                        padding: 2rem 1rem !important;
+                    }
+                }
+                @media (max-width: 480px) {
+                    .about-title {
+                        font-size: 1.75rem !important;
+                    }
+                    .who-title, .showcase-title, .cta-title {
+                        font-size: 1.5rem !important;
+                    }
+                    .hide-mobile {
+                        display: none;
+                    }
+                }
+            `}</style>
         </div>
     );
 }

@@ -30,6 +30,11 @@ const transporter = nodemailer.createTransport({
 
 const app = express();
 
+// Middleware - MUST be before routes
+app.use(cors());
+app.use(express.json()); // Enable JSON body parsing
+app.use('/uploads', express.static(path.join(__dirname, 'uploads'))); // Serve uploaded files
+
 // --- Auth Endpoints ---
 
 // Signup
@@ -151,9 +156,6 @@ app.post('/api/auth/google', async (req, res) => {
     res.status(400).json({ error: 'Invalid Google token' });
   }
 });
-app.use(cors());
-app.use(express.json()); // Enable JSON body parsing
-app.use('/uploads', express.static(path.join(__dirname, 'uploads'))); // Serve uploaded files
 
 // Multer Configuration for File Uploads
 const multer = require('multer');

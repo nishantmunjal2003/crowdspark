@@ -174,11 +174,11 @@ export default function Participant() {
 
     if (gameState === 'active' && currentQuestion) {
         return (
-            <div style={{ minHeight: '100vh', padding: '2rem', maxWidth: '600px', margin: '0 auto', display: 'flex', flexDirection: 'column', position: 'relative', color: 'white' }}>
+            <div className="participant-question" style={{ minHeight: '100vh', padding: '1rem', maxWidth: '600px', margin: '0 auto', display: 'flex', flexDirection: 'column', position: 'relative', color: 'white' }}>
                 <Background />
                 <div style={{ position: 'relative', zIndex: 1, flex: 1, display: 'flex', flexDirection: 'column' }}>
-                    <div style={{ marginBottom: '2rem', textAlign: 'center' }}>
-                        <span style={{
+                    <div style={{ marginBottom: '1.5rem', textAlign: 'center' }}>
+                        <span className="timer-badge" style={{
                             padding: '0.5rem 1rem',
                             borderRadius: '2rem',
                             fontSize: '0.875rem',
@@ -190,19 +190,20 @@ export default function Participant() {
                             <Clock size={16} />
                             {timeLeft}s
                         </span>
-                        <h2 style={{
-                            fontSize: '1.75rem',
+                        <h2 className="question-text" style={{
+                            fontSize: '1.5rem',
                             fontWeight: '800',
                             marginTop: '1.5rem',
                             lineHeight: '1.4',
-                            textShadow: '0 2px 4px rgba(0,0,0,0.5)'
+                            textShadow: '0 2px 4px rgba(0,0,0,0.5)',
+                            padding: '0 0.5rem'
                         }}>
                             {currentQuestion.text}
                         </h2>
 
                         {/* Media Display */}
                         {currentQuestion.media && (
-                            <div style={{
+                            <div className="question-media" style={{
                                 marginTop: '1.5rem',
                                 borderRadius: '1rem',
                                 overflow: 'hidden',
@@ -211,15 +212,15 @@ export default function Participant() {
                                 border: '1px solid rgba(255, 255, 255, 0.1)'
                             }}>
                                 {currentQuestion.media.type === 'image' ? (
-                                    <img src={currentQuestion.media.data} alt="Question media" style={{ maxWidth: '100%', maxHeight: '300px', objectFit: 'contain', borderRadius: '0.5rem' }} />
+                                    <img src={currentQuestion.media.data} alt="Question media" style={{ maxWidth: '100%', maxHeight: '250px', objectFit: 'contain', borderRadius: '0.5rem' }} />
                                 ) : (
-                                    <video src={currentQuestion.media.data} controls style={{ maxWidth: '100%', maxHeight: '300px', borderRadius: '0.5rem' }} />
+                                    <video src={currentQuestion.media.data} controls style={{ maxWidth: '100%', maxHeight: '250px', borderRadius: '0.5rem' }} />
                                 )}
                             </div>
                         )}
                     </div>
 
-                    <div style={{ display: 'grid', gap: '1rem', flex: 1 }}>
+                    <div className="options-grid" style={{ display: 'grid', gap: '0.75rem', flex: 1 }}>
                         {currentQuestion.options.map((opt, i) => {
                             const isSelected = submittedAnswer === i;
                             const colors = ['#3b82f6', '#ef4444', '#eab308', '#22c55e']; // Kahoot-ish colors
@@ -230,8 +231,9 @@ export default function Participant() {
                                     key={i}
                                     onClick={() => submitAnswer(i)}
                                     disabled={submittedAnswer !== null || !questionActive}
+                                    className="option-button"
                                     style={{
-                                        padding: '1.5rem',
+                                        padding: '1.25rem',
                                         textAlign: 'left',
                                         cursor: (submittedAnswer !== null || !questionActive) ? 'default' : 'pointer',
                                         background: isSelected ? baseColor : 'rgba(255, 255, 255, 0.1)',
@@ -241,79 +243,127 @@ export default function Participant() {
                                         transition: 'all 0.2s',
                                         display: 'flex',
                                         alignItems: 'center',
-                                        gap: '1rem',
+                                        gap: '0.75rem',
                                         opacity: (submittedAnswer !== null || !questionActive) && !isSelected ? 0.5 : 1,
                                         transform: isSelected ? 'scale(1.02)' : 'scale(1)',
                                         boxShadow: isSelected ? `0 0 30px ${baseColor}60` : '0 4px 6px rgba(0,0,0,0.1)',
-                                        color: 'white'
+                                        color: 'white',
+                                        minHeight: '60px'
                                     }}
                                 >
-                                    <span style={{
-                                        width: '40px', height: '40px',
+                                    <span className="option-letter" style={{
+                                        width: '36px', height: '36px',
                                         background: isSelected ? 'white' : 'rgba(255,255,255,0.1)',
                                         color: isSelected ? baseColor : 'white',
                                         borderRadius: '50%',
                                         display: 'flex', alignItems: 'center', justifyContent: 'center',
                                         fontWeight: 'bold',
-                                        fontSize: '1.2rem',
+                                        fontSize: '1.1rem',
                                         flexShrink: 0
                                     }}>{String.fromCharCode(65 + i)}</span>
-                                    <span style={{ fontSize: '1.1rem', fontWeight: '500' }}>{opt}</span>
+                                    <span className="option-text" style={{ fontSize: '1rem', fontWeight: '500', wordBreak: 'break-word' }}>{opt}</span>
                                 </button>
                             );
                         })}
                     </div>
 
                     {submittedAnswer && (
-                        <div className="animate-fade-in" style={{
-                            marginTop: '2rem',
+                        <div className="animate-fade-in feedback-card" style={{
+                            marginTop: '1.5rem',
                             textAlign: 'center',
-                            padding: '2rem',
+                            padding: '1.5rem',
                             background: 'rgba(16, 185, 129, 0.1)',
                             backdropFilter: 'blur(10px)',
                             borderRadius: '1.5rem',
                             border: '1px solid rgba(16, 185, 129, 0.3)'
                         }}>
                             <div style={{
-                                width: '70px', height: '70px',
+                                width: '60px', height: '60px',
                                 background: 'rgba(16, 185, 129, 0.2)',
                                 borderRadius: '50%',
                                 display: 'flex', alignItems: 'center', justifyContent: 'center',
-                                margin: '0 auto 1.5rem auto',
+                                margin: '0 auto 1rem auto',
                                 boxShadow: '0 0 20px rgba(16, 185, 129, 0.2)'
                             }}>
-                                <Zap size={36} color="#34d399" fill="#34d399" />
+                                <Zap size={32} color="#34d399" fill="#34d399" />
                             </div>
-                            <h3 style={{ fontSize: '1.5rem', marginBottom: '0.5rem', fontWeight: 'bold' }}>Answer Locked!</h3>
-                            <p style={{ color: 'rgba(255,255,255,0.7)' }}>Keep your eyes on the host screen.</p>
+                            <h3 style={{ fontSize: '1.25rem', marginBottom: '0.5rem', fontWeight: 'bold' }}>Answer Locked!</h3>
+                            <p style={{ color: 'rgba(255,255,255,0.7)', fontSize: '0.9rem' }}>Keep your eyes on the host screen.</p>
                         </div>
                     )}
 
                     {!questionActive && !submittedAnswer && (
-                        <div className="animate-fade-in" style={{
-                            marginTop: '2rem',
+                        <div className="animate-fade-in feedback-card" style={{
+                            marginTop: '1.5rem',
                             textAlign: 'center',
-                            padding: '2rem',
+                            padding: '1.5rem',
                             background: 'rgba(239, 68, 68, 0.1)',
                             backdropFilter: 'blur(10px)',
                             borderRadius: '1.5rem',
                             border: '1px solid rgba(239, 68, 68, 0.3)'
                         }}>
                             <div style={{
-                                width: '70px', height: '70px',
+                                width: '60px', height: '60px',
                                 background: 'rgba(239, 68, 68, 0.2)',
                                 borderRadius: '50%',
                                 display: 'flex', alignItems: 'center', justifyContent: 'center',
-                                margin: '0 auto 1.5rem auto',
+                                margin: '0 auto 1rem auto',
                                 boxShadow: '0 0 20px rgba(239, 68, 68, 0.2)'
                             }}>
-                                <Clock size={36} color="#f87171" />
+                                <Clock size={32} color="#f87171" />
                             </div>
-                            <h3 style={{ fontSize: '1.5rem', marginBottom: '0.5rem', fontWeight: 'bold' }}>Time's Up!</h3>
-                            <p style={{ color: 'rgba(255,255,255,0.7)' }}>The answer has been revealed.</p>
+                            <h3 style={{ fontSize: '1.25rem', marginBottom: '0.5rem', fontWeight: 'bold' }}>Time's Up!</h3>
+                            <p style={{ color: 'rgba(255,255,255,0.7)', fontSize: '0.9rem' }}>The answer has been revealed.</p>
                         </div>
                     )}
                 </div>
+
+                {/* Mobile Responsive Styles */}
+                <style>{`
+                    @media (max-width: 768px) {
+                        .participant-question {
+                            padding: 1rem 0.75rem !important;
+                        }
+                        .question-text {
+                            font-size: 1.25rem !important;
+                        }
+                        .question-media img,
+                        .question-media video {
+                            max-height: 200px !important;
+                        }
+                        .option-button {
+                            padding: 1rem !important;
+                            min-height: 56px !important;
+                        }
+                        .option-letter {
+                            width: 32px !important;
+                            height: 32px !important;
+                            font-size: 1rem !important;
+                        }
+                        .option-text {
+                            font-size: 0.95rem !important;
+                        }
+                        .feedback-card {
+                            padding: 1.25rem !important;
+                        }
+                    }
+                    @media (max-width: 480px) {
+                        .question-text {
+                            font-size: 1.1rem !important;
+                        }
+                        .timer-badge {
+                            font-size: 0.8rem !important;
+                            padding: 0.4rem 0.8rem !important;
+                        }
+                        .option-button {
+                            padding: 0.875rem !important;
+                            gap: 0.5rem !important;
+                        }
+                        .option-text {
+                            font-size: 0.9rem !important;
+                        }
+                    }
+                `}</style>
             </div>
         );
     }
