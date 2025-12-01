@@ -294,3 +294,61 @@ body {
   right: -100px;
   background: var(--success);
 }
+
+/* Mobile Responsive Styles */
+@media (max-width: 768px) {
+  .container {
+    padding: 1rem;
+  }
+
+  .card {
+    padding: 1.25rem;
+    border-radius: 1rem;
+  }
+
+  .title {
+    font-size: 2rem;
+  }
+
+  .subtitle {
+    font-size: 1rem;
+  }
+
+  .btn {
+    padding: 0.75rem 1.25rem;
+    font-size: 0.9rem;
+  }
+
+  .input {
+    padding: 0.875rem 1rem;
+    font-size: 0.95rem;
+  }
+
+  /* Hide text on mobile for compact buttons */
+  .mobile-hide {
+    display: inline !important;
+  }
+}
+
+@media (max-width: 480px) {
+  .hero-container {
+    padding: 1rem;
+  }
+
+  .hero-content {
+    max-width: 100%;
+  }
+
+  .title {
+    font-size: 1.75rem;
+  }
+
+  .card {
+    padding: 1rem;
+  }
+
+  .btn {
+    padding: 0.625rem 1rem;
+    font-size: 0.875rem;
+  }
+}

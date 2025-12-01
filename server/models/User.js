@@ -10,6 +10,10 @@ const userSchema = new mongoose.Schema({
         required: true,
         unique: true
     },
+    password: {
+        type: String,
+        required: false // Not required because Google login users won't have passwords
+    },
     googleId: {
         type: String,
         unique: true,

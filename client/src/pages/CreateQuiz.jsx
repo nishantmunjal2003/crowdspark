@@ -250,16 +250,16 @@ export default function CreateQuiz() {
     };
 
     return (
-        <div style={{ minHeight: '100vh', background: 'var(--bg-primary)', padding: '2rem' }}>
+        <div style={{ minHeight: '100vh', background: 'var(--bg-primary)', padding: 'clamp(1rem, 3vw, 2rem)' }}>
             <div className="container" style={{ maxWidth: '900px', margin: '0 auto' }}>
                 {/* Header */}
-                <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '2rem' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '2rem', flexWrap: 'wrap' }}>
                     <button onClick={() => navigate('/dashboard')} className="btn btn-secondary" style={{ padding: '0.75rem' }}>
                         <ArrowLeft size={20} />
                     </button>
-                    <div style={{ flex: 1 }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-                            <h1 className="title" style={{ fontSize: '2rem', marginBottom: '0.25rem' }}>
+                    <div style={{ flex: 1, minWidth: '200px' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', flexWrap: 'wrap' }}>
+                            <h1 className="title" style={{ fontSize: 'clamp(1.5rem, 4vw, 2rem)', marginBottom: '0.25rem' }}>
                                 {editingQuiz ? `Edit ${quizType === 'poll' ? 'Poll' : 'Quiz'}` : `Create New ${quizType === 'poll' ? 'Poll' : 'Quiz'}`}
                             </h1>
                             <span style={{
@@ -297,11 +297,11 @@ export default function CreateQuiz() {
 
                 {/* Time Limit */}
                 <div className="card animate-fade-in" style={{ marginBottom: '2rem' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1rem' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1rem', flexWrap: 'wrap' }}>
                         <div style={{ padding: '0.5rem', borderRadius: '0.5rem', background: 'rgba(234, 179, 8, 0.1)', color: '#eab308' }}>
                             <Clock size={24} />
                         </div>
-                        <h2 style={{ fontSize: '1.25rem', fontWeight: 'bold', margin: 0 }}>Time Limit</h2>
+                        <h2 style={{ fontSize: 'clamp(1rem, 3vw, 1.25rem)', fontWeight: 'bold', margin: 0 }}>Time Limit</h2>
                     </div>
                     <label style={{ display: 'block', marginBottom: '0.75rem', fontSize: '1rem', fontWeight: '600' }}>
                         Time per Question (seconds)
@@ -319,14 +319,14 @@ export default function CreateQuiz() {
 
                 {/* Customization Section */}
                 <div className="card animate-fade-in" style={{ marginBottom: '2rem' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1.5rem' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1.5rem', flexWrap: 'wrap' }}>
                         <div style={{ padding: '0.5rem', borderRadius: '0.5rem', background: 'rgba(139, 92, 246, 0.1)', color: '#8b5cf6' }}>
                             <Palette size={24} />
                         </div>
-                        <h2 style={{ fontSize: '1.25rem', fontWeight: 'bold', margin: 0 }}>Customize Appearance</h2>
+                        <h2 style={{ fontSize: 'clamp(1rem, 3vw, 1.25rem)', fontWeight: 'bold', margin: 0 }}>Customize Appearance</h2>
                     </div>
 
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '2rem' }}>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(250px, 100%), 1fr))', gap: 'clamp(1rem, 3vw, 2rem)' }}>
                         {/* Background Image */}
                         <div>
                             <label style={{ display: 'block', marginBottom: '0.75rem', fontSize: '0.875rem', fontWeight: '600' }}>
@@ -393,18 +393,18 @@ export default function CreateQuiz() {
                 {/* Questions */}
                 <div style={{ marginBottom: '2rem' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', flexWrap: 'wrap', gap: '1rem' }}>
-                        <h2 style={{ fontSize: '1.5rem', fontWeight: 'bold' }}>Questions</h2>
-                        <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
-                            <button onClick={downloadSampleCSV} className="btn btn-secondary" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                        <h2 style={{ fontSize: 'clamp(1.25rem, 4vw, 1.5rem)', fontWeight: 'bold' }}>Questions</h2>
+                        <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', width: '100%', justifyContent: 'flex-end' }}>
+                            <button onClick={downloadSampleCSV} className="btn btn-secondary" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: 'clamp(0.875rem, 2vw, 1rem)', padding: 'clamp(0.5rem, 2vw, 0.75rem) clamp(0.75rem, 3vw, 1rem)' }}>
                                 <Download size={18} />
-                                Sample CSV
+                                <span style={{ display: 'none' }} className="mobile-hide">Sample </span>CSV
                             </button>
-                            <label className="btn btn-secondary" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer' }}>
+                            <label className="btn btn-secondary" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer', fontSize: 'clamp(0.875rem, 2vw, 1rem)', padding: 'clamp(0.5rem, 2vw, 0.75rem) clamp(0.75rem, 3vw, 1rem)' }}>
                                 <Upload size={18} />
-                                Upload CSV
+                                <span style={{ display: 'none' }} className="mobile-hide">Upload </span>CSV
                                 <input type="file" accept=".csv" onChange={handleCSVUpload} style={{ display: 'none' }} />
                             </label>
-                            <button onClick={addQuestion} className="btn btn-primary" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                            <button onClick={addQuestion} className="btn btn-primary" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: 'clamp(0.875rem, 2vw, 1rem)', padding: 'clamp(0.5rem, 2vw, 0.75rem) clamp(0.75rem, 3vw, 1rem)' }}>
                                 <Plus size={20} />
                                 Add Question
                             </button>
@@ -419,8 +419,8 @@ export default function CreateQuiz() {
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
                             {questions.map((question, qIndex) => (
                                 <div key={question.id} className="card animate-fade-in">
-                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', marginBottom: '1.5rem' }}>
-                                        <h3 style={{ fontSize: '1.125rem', fontWeight: 'bold', color: 'var(--accent)' }}>
+                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', marginBottom: '1.5rem', gap: '1rem' }}>
+                                        <h3 style={{ fontSize: 'clamp(1rem, 3vw, 1.125rem)', fontWeight: 'bold', color: 'var(--accent)' }}>
                                             Question {qIndex + 1}
                                         </h3>
                                         <button
@@ -531,7 +531,7 @@ export default function CreateQuiz() {
                                             <label style={{ display: 'block', marginBottom: '0.75rem', fontSize: '0.875rem', fontWeight: '500' }}>
                                                 Correct Answer
                                             </label>
-                                            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '0.75rem' }}>
+                                            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(150px, 100%), 1fr))', gap: '0.75rem' }}>
                                                 {question.options.map((option, oIndex) => (
                                                     <button
                                                         key={oIndex}

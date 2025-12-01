@@ -16,6 +16,7 @@ const nodemailer = require('nodemailer');
 const { OAuth2Client } = require('google-auth-library');
 
 const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
+const bcrypt = require('bcrypt');
 
 // Nodemailer Transporter
 // ... (keep existing transporter config)
@@ -28,39 +29,87 @@ const transporter = nodemailer.createTransport({
 });
 
 const app = express();
-// ... (keep existing middleware)
 
-// ... (keep existing send-otp)
+// --- Auth Endpoints ---
 
-// Verify OTP
-app.post('/api/auth/verify-otp', async (req, res) => {
+// Signup
+app.post('/api/auth/signup', async (req, res) => {
   try {
-    const { email, otp, name } = req.body; // Expect name if it's a new signup
-    if (!email || !otp) return res.status(400).json({ error: 'Email and OTP are required' });
-
-    const record = await Otp.findOne({ email });
-    if (!record) return res.status(400).json({ error: 'OTP not found or expired' });
-
-    if (record.otp === otp) {
-      await Otp.deleteOne({ email }); // Clear OTP
-
-      // Find or Create User
-      let user = await User.findOne({ email });
-      if (!user) {
-        // If new user, we need a name. If not provided, default to part of email.
-        user = await User.create({
-          email,
-          name: name || email.split('@')[0]
-        });
-      }
-
-      res.json({ success: true, message: 'Login successful', user });
-    } else {
-      res.status(400).json({ error: 'Invalid OTP' });
+    const { name, email, password } = req.body;
+    if (!name || !email || !password) {
+      return res.status(400).json({ error: 'All fields are required' });
     }
+
+    // Check if user already exists
+    const existingUser = await User.findOne({ email });
+    if (existingUser) {
+      return res.status(400).json({ error: 'User already exists with this email' });
+    }
+
+    // Hash password
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    // Create user
+    const user = await User.create({
+      name,
+      email,
+      password: hashedPassword
+    });
+
+    // Return user without password
+    const userResponse = {
+      _id: user._id,
+      name: user.name,
+      email: user.email,
+      picture: user.picture,
+      createdAt: user.createdAt
+    };
+
+    res.json({ success: true, message: 'Account created successfully', user: userResponse });
   } catch (err) {
-    console.error('Error verifying OTP:', err);
-    res.status(500).json({ error: 'Failed to verify OTP' });
+    console.error('Error creating account:', err);
+    res.status(500).json({ error: 'Failed to create account' });
+  }
+});
+
+// Login
+app.post('/api/auth/login', async (req, res) => {
+  try {
+    const { email, password } = req.body;
+    if (!email || !password) {
+      return res.status(400).json({ error: 'Email and password are required' });
+    }
+
+    // Find user
+    const user = await User.findOne({ email });
+    if (!user) {
+      return res.status(400).json({ error: 'Invalid email or password' });
+    }
+
+    // Check if user has a password (might be Google-only user)
+    if (!user.password) {
+      return res.status(400).json({ error: 'Please use Google Sign-In for this account' });
+    }
+
+    // Verify password
+    const isValidPassword = await bcrypt.compare(password, user.password);
+    if (!isValidPassword) {
+      return res.status(400).json({ error: 'Invalid email or password' });
+    }
+
+    // Return user without password
+    const userResponse = {
+      _id: user._id,
+      name: user.name,
+      email: user.email,
+      picture: user.picture,
+      createdAt: user.createdAt
+    };
+
+    res.json({ success: true, message: 'Login successful', user: userResponse });
+  } catch (err) {
+    console.error('Error logging in:', err);
+    res.status(500).json({ error: 'Failed to login' });
   }
 });
 
@@ -231,48 +280,6 @@ app.post('/api/quizzes', async (req, res) => {
     });
   }
 });
-
-// --- Auth Endpoints (OTP) ---
-
-// Send OTP
-app.post('/api/auth/send-otp', async (req, res) => {
-  try {
-    const { email } = req.body;
-    if (!email) return res.status(400).json({ error: 'Email is required' });
-
-    // Generate 6-digit OTP
-    const otp = Math.floor(100000 + Math.random() * 900000).toString();
-
-    // Save to DB (upsert: update if exists, insert if not)
-    await Otp.findOneAndUpdate(
-      { email },
-      { otp, createdAt: Date.now() },
-      { upsert: true, new: true }
-    );
-
-    console.log(`Generated OTP for ${email}: ${otp}`); // Log for dev/testing
-
-    // Send Email
-    if (process.env.EMAIL_USER && process.env.EMAIL_PASS) {
-      await transporter.sendMail({
-        from: process.env.EMAIL_USER,
-        to: email,
-        subject: 'Your CrowdSpark Login OTP',
-        text: `Your OTP is: ${otp}. It expires in 5 minutes.`
-      });
-      console.log(`Email sent to ${email}`);
-    } else {
-      console.log('Skipping email send (EMAIL_USER/PASS not set). Check console for OTP.');
-    }
-
-    res.json({ message: 'OTP sent successfully' });
-  } catch (err) {
-    console.error('Error sending OTP:', err);
-    res.status(500).json({ error: 'Failed to send OTP' });
-  }
-});
-
-
 
 // Get all quizzes
 app.get('/api/quizzes', async (req, res) => {
