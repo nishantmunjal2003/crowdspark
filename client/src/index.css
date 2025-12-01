@@ -35,6 +35,22 @@
   --font-family: 'Inter', system-ui, -apple-system, sans-serif;
 }
 
+[data-theme="light"] {
+  --bg-primary: #f8fafc;
+  --bg-secondary: #e2e8f0;
+  --bg-card: rgba(255, 255, 255, 0.7);
+
+  --accent: #6366f1;
+  --accent-hover: #4f46e5;
+  --success: #10b981;
+  --error: #ef4444;
+
+  --text-primary: #1e293b;
+  --text-secondary: #64748b;
+
+  --border-color: rgba(0, 0, 0, 0.1);
+}
+
 body {
   font-family: var(--font-family);
   background-color: var(--bg-primary);
@@ -147,6 +163,13 @@ body {
   margin-bottom: 1rem;
   line-height: 1.1;
   letter-spacing: -0.02em;
+}
+
+[data-theme="light"] .title {
+  background: linear-gradient(135deg, #1e293b 0%, #475569 100%);
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
 }
 
 .subtitle {

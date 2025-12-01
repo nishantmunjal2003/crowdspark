@@ -10,8 +10,98 @@ const path = require('path');
 // Models
 const Quiz = require('./models/Quiz');
 const Response = require('./models/Response');
+const Otp = require('./models/Otp');
+const User = require('./models/User');
+const nodemailer = require('nodemailer');
+const { OAuth2Client } = require('google-auth-library');
+
+const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
+
+// Nodemailer Transporter
+// ... (keep existing transporter config)
+const transporter = nodemailer.createTransport({
+  service: 'gmail',
+  auth: {
+    user: process.env.EMAIL_USER,
+    pass: process.env.EMAIL_PASS
+  }
+});
 
 const app = express();
+// ... (keep existing middleware)
+
+// ... (keep existing send-otp)
+
+// Verify OTP
+app.post('/api/auth/verify-otp', async (req, res) => {
+  try {
+    const { email, otp, name } = req.body; // Expect name if it's a new signup
+    if (!email || !otp) return res.status(400).json({ error: 'Email and OTP are required' });
+
+    const record = await Otp.findOne({ email });
+    if (!record) return res.status(400).json({ error: 'OTP not found or expired' });
+
+    if (record.otp === otp) {
+      await Otp.deleteOne({ email }); // Clear OTP
+
+      // Find or Create User
+      let user = await User.findOne({ email });
+      if (!user) {
+        // If new user, we need a name. If not provided, default to part of email.
+        user = await User.create({
+          email,
+          name: name || email.split('@')[0]
+        });
+      }
+
+      res.json({ success: true, message: 'Login successful', user });
+    } else {
+      res.status(400).json({ error: 'Invalid OTP' });
+    }
+  } catch (err) {
+    console.error('Error verifying OTP:', err);
+    res.status(500).json({ error: 'Failed to verify OTP' });
+  }
+});
+
+// Google Sign-In
+app.post('/api/auth/google', async (req, res) => {
+  try {
+    const { credential } = req.body;
+    if (!credential) return res.status(400).json({ error: 'Credential is required' });
+
+    // Verify Google Token
+    const ticket = await client.verifyIdToken({
+      idToken: credential,
+      audience: process.env.GOOGLE_CLIENT_ID
+    });
+    const payload = ticket.getPayload();
+    const { email, name, picture, sub: googleId } = payload;
+
+    // Find or Create User
+    let user = await User.findOne({ email });
+    if (user) {
+      // Update googleId if missing
+      if (!user.googleId) {
+        user.googleId = googleId;
+        user.picture = picture;
+        await user.save();
+      }
+    } else {
+      user = await User.create({
+        email,
+        name,
+        picture,
+        googleId
+      });
+    }
+
+    res.json({ success: true, message: 'Google login successful', user });
+  } catch (err) {
+    console.error('Error verifying Google token:', err);
+    res.status(400).json({ error: 'Invalid Google token' });
+  }
+});
 app.use(cors());
 app.use(express.json()); // Enable JSON body parsing
 app.use('/uploads', express.static(path.join(__dirname, 'uploads'))); // Serve uploaded files
@@ -141,6 +231,48 @@ app.post('/api/quizzes', async (req, res) => {
     });
   }
 });
+
+// --- Auth Endpoints (OTP) ---
+
+// Send OTP
+app.post('/api/auth/send-otp', async (req, res) => {
+  try {
+    const { email } = req.body;
+    if (!email) return res.status(400).json({ error: 'Email is required' });
+
+    // Generate 6-digit OTP
+    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+
+    // Save to DB (upsert: update if exists, insert if not)
+    await Otp.findOneAndUpdate(
+      { email },
+      { otp, createdAt: Date.now() },
+      { upsert: true, new: true }
+    );
+
+    console.log(`Generated OTP for ${email}: ${otp}`); // Log for dev/testing
+
+    // Send Email
+    if (process.env.EMAIL_USER && process.env.EMAIL_PASS) {
+      await transporter.sendMail({
+        from: process.env.EMAIL_USER,
+        to: email,
+        subject: 'Your CrowdSpark Login OTP',
+        text: `Your OTP is: ${otp}. It expires in 5 minutes.`
+      });
+      console.log(`Email sent to ${email}`);
+    } else {
+      console.log('Skipping email send (EMAIL_USER/PASS not set). Check console for OTP.');
+    }
+
+    res.json({ message: 'OTP sent successfully' });
+  } catch (err) {
+    console.error('Error sending OTP:', err);
+    res.status(500).json({ error: 'Failed to send OTP' });
+  }
+});
+
+
 
 // Get all quizzes
 app.get('/api/quizzes', async (req, res) => {

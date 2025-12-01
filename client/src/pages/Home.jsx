@@ -3,6 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import { Zap, ArrowRight } from 'lucide-react';
 import Footer from '../components/Footer';
 
+import ThemeToggle from '../components/ThemeToggle';
+
 export default function Home() {
     const [sessionId, setSessionId] = useState('');
     const navigate = useNavigate();
@@ -16,6 +18,18 @@ export default function Home() {
 
     return (
         <div className="hero-container">
+            {/* Navigation Bar */}
+            <nav style={{ position: 'absolute', top: 0, left: 0, right: 0, padding: '1.5rem 2rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', zIndex: 100 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer' }} onClick={() => navigate('/')}>
+                    <Zap size={24} color="#fbbf24" fill="#fbbf24" />
+                    <span style={{ fontSize: '1.25rem', fontWeight: '700', letterSpacing: '-0.02em' }}>CrowdSpark</span>
+                </div>
+                <div style={{ display: 'flex', gap: '1.5rem', alignItems: 'center' }}>
+                    <span onClick={() => navigate('/about')} style={{ cursor: 'pointer', color: 'var(--text-secondary)', fontWeight: '500', transition: 'color 0.2s' }} onMouseOver={(e) => e.target.style.color = 'var(--text-primary)'} onMouseOut={(e) => e.target.style.color = 'var(--text-secondary)'}>About</span>
+                    <span onClick={() => navigate('/pricing')} style={{ cursor: 'pointer', color: 'var(--text-secondary)', fontWeight: '500', transition: 'color 0.2s' }} onMouseOver={(e) => e.target.style.color = 'var(--text-primary)'} onMouseOut={(e) => e.target.style.color = 'var(--text-secondary)'}>Pricing</span>
+                    <ThemeToggle />
+                </div>
+            </nav>
             {/* Background Effects */}
             <div className="blob blob-1"></div>
             <div className="blob blob-2"></div>

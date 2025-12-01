@@ -3,6 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import { Users, Presentation, Zap, BarChart2, Smartphone, ArrowRight } from 'lucide-react';
 import Footer from '../components/Footer';
 
+import ThemeToggle from '../components/ThemeToggle';
+
 export default function About() {
     const navigate = useNavigate();
 
@@ -14,7 +16,9 @@ export default function About() {
                     <Zap size={24} color="#fbbf24" fill="#fbbf24" />
                     <span style={{ fontSize: '1.25rem', fontWeight: '700', letterSpacing: '-0.02em' }}>CrowdSpark</span>
                 </div>
-                <div style={{ display: 'flex', gap: '1rem' }}>
+                <div style={{ display: 'flex', gap: '1.5rem', alignItems: 'center' }}>
+                    <span onClick={() => navigate('/pricing')} style={{ cursor: 'pointer', color: 'var(--text-secondary)', fontWeight: '500' }}>Pricing</span>
+                    <ThemeToggle />
                     <button onClick={() => navigate('/login')} className="btn btn-secondary" style={{ padding: '0.5rem 1rem', fontSize: '0.9rem' }}>Host Login</button>
                     <button onClick={() => navigate('/')} className="btn btn-primary" style={{ padding: '0.5rem 1rem', fontSize: '0.9rem' }}>Join Session</button>
                 </div>
