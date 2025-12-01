@@ -198,3 +198,76 @@ body {
 .ml-auto {
   margin-left: auto;
 }
+
+/* Mobile First Landing Utilities */
+.hero-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  padding: 1.5rem;
+  position: relative;
+  overflow: hidden;
+}
+
+.hero-content {
+  width: 100%;
+  max-width: 420px;
+  z-index: 10;
+  position: relative;
+}
+
+.input-large {
+  font-size: 1.75rem;
+  text-align: center;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  font-family: 'Inter', monospace;
+  padding: 1.25rem;
+  font-weight: 700;
+}
+
+.host-link {
+  margin-top: 2.5rem;
+  text-align: center;
+  color: var(--text-secondary);
+  font-size: 0.95rem;
+  cursor: pointer;
+  transition: all 0.2s;
+  padding: 0.5rem;
+}
+
+.host-link:hover {
+  color: var(--text-primary);
+}
+
+.host-link span {
+  color: var(--accent);
+  font-weight: 600;
+  margin-left: 0.5rem;
+}
+
+/* Background blobs */
+.blob {
+  position: absolute;
+  width: 400px;
+  height: 400px;
+  border-radius: 50%;
+  filter: blur(100px);
+  opacity: 0.2;
+  z-index: 0;
+  pointer-events: none;
+}
+
+.blob-1 {
+  top: -100px;
+  left: -100px;
+  background: var(--accent);
+}
+
+.blob-2 {
+  bottom: -100px;
+  right: -100px;
+  background: var(--success);
+}
