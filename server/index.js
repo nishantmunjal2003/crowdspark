@@ -32,7 +32,8 @@ const app = express();
 
 // Middleware - MUST be before routes
 app.use(cors());
-app.use(express.json()); // Enable JSON body parsing
+app.use(express.json({ limit: '50mb' })); // Enable JSON body parsing with larger limit for base64 images
+app.use(express.urlencoded({ limit: '50mb', extended: true })); // Also increase URL-encoded body limit
 app.use('/uploads', express.static(path.join(__dirname, 'uploads'))); // Serve uploaded files
 
 // --- Auth Endpoints ---

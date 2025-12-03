@@ -109,7 +109,7 @@ export default function CreateQuiz() {
         e.target.value = ''; // Reset input
     };
 
-    const handleMediaUpload = (questionIndex, e) => {
+    const handleMediaUpload = async (questionIndex, e) => {
         const file = e.target.files[0];
         if (!file) return;
 
@@ -125,18 +125,32 @@ export default function CreateQuiz() {
             return;
         }
 
-        const reader = new FileReader();
-        reader.onload = (event) => {
+        // Upload to server instead of storing as base64
+        const formData = new FormData();
+        formData.append('file', file);
+
+        try {
+            const response = await fetch('/api/upload', {
+                method: 'POST',
+                body: formData
+            });
+
+            if (!response.ok) throw new Error('Upload failed');
+
+            const data = await response.json();
+
             const updated = [...questions];
             updated[questionIndex].media = {
                 type: file.type.startsWith('image/') ? 'image' : 'video',
-                data: event.target.result,
+                data: data.url, // Store the URL instead of base64
                 name: file.name
             };
             setQuestions(updated);
             setError('');
-        };
-        reader.readAsDataURL(file);
+        } catch (err) {
+            setError('Error uploading file: ' + err.message);
+        }
+
         e.target.value = ''; // Reset input
     };
 
