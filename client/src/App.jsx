@@ -8,9 +8,10 @@ import Dashboard from './pages/Dashboard';
 import CreateQuiz from './pages/CreateQuiz';
 import Host from './pages/Host';
 import Participant from './pages/Participant';
+import AdminDashboard from './pages/AdminDashboard';
 
 import { GoogleOAuthProvider } from '@react-oauth/google';
-const GOOGLE_CLIENT_ID = "YOUR_GOOGLE_CLIENT_ID"; // Replace with actual ID
+const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID || "YOUR_GOOGLE_CLIENT_ID";
 
 function App() {
   return (
@@ -22,6 +23,7 @@ function App() {
           <Route path="/pricing" element={<Pricing />} />
           <Route path="/login" element={<Login />} />
           <Route path="/dashboard" element={<Dashboard />} />
+          <Route path="/admin" element={<AdminDashboard />} />
           <Route path="/create-quiz" element={<CreateQuiz />} />
           <Route path="/host" element={<Host />} />
           <Route path="/join/:sessionId?" element={<Participant />} />

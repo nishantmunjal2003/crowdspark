@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Plus, Play, Edit, Trash2, LogOut, BookOpen, Users, BarChart3, Download, Sparkles } from 'lucide-react';
+import { Plus, Play, Edit, Trash2, LogOut, BookOpen, Users, BarChart3, Download, Sparkles, Shield } from 'lucide-react';
 
 export default function Dashboard() {
     const navigate = useNavigate();
@@ -16,10 +16,11 @@ export default function Dashboard() {
             navigate('/login');
             return;
         }
-        setUser(JSON.parse(currentUser));
+        const userData = JSON.parse(currentUser);
+        setUser(userData);
 
-        // Load quizzes from MongoDB API
-        fetch('/api/quizzes')
+        // Load quizzes from MongoDB API - ONLY for this user
+        fetch(`/api/quizzes?userId=${userData._id}`)
             .then(res => res.json())
             .then(data => {
                 setQuizzes(data);
@@ -156,10 +157,31 @@ export default function Dashboard() {
                             </p>
                         </div>
                     </div>
-                    <button onClick={handleLogout} className="btn btn-secondary" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.875rem', padding: '0.6rem 1.2rem' }}>
-                        <LogOut size={16} />
-                        Logout
-                    </button>
+                    <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
+                        {user.role === 'admin' && (
+                            <button
+                                onClick={() => navigate('/admin')}
+                                className="btn"
+                                style={{
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: '0.5rem',
+                                    fontSize: '0.875rem',
+                                    padding: '0.6rem 1.2rem',
+                                    background: 'linear-gradient(135deg, rgba(236, 72, 153, 0.2), rgba(139, 92, 246, 0.2))',
+                                    border: '1px solid rgba(236, 72, 153, 0.3)',
+                                    color: 'var(--accent-tertiary)'
+                                }}
+                            >
+                                <Shield size={16} />
+                                Admin
+                            </button>
+                        )}
+                        <button onClick={handleLogout} className="btn btn-secondary" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.875rem', padding: '0.6rem 1.2rem' }}>
+                            <LogOut size={16} />
+                            Logout
+                        </button>
+                    </div>
                 </div>
             </div>
 

@@ -16,10 +16,11 @@ const QuizSchema = new mongoose.Schema({
     questions: [QuestionSchema],
     backgroundImage: String,
     music: String,
-    theme: { type: String, default: 'default' }, // For future preset themes
+    theme: { type: String, default: 'default' },
+    creatorId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true }, // Track quiz owner
+    creatorEmail: { type: String }, // Backup identifier
     createdAt: { type: Date, default: Date.now },
     updatedAt: { type: Date, default: Date.now }
-    // In a real app, we would add: creatorId: { type: mongoose.Schema.Types.ObjectId, ref: 'User' }
 });
 
 module.exports = mongoose.model('Quiz', QuizSchema);

@@ -22,6 +22,18 @@ const userSchema = new mongoose.Schema({
     picture: {
         type: String
     },
+    role: {
+        type: String,
+        enum: ['user', 'admin'],
+        default: 'user'
+    },
+    isActive: {
+        type: Boolean,
+        default: true
+    },
+    lastLogin: {
+        type: Date
+    },
     createdAt: {
         type: Date,
         default: Date.now

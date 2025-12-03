@@ -225,14 +225,25 @@ export default function CreateQuiz() {
             }
         }
 
+        // Get current user info
+        const currentUser = localStorage.getItem('current_user');
+        if (!currentUser) {
+            setError('You must be logged in to save a quiz');
+            navigate('/login');
+            return;
+        }
+        const userData = JSON.parse(currentUser);
+
         // Save quiz to MongoDB
         const quizData = {
             title: quizTitle,
-            questions: questions,
+            questions: questions.map(q => ({ ...q, timeLimit })), // Apply global time limit to all questions
             type: quizType,
             backgroundImage,
             music,
-            questions: questions.map(q => ({ ...q, timeLimit })) // Apply global time limit to all questions
+            creatorId: userData._id,
+            creatorEmail: userData.email,
+            creatorName: userData.name
         };
 
         try {

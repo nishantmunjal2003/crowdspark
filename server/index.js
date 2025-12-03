@@ -12,8 +12,10 @@ const Quiz = require('./models/Quiz');
 const Response = require('./models/Response');
 const Otp = require('./models/Otp');
 const User = require('./models/User');
+const ActivityLog = require('./models/ActivityLog');
 const nodemailer = require('nodemailer');
 const { OAuth2Client } = require('google-auth-library');
+const { logActivity } = require('./middleware/activityLogger');
 
 const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 const bcrypt = require('bcrypt');
@@ -92,6 +94,11 @@ app.post('/api/auth/login', async (req, res) => {
       return res.status(400).json({ error: 'Invalid email or password' });
     }
 
+    // Check if user is active
+    if (!user.isActive) {
+      return res.status(403).json({ error: 'Your account has been deactivated. Please contact support.' });
+    }
+
     // Check if user has a password (might be Google-only user)
     if (!user.password) {
       return res.status(400).json({ error: 'Please use Google Sign-In for this account' });
@@ -103,12 +110,20 @@ app.post('/api/auth/login', async (req, res) => {
       return res.status(400).json({ error: 'Invalid email or password' });
     }
 
+    // Update last login
+    user.lastLogin = new Date();
+    await user.save();
+
+    // Log activity
+    await logActivity(user._id, user.email, user.name, 'login', { method: 'email' }, req);
+
     // Return user without password
     const userResponse = {
       _id: user._id,
       name: user.name,
       email: user.email,
       picture: user.picture,
+      role: user.role,
       createdAt: user.createdAt
     };
 
@@ -193,6 +208,10 @@ app.post('/api/upload', upload.single('file'), (req, res) => {
   res.json({ url: fileUrl, filename: req.file.filename, originalname: req.file.originalname });
 });
 
+// Admin Routes
+const adminRoutes = require('./routes/admin');
+app.use('/api/admin', adminRoutes);
+
 const server = http.createServer(app);
 const io = new Server(server, {
   cors: {
@@ -267,11 +286,26 @@ app.post('/api/quizzes', async (req, res) => {
     console.log('Received quiz data:', JSON.stringify(req.body, null, 2));
     console.log('MongoDB connection state:', mongoose.connection.readyState);
 
+    // Ensure creatorId is provided
+    if (!req.body.creatorId) {
+      return res.status(400).json({ error: 'creatorId is required' });
+    }
+
     const quiz = new Quiz(req.body);
     console.log('Quiz model created, attempting to save...');
 
     await quiz.save();
     console.log('Quiz saved successfully:', quiz._id);
+
+    // Log activity
+    await logActivity(
+      req.body.creatorId,
+      req.body.creatorEmail || 'unknown',
+      req.body.creatorName || 'User',
+      'quiz_created',
+      { quizId: quiz._id, title: quiz.title },
+      req
+    );
 
     res.status(201).json(quiz);
   } catch (err) {
@@ -284,10 +318,15 @@ app.post('/api/quizzes', async (req, res) => {
   }
 });
 
-// Get all quizzes
+// Get quizzes (optionally filtered by user)
 app.get('/api/quizzes', async (req, res) => {
   try {
-    const quizzes = await Quiz.find().sort({ createdAt: -1 });
+    const { userId } = req.query;
+
+    // If userId is provided, filter by creator
+    const filter = userId ? { creatorId: userId } : {};
+
+    const quizzes = await Quiz.find(filter).sort({ createdAt: -1 });
     res.json(quizzes);
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -310,6 +349,21 @@ app.put('/api/quizzes/:id', async (req, res) => {
   try {
     const quiz = await Quiz.findByIdAndUpdate(req.params.id, req.body, { new: true });
     if (!quiz) return res.status(404).json({ error: 'Quiz not found' });
+
+    // Log activity
+    const userId = req.body.creatorId || quiz.creatorId;
+    const userEmail = req.body.creatorEmail || quiz.creatorEmail;
+    const userName = req.body.creatorName || 'User';
+
+    await logActivity(
+      userId,
+      userEmail,
+      userName,
+      'quiz_updated',
+      { quizId: quiz._id, title: quiz.title },
+      req
+    );
+
     res.json(quiz);
   } catch (err) {
     res.status(400).json({ error: err.message });
@@ -326,6 +380,19 @@ app.delete('/api/quizzes/:id', async (req, res) => {
       return res.status(404).json({ error: 'Quiz not found' });
     }
     console.log('Quiz deleted successfully:', req.params.id);
+
+    // Log activity
+    if (quiz.creatorId) {
+      await logActivity(
+        quiz.creatorId,
+        quiz.creatorEmail || 'unknown',
+        'User',
+        'quiz_deleted',
+        { quizId: quiz._id, title: quiz.title },
+        req
+      );
+    }
+
     res.json({ message: 'Quiz deleted successfully' });
   } catch (err) {
     console.error('Error deleting quiz:', err);
