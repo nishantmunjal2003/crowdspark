@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Plus, Play, Edit, Trash2, LogOut, BookOpen, Users, BarChart3, Download, Sparkles, Shield } from 'lucide-react';
+import '../dashboard.css';
 
 export default function Dashboard() {
     const navigate = useNavigate();
@@ -124,50 +125,25 @@ export default function Dashboard() {
             }}></div>
 
             {/* Header - Glassmorphic */}
-            <div style={{
-                position: 'relative',
-                zIndex: 1,
-                background: 'rgba(15, 23, 42, 0.6)',
-                backdropFilter: 'blur(20px)',
-                borderBottom: '1px solid rgba(255,255,255,0.05)',
-                padding: '1.5rem 2rem',
-            }}>
-                <div className="container" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', maxWidth: '1400px', margin: '0 auto' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-                        <div style={{
-                            background: 'linear-gradient(135deg, rgba(99, 102, 241, 0.2), rgba(139, 92, 246, 0.2))',
-                            padding: '0.5rem',
-                            borderRadius: '12px',
-                            border: '1px solid rgba(139, 92, 246, 0.2)'
-                        }}>
+            <div className="dashboard-header">
+                <div className="dashboard-header-content">
+                    <div className="dashboard-user-info">
+                        <div className="dashboard-logo-icon">
                             <Sparkles size={24} color="#818cf8" />
                         </div>
-                        <div>
-                            <h1 style={{
-                                fontSize: '1.75rem',
-                                fontWeight: '700',
-                                color: '#f1f5f9',
-                                marginBottom: '0.1rem',
-                                letterSpacing: '-0.02em'
-                            }}>
-                                CrowdSpark
-                            </h1>
-                            <p style={{ color: '#94a3b8', margin: 0, fontSize: '0.875rem' }}>
+                        <div className="dashboard-title-text">
+                            <h1>CrowdSpark</h1>
+                            <p>
                                 Welcome back, <span style={{ color: '#818cf8', fontWeight: '500' }}>{user.name}</span>
                             </p>
                         </div>
                     </div>
-                    <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
+                    <div className="dashboard-actions">
                         {user.role === 'admin' && (
                             <button
                                 onClick={() => navigate('/admin')}
                                 className="btn"
                                 style={{
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    gap: '0.5rem',
-                                    fontSize: '0.875rem',
-                                    padding: '0.6rem 1.2rem',
                                     background: 'linear-gradient(135deg, rgba(236, 72, 153, 0.2), rgba(139, 92, 246, 0.2))',
                                     border: '1px solid rgba(236, 72, 153, 0.3)',
                                     color: 'var(--accent-tertiary)'
@@ -177,7 +153,7 @@ export default function Dashboard() {
                                 Admin
                             </button>
                         )}
-                        <button onClick={handleLogout} className="btn btn-secondary" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.875rem', padding: '0.6rem 1.2rem' }}>
+                        <button onClick={handleLogout} className="btn btn-secondary">
                             <LogOut size={16} />
                             Logout
                         </button>
@@ -186,9 +162,9 @@ export default function Dashboard() {
             </div>
 
             {/* Content */}
-            <div className="container" style={{ position: 'relative', zIndex: 1, padding: '2.5rem 2rem', maxWidth: '1400px', margin: '0 auto' }}>
+            <div className="dashboard-content">
                 {/* Stats Cards - Softer Glass */}
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '1.5rem', marginBottom: '3rem' }}>
+                <div className="dashboard-stats-grid">
                     <div className="card animate-fade-in" style={{
                         background: 'linear-gradient(145deg, rgba(30, 41, 59, 0.4), rgba(15, 23, 42, 0.4))',
                         border: '1px solid rgba(255, 255, 255, 0.05)',
@@ -277,23 +253,15 @@ export default function Dashboard() {
                 </div>
 
                 {/* Create New Buttons - Refined Gradients */}
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem', marginBottom: '3rem' }}>
+                <div className="dashboard-create-grid">
                     <button
                         onClick={() => navigate('/create-quiz', { state: { type: 'quiz' } })}
-                        className="btn animate-fade-in"
+                        className="btn animate-fade-in create-card-btn"
                         style={{
-                            padding: '2.5rem',
-                            display: 'flex',
-                            flexDirection: 'column',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            gap: '1rem',
                             background: 'linear-gradient(135deg, rgba(129, 140, 248, 0.1), rgba(99, 102, 241, 0.05))',
                             border: '1px solid rgba(129, 140, 248, 0.2)',
                             color: '#e2e8f0',
-                            transition: 'all 0.3s ease',
-                            animationDelay: '0.3s',
-                            borderRadius: '1.5rem'
+                            animationDelay: '0.3s'
                         }}
                         onMouseEnter={e => {
                             e.currentTarget.style.background = 'linear-gradient(135deg, rgba(129, 140, 248, 0.15), rgba(99, 102, 241, 0.1))';
@@ -322,20 +290,12 @@ export default function Dashboard() {
 
                     <button
                         onClick={() => navigate('/create-quiz', { state: { type: 'poll' } })}
-                        className="btn animate-fade-in"
+                        className="btn animate-fade-in create-card-btn"
                         style={{
-                            padding: '2.5rem',
-                            display: 'flex',
-                            flexDirection: 'column',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            gap: '1rem',
                             background: 'linear-gradient(135deg, rgba(52, 211, 153, 0.1), rgba(16, 185, 129, 0.05))',
                             border: '1px solid rgba(52, 211, 153, 0.2)',
                             color: '#e2e8f0',
-                            transition: 'all 0.3s ease',
-                            animationDelay: '0.4s',
-                            borderRadius: '1.5rem'
+                            animationDelay: '0.4s'
                         }}
                         onMouseEnter={e => {
                             e.currentTarget.style.background = 'linear-gradient(135deg, rgba(52, 211, 153, 0.15), rgba(16, 185, 129, 0.1))';
@@ -364,7 +324,7 @@ export default function Dashboard() {
                 </div>
 
                 {/* Filter Tabs - Pill Design */}
-                <div style={{ display: 'flex', gap: '0.75rem', marginBottom: '2rem', flexWrap: 'wrap' }}>
+                <div className="dashboard-filter-tabs">
                     {['all', 'quiz', 'poll'].map((tab, index) => (
                         <button
                             key={tab}
@@ -409,20 +369,10 @@ export default function Dashboard() {
                         <p style={{ color: '#94a3b8' }}>Create your first {activeTab === 'all' ? 'quiz or poll' : activeTab} to get started!</p>
                     </div>
                 ) : (
-                    <div style={{ display: 'grid', gap: '1rem' }}>
+                    <div className="dashboard-quiz-list">
                         {filteredQuizzes.map((quiz, index) => (
-                            <div key={quiz._id || quiz.id} className="card animate-fade-in" style={{
-                                display: 'flex',
-                                justifyContent: 'space-between',
-                                alignItems: 'center',
-                                padding: '1.25rem 1.5rem',
-                                transition: 'all 0.3s ease',
-                                cursor: 'pointer',
-                                background: 'rgba(30, 41, 59, 0.4)',
-                                border: '1px solid rgba(255, 255, 255, 0.03)',
-                                borderRadius: '1rem',
-                                animationDelay: `${0.8 + index * 0.1}s`
-                            }}
+                            <div key={quiz._id || quiz.id} className="quiz-card animate-fade-in"
+                                style={{ animationDelay: `${0.8 + index * 0.1}s` }}
                                 onMouseEnter={e => {
                                     e.currentTarget.style.transform = 'translateX(6px)';
                                     e.currentTarget.style.background = 'rgba(30, 41, 59, 0.6)';
@@ -433,9 +383,9 @@ export default function Dashboard() {
                                     e.currentTarget.style.background = 'rgba(30, 41, 59, 0.4)';
                                     e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.03)';
                                 }}>
-                                <div style={{ flex: 1 }}>
-                                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.5rem' }}>
-                                        <h3 style={{ fontSize: '1.125rem', fontWeight: '600', margin: 0, color: '#f1f5f9' }}>
+                                <div className="quiz-info">
+                                    <div className="quiz-header">
+                                        <h3 className="quiz-title">
                                             {quiz.title}
                                         </h3>
                                         <span style={{
@@ -450,13 +400,13 @@ export default function Dashboard() {
                                             {quiz.type === 'poll' ? 'POLL' : 'QUIZ'}
                                         </span>
                                     </div>
-                                    <div style={{ display: 'flex', gap: '1.5rem', color: '#94a3b8', fontSize: '0.8rem' }}>
+                                    <div className="quiz-meta">
                                         <span>{quiz.questions?.length || 0} questions</span>
                                         <span>{new Date(quiz.createdAt).toLocaleDateString()}</span>
                                     </div>
                                 </div>
 
-                                <div style={{ display: 'flex', gap: '0.5rem' }}>
+                                <div className="quiz-actions">
                                     <button
                                         onClick={() => handleHostQuiz(quiz)}
                                         className="btn"
