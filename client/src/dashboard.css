@@ -1,0 +1,250 @@
+/* Dashboard Specific Styles */
+
+.dashboard-header {
+    position: relative;
+    z-index: 1;
+    background: rgba(15, 23, 42, 0.6);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    padding: 1.5rem 2rem;
+}
+
+.dashboard-header-content {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    max-width: 1400px;
+    margin: 0 auto;
+    gap: 1rem;
+}
+
+.dashboard-user-info {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.dashboard-logo-icon {
+    background: linear-gradient(135deg, rgba(99, 102, 241, 0.2), rgba(139, 92, 246, 0.2));
+    padding: 0.5rem;
+    border-radius: 12px;
+    border: 1px solid rgba(139, 92, 246, 0.2);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.dashboard-title-text h1 {
+    font-size: 1.75rem;
+    font-weight: 700;
+    color: #f1f5f9;
+    margin-bottom: 0.1rem;
+    letter-spacing: -0.02em;
+    line-height: 1.2;
+}
+
+.dashboard-title-text p {
+    color: #94a3b8;
+    margin: 0;
+    font-size: 0.875rem;
+}
+
+.dashboard-actions {
+    display: flex;
+    gap: 1rem;
+    align-items: center;
+}
+
+.dashboard-content {
+    position: relative;
+    z-index: 1;
+    padding: 2.5rem 2rem;
+    max-width: 1400px;
+    margin: 0 auto;
+}
+
+.dashboard-stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 3rem;
+}
+
+.dashboard-create-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.5rem;
+    margin-bottom: 3rem;
+}
+
+.create-card-btn {
+    padding: 2.5rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 1rem;
+    border-radius: 1.5rem;
+    transition: all 0.3s ease;
+    width: 100%;
+}
+
+.dashboard-filter-tabs {
+    display: flex;
+    gap: 0.75rem;
+    margin-bottom: 2rem;
+    flex-wrap: wrap;
+}
+
+.dashboard-quiz-list {
+    display: grid;
+    gap: 1rem;
+}
+
+.quiz-card {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1.25rem 1.5rem;
+    transition: all 0.3s ease;
+    cursor: pointer;
+    background: rgba(30, 41, 59, 0.4);
+    border: 1px solid rgba(255, 255, 255, 0.03);
+    border-radius: 1rem;
+}
+
+.quiz-info {
+    flex: 1;
+    min-width: 0;
+    /* Prevents text overflow issues */
+}
+
+.quiz-header {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-bottom: 0.5rem;
+    flex-wrap: wrap;
+}
+
+.quiz-title {
+    font-size: 1.125rem;
+    font-weight: 600;
+    margin: 0;
+    color: #f1f5f9;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 100%;
+}
+
+.quiz-meta {
+    display: flex;
+    gap: 1.5rem;
+    color: #94a3b8;
+    font-size: 0.8rem;
+}
+
+.quiz-actions {
+    display: flex;
+    gap: 0.5rem;
+}
+
+/* Mobile Responsive Adjustments */
+@media (max-width: 768px) {
+    .dashboard-header {
+        padding: 1rem;
+    }
+
+    .dashboard-header-content {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 1.5rem;
+    }
+
+    .dashboard-user-info {
+        width: 100%;
+    }
+
+    .dashboard-actions {
+        width: 100%;
+        justify-content: space-between;
+        /* Spread buttons out */
+    }
+
+    .dashboard-actions .btn {
+        flex: 1;
+        /* Make buttons full width */
+    }
+
+    .dashboard-content {
+        padding: 1.5rem 1rem;
+    }
+
+    .dashboard-create-grid {
+        grid-template-columns: 1fr;
+        /* Stack create buttons */
+        gap: 1rem;
+    }
+
+    .create-card-btn {
+        padding: 1.5rem;
+        flex-direction: row;
+        /* Horizontal layout on mobile */
+        justify-content: flex-start;
+        text-align: left;
+    }
+
+    .create-card-btn>div:last-child {
+        text-align: left;
+    }
+
+    .quiz-card {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 1rem;
+        padding: 1rem;
+    }
+
+    .quiz-info {
+        width: 100%;
+    }
+
+    .quiz-header {
+        flex-wrap: nowrap;
+    }
+
+    .quiz-title {
+        white-space: normal;
+        /* Allow wrapping on mobile */
+    }
+
+    .quiz-actions {
+        width: 100%;
+        justify-content: space-between;
+        border-top: 1px solid rgba(255, 255, 255, 0.05);
+        padding-top: 1rem;
+    }
+
+    .quiz-actions button {
+        flex: 1;
+        justify-content: center;
+    }
+}
+
+@media (max-width: 480px) {
+    .dashboard-title-text h1 {
+        font-size: 1.5rem;
+    }
+
+    .dashboard-actions {
+        flex-direction: column;
+        /* Stack actions vertically on very small screens */
+    }
+
+    .quiz-meta {
+        flex-direction: column;
+        gap: 0.25rem;
+    }
+}
