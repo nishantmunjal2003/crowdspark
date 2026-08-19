@@ -70,6 +70,7 @@ app.post('/api/auth/signup', async (req, res) => {
       name: user.name,
       email: user.email,
       picture: user.picture,
+      role: user.role,
       createdAt: user.createdAt
     };
 
@@ -234,9 +235,13 @@ if (!MONGODB_URI) {
 console.log('Connecting to MongoDB...');
 console.log('Connection string:', MONGODB_URI.replace(/\/\/([^:]+):([^@]+)@/, '//$1:****@')); // Hide password in logs
 
-mongoose.connect(MONGODB_URI)
+mongoose.connect(MONGODB_URI, {
+  maxPoolSize: 100,
+  serverSelectionTimeoutMS: 5000,
+  socketTimeoutMS: 45000,
+})
   .then(() => {
-    console.log('✓ Connected to MongoDB successfully');
+    console.log('✓ Connected to MongoDB successfully (Pool Size: 100)');
     console.log('  Database:', mongoose.connection.name);
     console.log('  Host:', mongoose.connection.host);
   })
@@ -473,14 +478,33 @@ io.on('connection', (socket) => {
   socket.on('join_session', ({ sessionId, name }, callback) => {
     const session = sessions[sessionId];
     if (session) {
+      // Check for reconnection (same name, different socket ID)
+      let oldSocketId = null;
+      let existingScore = 0;
+      let existingAnswers = {};
+
+      for (const [sId, p] of Object.entries(session.participants)) {
+        if (p.name.trim().toLowerCase() === name.trim().toLowerCase()) {
+          oldSocketId = sId;
+          existingScore = p.score;
+          existingAnswers = p.answers;
+          break;
+        }
+      }
+
+      if (oldSocketId) {
+        delete session.participants[oldSocketId];
+        console.log(`[Reconnection] Participant ${name} reconnected (moved socket ${oldSocketId} -> ${socket.id})`);
+      }
+
       session.participants[socket.id] = {
         name,
-        score: 0,
-        answers: {}
+        score: existingScore,
+        answers: existingAnswers
       };
       socket.join(sessionId);
 
-      // Notify host of new participant
+      // Notify host of participant
       io.to(session.hostId).emit('participant_joined', { name, total: Object.keys(session.participants).length });
 
       callback({
@@ -488,7 +512,6 @@ io.on('connection', (socket) => {
         state: session.state,
         theme: {
           backgroundImage: session.quizData.backgroundImage,
-          // music: session.quizData.music // Optional: don't play music on participant devices by default
         }
       });
       console.log(`${name} joined session ${sessionId}`);
@@ -549,6 +572,22 @@ io.on('connection', (socket) => {
 
   socket.on('disconnect', () => {
     console.log('User disconnected:', socket.id);
+
+    // Find and clean up participant if disconnected in the waiting room
+    for (const sessionId in sessions) {
+      const session = sessions[sessionId];
+      if (session.participants[socket.id]) {
+        const participantName = session.participants[socket.id].name;
+
+        // If the quiz hasn't started yet, remove them entirely
+        if (session.state === 'waiting') {
+          delete session.participants[socket.id];
+          io.to(session.hostId).emit('participant_left', { name: participantName, total: Object.keys(session.participants).length });
+          console.log(`${participantName} left session ${sessionId} (disconnected)`);
+        }
+        break;
+      }
+    }
   });
 });
 

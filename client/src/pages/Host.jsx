@@ -51,7 +51,17 @@ export default function Host() {
 
     useEffect(() => {
         socket.on('participant_joined', (data) => {
-            setParticipants(prev => [...prev, data]);
+            setParticipants(prev => {
+                // If a participant with this name is already in the list, don't add them again
+                if (prev.some(p => p.name.trim().toLowerCase() === data.name.trim().toLowerCase())) {
+                    return prev;
+                }
+                return [...prev, data];
+            });
+        });
+
+        socket.on('participant_left', (data) => {
+            setParticipants(prev => prev.filter(p => p.name.trim().toLowerCase() !== data.name.trim().toLowerCase()));
         });
 
         // ... rest of socket listeners
@@ -70,6 +80,7 @@ export default function Host() {
 
         return () => {
             socket.off('participant_joined');
+            socket.off('participant_left');
             socket.off('live_stats_update');
             socket.off('question_results');
             socket.off('quiz_finished');
