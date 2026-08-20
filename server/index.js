@@ -152,6 +152,10 @@ app.post('/api/auth/google', async (req, res) => {
     // Find or Create User
     let user = await User.findOne({ email });
     if (user) {
+      // Check if user is active
+      if (!user.isActive) {
+        return res.status(403).json({ error: 'Your account has been deactivated. Please contact support.' });
+      }
       // Update googleId if missing
       if (!user.googleId) {
         user.googleId = googleId;
@@ -167,7 +171,24 @@ app.post('/api/auth/google', async (req, res) => {
       });
     }
 
-    res.json({ success: true, message: 'Google login successful', user });
+    // Update last login
+    user.lastLogin = new Date();
+    await user.save();
+
+    // Log activity
+    await logActivity(user._id, user.email, user.name, 'google_login', { email }, req);
+
+    // Return user without password
+    const userResponse = {
+      _id: user._id,
+      name: user.name,
+      email: user.email,
+      picture: user.picture,
+      role: user.role,
+      createdAt: user.createdAt
+    };
+
+    res.json({ success: true, message: 'Google login successful', user: userResponse });
   } catch (err) {
     console.error('Error verifying Google token:', err);
     res.status(400).json({ error: 'Invalid Google token' });
