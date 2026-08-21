@@ -306,6 +306,13 @@ app.get('/api/health', (req, res) => {
   });
 });
 
+// Config endpoint for client-side settings
+app.get('/api/config', (req, res) => {
+  res.json({
+    googleClientId: process.env.GOOGLE_CLIENT_ID || ""
+  });
+});
+
 // Save a new quiz
 app.post('/api/quizzes', async (req, res) => {
   try {
