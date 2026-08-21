@@ -28,8 +28,6 @@ export default function CreateQuiz() {
             id: Date.now(),
             text: '',
             options: ['', '', '', ''],
-            text: '',
-            options: ['', '', '', ''],
             correctAnswer: '',
             timeLimit: timeLimit
         }]);
