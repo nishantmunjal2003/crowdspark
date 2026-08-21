@@ -16,6 +16,7 @@ const ActivityLog = require('./models/ActivityLog');
 const nodemailer = require('nodemailer');
 const { OAuth2Client } = require('google-auth-library');
 const { logActivity } = require('./middleware/activityLogger');
+const { generateQuizFromAI } = require('./services/aiService');
 
 const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 const bcrypt = require('bcrypt');
@@ -311,6 +312,26 @@ app.get('/api/config', (req, res) => {
   res.json({
     googleClientId: process.env.GOOGLE_CLIENT_ID || ""
   });
+});
+
+// AI Quiz Generation endpoint
+app.post('/api/ai/generate-quiz', async (req, res) => {
+  try {
+    const { topic, numQuestions, difficulty } = req.body;
+    if (!topic || typeof topic !== 'string' || !topic.trim()) {
+      return res.status(400).json({ error: 'Topic prompt is required' });
+    }
+
+    const quizData = await generateQuizFromAI(
+      topic,
+      parseInt(numQuestions) || 5,
+      difficulty || 'Medium'
+    );
+    res.json(quizData);
+  } catch (err) {
+    console.error('AI Generation Error:', err);
+    res.status(500).json({ error: err.message || 'Failed to generate quiz with AI' });
+  }
 });
 
 // Save a new quiz

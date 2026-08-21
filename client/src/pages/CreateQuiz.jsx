@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { Plus, Trash2, Save, ArrowLeft, Check, Upload, Download, Image, Video, X, Music, Palette, Clock } from 'lucide-react';
+import { Plus, Trash2, Save, ArrowLeft, Check, Upload, Download, Image, Video, X, Music, Palette, Clock, Sparkles } from 'lucide-react';
 
 export default function CreateQuiz() {
     const navigate = useNavigate();
@@ -15,6 +15,14 @@ export default function CreateQuiz() {
     const [timeLimit, setTimeLimit] = useState(editingQuiz?.questions?.[0]?.timeLimit || 10);
     const [error, setError] = useState('');
 
+    // AI Quiz Generation states
+    const [showAIModal, setShowAIModal] = useState(false);
+    const [aiTopic, setAiTopic] = useState('');
+    const [aiNumQuestions, setAiNumQuestions] = useState(5);
+    const [aiDifficulty, setAiDifficulty] = useState('Medium');
+    const [aiLoading, setAiLoading] = useState(false);
+    const [aiError, setAiError] = useState('');
+
     useEffect(() => {
         // Check if user is logged in
         const currentUser = localStorage.getItem('current_user');
@@ -22,6 +30,50 @@ export default function CreateQuiz() {
             navigate('/login');
         }
     }, [navigate]);
+
+    const handleAIGenerate = async () => {
+        if (!aiTopic.trim()) {
+            setAiError('Please enter a topic or prompt');
+            return;
+        }
+
+        setAiLoading(true);
+        setAiError('');
+
+        try {
+            const res = await fetch('/api/ai/generate-quiz', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    topic: aiTopic,
+                    numQuestions: aiNumQuestions,
+                    difficulty: aiDifficulty
+                })
+            });
+
+            if (!res.ok) {
+                const errData = await res.json().catch(() => ({}));
+                throw new Error(errData.error || 'Failed to generate quiz');
+            }
+
+            const data = await res.json();
+
+            if (data.title) setQuizTitle(data.title);
+            if (data.questions && data.questions.length > 0) {
+                setQuestions(data.questions);
+            }
+            
+            setShowAIModal(false);
+            setAiTopic('');
+        } catch (err) {
+            console.error(err);
+            setAiError(err.message || 'Something went wrong while generating the quiz.');
+        } finally {
+            setAiLoading(false);
+        }
+    };
 
     const addQuestion = () => {
         setQuestions([...questions, {
@@ -418,6 +470,10 @@ export default function CreateQuiz() {
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', flexWrap: 'wrap', gap: '1rem' }}>
                         <h2 style={{ fontSize: 'clamp(1.25rem, 4vw, 1.5rem)', fontWeight: 'bold' }}>Questions</h2>
                         <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', width: '100%', justifyContent: 'flex-end' }}>
+                            <button onClick={() => setShowAIModal(true)} className="btn" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: 'clamp(0.875rem, 2vw, 1rem)', padding: 'clamp(0.5rem, 2vw, 0.75rem) clamp(0.75rem, 3vw, 1rem)', background: 'linear-gradient(135deg, var(--accent-primary) 0%, var(--accent-secondary) 100%)', color: 'white', border: 'none', boxShadow: '0 4px 15px rgba(99, 102, 241, 0.3)' }}>
+                                <Sparkles size={18} />
+                                Generate with AI
+                            </button>
                             <button onClick={downloadSampleCSV} className="btn btn-secondary" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: 'clamp(0.875rem, 2vw, 1rem)', padding: 'clamp(0.5rem, 2vw, 0.75rem) clamp(0.75rem, 3vw, 1rem)' }}>
                                 <Download size={18} />
                                 <span style={{ display: 'none' }} className="mobile-hide">Sample </span>CSV
@@ -609,12 +665,150 @@ export default function CreateQuiz() {
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
-                        gap: '0.75rem'
+                        gap: '0.75rem',
+                        marginBottom: '1.5rem'
                     }}
                 >
                     <Save size={20} />
                     {editingQuiz ? 'Update Quiz' : 'Save Quiz'}
                 </button>
+
+                {/* AI Generator Modal */}
+                {showAIModal && (
+                    <div style={{
+                        position: 'fixed',
+                        top: 0,
+                        left: 0,
+                        right: 0,
+                        bottom: 0,
+                        background: 'rgba(10, 14, 26, 0.8)',
+                        backdropFilter: 'blur(12px)',
+                        WebkitBackdropFilter: 'blur(12px)',
+                        display: 'flex',
+                        justifyContent: 'center',
+                        alignItems: 'center',
+                        zIndex: 1000,
+                        padding: '1rem'
+                    }}>
+                        <div className="card" style={{
+                            width: '100%',
+                            maxWidth: '500px',
+                            display: 'flex',
+                            flexDirection: 'column',
+                            gap: '1.25rem',
+                            background: 'var(--bg-secondary)',
+                            border: '1.5px solid var(--border-color)',
+                            padding: '2rem',
+                            boxShadow: 'var(--shadow-xl)'
+                        }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                <h2 style={{ fontSize: '1.25rem', fontWeight: 'bold', margin: 0, display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--text-primary)' }}>
+                                    <Sparkles size={20} color="var(--accent-secondary)" />
+                                    Generate Quiz with AI
+                                </h2>
+                                <button onClick={() => { if (!aiLoading) setShowAIModal(false); }} style={{ background: 'none', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer' }}>
+                                    <X size={20} />
+                                </button>
+                            </div>
+
+                            <div>
+                                <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.875rem', fontWeight: '600', color: 'var(--text-primary)' }}>
+                                    What is this quiz about?
+                                </label>
+                                <textarea
+                                    className="input"
+                                    placeholder="e.g. JavaScript Closures, WWII Key Events, French Verbs, etc. Provide context or topic..."
+                                    value={aiTopic}
+                                    onChange={e => setAiTopic(e.target.value)}
+                                    disabled={aiLoading}
+                                    style={{ minHeight: '100px', resize: 'vertical', fontSize: '0.95rem' }}
+                                />
+                            </div>
+
+                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                                <div>
+                                    <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.875rem', fontWeight: '600', color: 'var(--text-primary)' }}>
+                                        Questions
+                                    </label>
+                                    <select
+                                        className="input"
+                                        value={aiNumQuestions}
+                                        onChange={e => setAiNumQuestions(parseInt(e.target.value))}
+                                        disabled={aiLoading}
+                                        style={{ fontSize: '0.95rem' }}
+                                    >
+                                        <option value={3}>3 Questions</option>
+                                        <option value={5}>5 Questions</option>
+                                        <option value={10}>10 Questions</option>
+                                        <option value={15}>15 Questions</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.875rem', fontWeight: '600', color: 'var(--text-primary)' }}>
+                                        Difficulty
+                                    </label>
+                                    <select
+                                        className="input"
+                                        value={aiDifficulty}
+                                        onChange={e => setAiDifficulty(e.target.value)}
+                                        disabled={aiLoading}
+                                        style={{ fontSize: '0.95rem' }}
+                                    >
+                                        <option value="Easy">Easy</option>
+                                        <option value="Medium">Medium</option>
+                                        <option value="Hard">Hard</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            {aiError && (
+                                <div style={{
+                                    padding: '0.75rem',
+                                    background: 'rgba(239, 68, 68, 0.1)',
+                                    border: '1px solid rgba(239, 68, 68, 0.3)',
+                                    borderRadius: '0.5rem',
+                                    color: '#ef4444',
+                                    fontSize: '0.875rem'
+                                }}>
+                                    {aiError}
+                                </div>
+                            )}
+
+                            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.75rem', marginTop: '0.5rem' }}>
+                                <button
+                                    onClick={() => setShowAIModal(false)}
+                                    disabled={aiLoading}
+                                    className="btn btn-secondary"
+                                    style={{ padding: '0.5rem 1.25rem', fontSize: '0.95rem', borderRadius: '0.75rem' }}
+                                >
+                                    Cancel
+                                </button>
+                                <button
+                                    onClick={handleAIGenerate}
+                                    disabled={aiLoading}
+                                    className="btn btn-primary"
+                                    style={{ padding: '0.5rem 1.25rem', fontSize: '0.95rem', borderRadius: '0.75rem', minWidth: '120px' }}
+                                >
+                                    {aiLoading ? (
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                            <div style={{
+                                                width: '14px',
+                                                height: '14px',
+                                                border: '2px solid transparent',
+                                                borderTop: '2px solid white',
+                                                borderRadius: '50%',
+                                                animation: 'spin 1s linear infinite'
+                                            }}></div>
+                                            <span>Creating...</span>
+                                        </div>
+                                    ) : (
+                                        'Generate'
+                                    )}
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                )}
             </div>
         </div>
     );
