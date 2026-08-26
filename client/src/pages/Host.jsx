@@ -18,8 +18,25 @@ export default function Host() {
     const [showAnswer, setShowAnswer] = useState(false);
     const [timer, setTimer] = useState(0);
 
+    const leaveHostSession = () => {
+        sessionStorage.removeItem('host_sessionId');
+        sessionStorage.removeItem('host_quiz');
+        navigate('/dashboard');
+    };
+
     useEffect(() => {
-        const quiz = location.state?.quiz;
+        let quiz = location.state?.quiz;
+
+        if (!quiz) {
+            const savedQuiz = sessionStorage.getItem('host_quiz');
+            if (savedQuiz) {
+                try {
+                    quiz = JSON.parse(savedQuiz);
+                } catch (e) {
+                    console.error('Failed to parse saved host quiz:', e);
+                }
+            }
+        }
 
         if (!quiz) {
             navigate('/dashboard');
@@ -27,8 +44,18 @@ export default function Host() {
         }
 
         setQuizData(quiz);
-        socket.emit('create_session', quiz, (response) => {
-            setSessionId(response.sessionId);
+        sessionStorage.setItem('host_quiz', JSON.stringify(quiz));
+
+        const existingSessionId = sessionStorage.getItem('host_sessionId');
+
+        socket.emit('create_session', { quizData: quiz, existingSessionId }, (response) => {
+            if (response && response.sessionId) {
+                setSessionId(response.sessionId);
+                sessionStorage.setItem('host_sessionId', response.sessionId);
+                if (response.reclaimed && Array.isArray(response.participants)) {
+                    setParticipants(response.participants);
+                }
+            }
         });
     }, [navigate, location]);
 
@@ -138,7 +165,7 @@ export default function Host() {
                 <div className="container grid-center">
                     <div style={{ textAlign: 'center', width: '100%' }}>
                         <button
-                            onClick={() => navigate('/dashboard')}
+                            onClick={leaveHostSession}
                             className="btn btn-secondary"
                             style={{ position: 'absolute', top: '2rem', left: '2rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}
                         >
@@ -329,7 +356,7 @@ export default function Host() {
                             ))}
                         </div>
 
-                        <button onClick={() => navigate('/dashboard')} className="btn btn-secondary" style={{ marginTop: '2rem' }}>
+                        <button onClick={leaveHostSession} className="btn btn-secondary" style={{ marginTop: '2rem' }}>
                             Back to Dashboard
                         </button>
                     </div>

@@ -463,19 +463,47 @@ io.on('connection', (socket) => {
 
   // --- Host Events ---
 
-  socket.on('create_session', (quizData, callback) => {
-    const sessionId = Math.random().toString(36).substring(2, 8).toUpperCase();
+  socket.on('create_session', (payload, callback) => {
+    let quiz = payload;
+    let existingSessionId = null;
+
+    if (payload && payload.quizData) {
+      quiz = payload.quizData;
+      existingSessionId = payload.existingSessionId;
+    }
+
+    if (existingSessionId && sessions[existingSessionId]) {
+      const session = sessions[existingSessionId];
+      session.hostId = socket.id;
+      socket.join(existingSessionId);
+
+      const participantList = Object.values(session.participants).map(p => ({
+        name: p.name
+      }));
+
+      callback({
+        sessionId: existingSessionId,
+        reclaimed: true,
+        participants: participantList,
+        state: session.state,
+        currentQuestionIndex: session.currentQuestionIndex
+      });
+      console.log(`[Host Reclaim] Session ${existingSessionId} reclaimed by host ${socket.id}`);
+      return;
+    }
+
+    const sessionId = existingSessionId || Math.random().toString(36).substring(2, 8).toUpperCase();
     sessions[sessionId] = {
       id: sessionId,
       hostId: socket.id,
-      quizData: quizData,
+      quizData: quiz,
       currentQuestionIndex: -1, // -1 means waiting room
       participants: {}, // { socketId: { name, score, answers: {} } }
       state: 'waiting',
       questionActive: false
     };
     socket.join(sessionId);
-    callback({ sessionId });
+    callback({ sessionId, reclaimed: false, participants: [] });
     console.log(`Session created: ${sessionId} by ${socket.id}`);
   });
 
