@@ -1,12 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { socket } from '../socket';
-import { CheckCircle, XCircle, Clock, Zap } from 'lucide-react';
+import { CheckCircle, XCircle, Clock, Zap, WifiOff } from 'lucide-react';
 
 export default function Participant() {
     const { sessionId } = useParams();
     const navigate = useNavigate();
-    const [name, setName] = useState('');
+    const [name, setName] = useState(() => sessionStorage.getItem(`cq_name_${sessionId}`) || '');
     const [joined, setJoined] = useState(false);
     const [gameState, setGameState] = useState('waiting'); // waiting, active, finished
     const [currentQuestion, setCurrentQuestion] = useState(null);
@@ -16,12 +16,43 @@ export default function Participant() {
     const [feedback, setFeedback] = useState(null); // correct/incorrect
     const [questionActive, setQuestionActive] = useState(true);
     const [timeLeft, setTimeLeft] = useState(0);
+    const [isConnected, setIsConnected] = useState(socket.connected);
 
     useEffect(() => {
         if (!sessionId) {
             navigate('/');
             return;
         }
+
+        const attemptRejoin = (userName) => {
+            if (!userName) return;
+            socket.emit('join_session', { sessionId, name: userName }, (response) => {
+                if (response && response.success) {
+                    setJoined(true);
+                    if (response.theme) setTheme(response.theme);
+                    if (response.state) setGameState(response.state);
+                    if (response.currentQuestion) {
+                        setCurrentQuestion(response.currentQuestion);
+                        if (response.questionActive !== undefined) setQuestionActive(response.questionActive);
+                    }
+                }
+            });
+        };
+
+        const handleConnect = () => {
+            setIsConnected(true);
+            const storedName = sessionStorage.getItem(`cq_name_${sessionId}`) || name;
+            if (storedName) {
+                attemptRejoin(storedName);
+            }
+        };
+
+        const handleDisconnect = () => {
+            setIsConnected(false);
+        };
+
+        socket.on('connect', handleConnect);
+        socket.on('disconnect', handleDisconnect);
 
         socket.on('quiz_started', () => {
             setGameState('active');
@@ -45,7 +76,15 @@ export default function Participant() {
             setGameState('finished');
         });
 
+        // Auto-join on page load if name is saved in sessionStorage
+        const savedName = sessionStorage.getItem(`cq_name_${sessionId}`);
+        if (savedName) {
+            attemptRejoin(savedName);
+        }
+
         return () => {
+            socket.off('connect', handleConnect);
+            socket.off('disconnect', handleDisconnect);
             socket.off('quiz_started');
             socket.off('new_question');
             socket.off('question_results');
@@ -66,11 +105,17 @@ export default function Participant() {
     const joinSession = (e) => {
         e.preventDefault();
         if (name.trim()) {
-            socket.emit('join_session', { sessionId, name }, (response) => {
+            const cleanName = name.trim();
+            sessionStorage.setItem(`cq_name_${sessionId}`, cleanName);
+            socket.emit('join_session', { sessionId, name: cleanName }, (response) => {
                 if (response.success) {
                     setJoined(true);
                     if (response.theme) {
                         setTheme(response.theme);
+                    }
+                    if (response.state) setGameState(response.state);
+                    if (response.currentQuestion) {
+                        setCurrentQuestion(response.currentQuestion);
                     }
                 } else {
                     alert(response.message);
@@ -118,6 +163,27 @@ export default function Participant() {
         )
     );
 
+    const ConnectionBanner = () => (
+        !isConnected ? (
+            <div style={{
+                position: 'fixed',
+                top: '12px', left: '50%', transform: 'translateX(-50%)',
+                background: 'rgba(239, 68, 68, 0.95)',
+                color: 'white',
+                padding: '0.4rem 1rem',
+                borderRadius: '2rem',
+                fontSize: '0.85rem',
+                fontWeight: 'bold',
+                zIndex: 9999,
+                display: 'flex', alignItems: 'center', gap: '0.5rem',
+                boxShadow: '0 4px 12px rgba(0,0,0,0.3)',
+                backdropFilter: 'blur(5px)'
+            }}>
+                <WifiOff size={16} /> Reconnecting...
+            </div>
+        ) : null
+    );
+
     if (!joined) {
         return (
             <div className="grid-center" style={{ minHeight: '100vh', background: 'var(--bg-primary)' }}>
@@ -144,6 +210,7 @@ export default function Participant() {
         return (
             <div className="grid-center" style={{ minHeight: '100vh', textAlign: 'center', padding: '2rem', position: 'relative', color: 'white' }}>
                 <Background />
+                <ConnectionBanner />
                 <div className="animate-fade-in" style={{ position: 'relative', zIndex: 1 }}>
                     <div style={{
                         width: '100px', height: '100px',
@@ -176,6 +243,7 @@ export default function Participant() {
         return (
             <div className="participant-question" style={{ minHeight: '100vh', padding: '1rem', maxWidth: '600px', margin: '0 auto', display: 'flex', flexDirection: 'column', position: 'relative', color: 'white' }}>
                 <Background />
+                <ConnectionBanner />
                 <div style={{ position: 'relative', zIndex: 1, flex: 1, display: 'flex', flexDirection: 'column' }}>
                     <div style={{ marginBottom: '1.5rem', textAlign: 'center' }}>
                         <span className="timer-badge" style={{
@@ -372,6 +440,7 @@ export default function Participant() {
         return (
             <div className="grid-center" style={{ minHeight: '100vh', padding: '2rem', position: 'relative' }}>
                 <Background />
+                <ConnectionBanner />
                 <div className="card" style={{
                     textAlign: 'center',
                     maxWidth: '400px',

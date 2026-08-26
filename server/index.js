@@ -240,7 +240,9 @@ const io = new Server(server, {
   cors: {
     origin: "*", // Allow all for MVP
     methods: ["GET", "POST"]
-  }
+  },
+  pingTimeout: 60000, // 60 seconds tolerance for mobile sleep/backgrounding
+  pingInterval: 25000  // 25 seconds ping interval
 });
 
 // Connect to MongoDB
@@ -537,6 +539,9 @@ io.on('connection', (socket) => {
           oldSocketId = sId;
           existingScore = p.score;
           existingAnswers = p.answers;
+          if (p.disconnectTimer) {
+            clearTimeout(p.disconnectTimer);
+          }
           break;
         }
       }
@@ -549,18 +554,27 @@ io.on('connection', (socket) => {
       session.participants[socket.id] = {
         name,
         score: existingScore,
-        answers: existingAnswers
+        answers: existingAnswers,
+        connected: true,
+        disconnectTimer: null
       };
       socket.join(sessionId);
 
       // Notify host of participant
       io.to(session.hostId).emit('participant_joined', { name, total: Object.keys(session.participants).length });
 
+      const currentQ = (session.state === 'active' && session.currentQuestionIndex >= 0)
+        ? session.quizData.questions[session.currentQuestionIndex]
+        : null;
+
       callback({
         success: true,
         state: session.state,
+        currentQuestion: currentQ,
+        currentQuestionIndex: session.currentQuestionIndex,
+        questionActive: session.questionActive,
         theme: {
-          backgroundImage: session.quizData.backgroundImage,
+          backgroundImage: session.quizData ? session.quizData.backgroundImage : null,
         }
       });
       console.log(`${name} joined session ${sessionId}`);
@@ -626,13 +640,26 @@ io.on('connection', (socket) => {
     for (const sessionId in sessions) {
       const session = sessions[sessionId];
       if (session.participants[socket.id]) {
-        const participantName = session.participants[socket.id].name;
+        const participant = session.participants[socket.id];
+        const participantName = participant.name;
+        participant.connected = false;
 
-        // If the quiz hasn't started yet, remove them entirely
+        // If the quiz hasn't started yet, apply grace period before removing
         if (session.state === 'waiting') {
-          delete session.participants[socket.id];
-          io.to(session.hostId).emit('participant_left', { name: participantName, total: Object.keys(session.participants).length });
-          console.log(`${participantName} left session ${sessionId} (disconnected)`);
+          if (participant.disconnectTimer) {
+            clearTimeout(participant.disconnectTimer);
+          }
+
+          // 2 minute (120,000 ms) grace period to allow mobile screens to wake up or reconnect
+          participant.disconnectTimer = setTimeout(() => {
+            if (session.participants[socket.id] && !session.participants[socket.id].connected) {
+              delete session.participants[socket.id];
+              io.to(session.hostId).emit('participant_left', { name: participantName, total: Object.keys(session.participants).length });
+              console.log(`${participantName} removed from session ${sessionId} after grace period timeout`);
+            }
+          }, 120000);
+
+          console.log(`${participantName} disconnected from session ${sessionId} (grace period active)`);
         }
         break;
       }
