@@ -498,14 +498,12 @@ export default function Dashboard() {
                                         position: 'absolute',
                                         top: 'calc(100% + 8px)',
                                         right: 0,
-                                        width: '230px',
-                                        background: 'var(--bg-card)',
-                                        backdropFilter: 'blur(16px)',
-                                        WebkitBackdropFilter: 'blur(16px)',
+                                        width: '240px',
+                                        background: 'var(--bg-secondary)',
                                         border: '1.5px solid var(--border-color)',
                                         borderRadius: '1.25rem',
                                         padding: '0.5rem',
-                                        boxShadow: '0 15px 35px -5px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(255, 255, 255, 0.05)',
+                                        boxShadow: '0 20px 45px -10px rgba(0, 0, 0, 0.35), 0 0 0 1px var(--border-color)',
                                         zIndex: 1050,
                                         display: 'flex',
                                         flexDirection: 'column',
@@ -516,8 +514,9 @@ export default function Dashboard() {
                                     <div style={{
                                         padding: '0.65rem 0.85rem',
                                         borderRadius: '0.85rem',
-                                        background: 'var(--bg-secondary)',
-                                        marginBottom: '0.25rem'
+                                        background: 'var(--bg-tertiary)',
+                                        marginBottom: '0.25rem',
+                                        border: '1px solid var(--border-color)'
                                     }}>
                                         <div style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--text-primary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                                             {user.name}
