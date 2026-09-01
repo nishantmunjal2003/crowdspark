@@ -6,7 +6,7 @@ const QuizSession = require('../models/QuizSession');
 const ActivityLog = require('../models/ActivityLog');
 const SystemSetting = require('../models/SystemSetting');
 const TokenRequest = require('../models/TokenRequest');
-const { sendTokenApprovedNotification } = require('../services/mailService');
+const { sendTokenApprovedNotification, sendTokenRejectedNotification } = require('../services/mailService');
 const { logActivity } = require('../middleware/activityLogger');
 
 // Middleware to check if user is admin
@@ -583,6 +583,7 @@ router.post('/token-requests/:id/approve', isAdmin, async (req, res) => {
 router.post('/token-requests/:id/reject', isAdmin, async (req, res) => {
     try {
         const { id } = req.params;
+        const { reason = '' } = req.body;
         const tokenReq = await TokenRequest.findById(id);
 
         if (!tokenReq) {
@@ -592,23 +593,60 @@ router.post('/token-requests/:id/reject', isAdmin, async (req, res) => {
         tokenReq.status = 'rejected';
         tokenReq.reviewedBy = req.adminUser._id;
         tokenReq.reviewedAt = new Date();
+        if (reason) {
+            tokenReq.note = tokenReq.note ? `${tokenReq.note} | Admin: ${reason}` : reason;
+        }
         await tokenReq.save();
 
         // Log activity
         await logActivity(req.adminUser._id, req.adminUser.email, req.adminUser.name, 'admin_reject_tokens', {
             requestId: tokenReq._id,
             targetUserId: tokenReq.userId,
-            targetUserEmail: tokenReq.userEmail
+            targetUserEmail: tokenReq.userEmail,
+            reason
         }, req);
+
+        // Send rejection email to user asynchronously
+        sendTokenRejectedNotification(tokenReq.userEmail, tokenReq.userName, tokenReq.tokensRequested, reason).catch(err => {
+            console.error('[Token Rejection Email Error]:', err);
+        });
 
         res.json({
             success: true,
-            message: 'Token request marked as rejected',
+            message: `Token request rejected and notification email sent to ${tokenReq.userName}`,
             request: tokenReq
         });
     } catch (err) {
         console.error('Error rejecting token request:', err);
         res.status(500).json({ error: 'Failed to reject token request' });
+    }
+});
+
+// Delete a Token Request (admin only)
+router.delete('/token-requests/:id', isAdmin, async (req, res) => {
+    try {
+        const { id } = req.params;
+        const tokenReq = await TokenRequest.findByIdAndDelete(id);
+
+        if (!tokenReq) {
+            return res.status(404).json({ error: 'Token request not found' });
+        }
+
+        // Log activity
+        await logActivity(req.adminUser._id, req.adminUser.email, req.adminUser.name, 'admin_delete_token_request', {
+            requestId: id,
+            targetUserId: tokenReq.userId,
+            targetUserEmail: tokenReq.userEmail
+        }, req);
+
+        res.json({
+            success: true,
+            message: 'Token request deleted from history',
+            deletedId: id
+        });
+    } catch (err) {
+        console.error('Error deleting token request:', err);
+        res.status(500).json({ error: 'Failed to delete token request' });
     }
 });
 

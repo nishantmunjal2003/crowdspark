@@ -24,7 +24,11 @@ import {
     Zap,
     Sparkles,
     Coins,
-    Trophy
+    Trophy,
+    ChevronDown,
+    ChevronUp,
+    Trash2,
+    Archive
 } from 'lucide-react';
 import ThemeToggle from '../components/ThemeToggle';
 import '../admin.css';
@@ -52,6 +56,7 @@ export default function AdminDashboard() {
     const [isGrantingTokens, setIsGrantingTokens] = useState(false);
     const [tokenRequests, setTokenRequests] = useState([]);
     const [isProcessingTokenReq, setIsProcessingTokenReq] = useState(null);
+    const [showProcessedRequests, setShowProcessedRequests] = useState(false);
 
     // Filter & Sort States for Users
     const [userSearch, setUserSearch] = useState('');
@@ -350,23 +355,54 @@ export default function AdminDashboard() {
     };
 
     const handleRejectTokenRequest = async (requestId) => {
-        if (!confirm('Are you sure you want to reject this token request?')) return;
+        const targetReq = tokenRequests.find(r => r._id === requestId);
+        const defaultReason = 'AI token limit reached or payment verification needed';
+        const reasonInput = prompt(`Please enter a reason for rejecting this token request (this will be emailed to ${targetReq?.userName || 'the user'}):`, defaultReason);
+        if (reasonInput === null) return; // User cancelled prompt
+
         setIsProcessingTokenReq(requestId);
         try {
             const res = await fetch(`/api/admin/token-requests/${requestId}/reject?userId=${user._id}`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ userId: user._id })
+                body: JSON.stringify({ userId: user._id, reason: reasonInput.trim() })
             });
             const data = await res.json();
             if (data.success) {
-                setTokenRequests(prev => prev.map(r => r._id === requestId ? { ...r, status: 'rejected', reviewedAt: new Date() } : r));
+                alert(`✓ Request rejected and notification email sent to ${targetReq?.userName || 'the user'}.`);
+                setTokenRequests(prev => prev.map(r => r._id === requestId ? {
+                    ...r,
+                    status: 'rejected',
+                    reviewedAt: new Date(),
+                    note: reasonInput.trim() ? `${r.note ? r.note + ' | ' : ''}Admin: ${reasonInput.trim()}` : r.note
+                } : r));
             } else {
                 alert(data.error || 'Failed to reject token request');
             }
         } catch (err) {
             console.error('Error rejecting token request:', err);
             alert('Network error rejecting token request');
+        } finally {
+            setIsProcessingTokenReq(null);
+        }
+    };
+
+    const handleDeleteTokenRequest = async (requestId) => {
+        if (!confirm('Are you sure you want to permanently delete this request from history?')) return;
+        setIsProcessingTokenReq(requestId);
+        try {
+            const res = await fetch(`/api/admin/token-requests/${requestId}?userId=${user._id}`, {
+                method: 'DELETE'
+            });
+            const data = await res.json();
+            if (data.success) {
+                setTokenRequests(prev => prev.filter(r => r._id !== requestId));
+            } else {
+                alert(data.error || 'Failed to delete token request');
+            }
+        } catch (err) {
+            console.error('Error deleting token request:', err);
+            alert('Network error deleting token request');
         } finally {
             setIsProcessingTokenReq(null);
         }
@@ -497,6 +533,11 @@ export default function AdminDashboard() {
     // Derived Pending Token Requests
     const pendingTokenRequests = useMemo(() => {
         return tokenRequests.filter(r => r.status === 'pending');
+    }, [tokenRequests]);
+
+    // Derived Processed Token Requests (Approved & Rejected)
+    const processedTokenRequests = useMemo(() => {
+        return tokenRequests.filter(r => r.status !== 'pending');
     }, [tokenRequests]);
 
     const hasUserFilters = userSearch || userRoleFilter !== 'all' || userStatusFilter !== 'all' || userAuthFilter !== 'all' || userSort !== 'newest';
@@ -1498,109 +1539,242 @@ export default function AdminDashboard() {
                                 </div>
                             ) : (
                                 <div>
-                                    <div className="admin-table-hint">👈 Swipe table horizontally to view full details 👉</div>
-                                    <div className="admin-table-container">
-                                        <table className="admin-table">
-                                            <thead>
-                                                <tr style={{ borderBottom: '1.5px solid var(--border-color)', color: 'var(--text-secondary)', fontSize: '0.825rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                                                    <th style={{ padding: '0.85rem 1rem' }}>User</th>
-                                                    <th style={{ padding: '0.85rem 1rem' }}>Tokens Requested</th>
-                                                    <th style={{ padding: '0.85rem 1rem' }}>Amount</th>
-                                                    <th style={{ padding: '0.85rem 1rem' }}>Date & Note</th>
-                                                    <th style={{ padding: '0.85rem 1rem' }}>Status</th>
-                                                    <th style={{ padding: '0.85rem 1rem', textAlign: 'right' }}>Actions</th>
-                                                </tr>
-                                            </thead>
-                                            <tbody>
-                                                {tokenRequests.map(req => {
-                                                    const isPending = req.status === 'pending';
-                                                    const isApproved = req.status === 'approved';
-                                                    const isProcessing = isProcessingTokenReq === req._id;
-                                                    return (
-                                                        <tr key={req._id} style={{ borderBottom: '1px solid var(--border-color)', background: isPending ? 'rgba(245, 158, 11, 0.03)' : 'transparent' }}>
-                                                            <td style={{ padding: '0.85rem 1rem' }}>
-                                                                <div style={{ fontWeight: 700, color: 'var(--text-primary)' }}>{req.userName}</div>
-                                                                <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{req.userEmail}</div>
-                                                            </td>
-                                                            <td style={{ padding: '0.85rem 1rem' }}>
-                                                                <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.3rem', fontWeight: 800, color: 'var(--accent-primary)', fontSize: '0.95rem' }}>
-                                                                    <Zap size={14} fill="currentColor" />
-                                                                    {req.tokensRequested || 100} Tokens
-                                                                </span>
-                                                            </td>
-                                                            <td style={{ padding: '0.85rem 1rem', fontWeight: 700, color: 'var(--text-primary)' }}>
-                                                                ${req.amount || 1}
-                                                            </td>
-                                                            <td style={{ padding: '0.85rem 1rem' }}>
-                                                                <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
-                                                                    {new Date(req.createdAt).toLocaleDateString()} {new Date(req.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                                                                </div>
-                                                                {req.note && (
-                                                                    <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontStyle: 'italic', marginTop: '0.2rem' }}>
-                                                                        "{req.note}"
-                                                                    </div>
-                                                                )}
-                                                            </td>
-                                                            <td style={{ padding: '0.85rem 1rem' }}>
-                                                                {isPending && (
-                                                                    <span style={{ padding: '0.25rem 0.6rem', borderRadius: '0.5rem', fontSize: '0.75rem', fontWeight: 700, background: 'rgba(245, 158, 11, 0.15)', color: '#f59e0b' }}>
-                                                                        Pending
-                                                                    </span>
-                                                                )}
-                                                                {isApproved && (
-                                                                    <span style={{ padding: '0.25rem 0.6rem', borderRadius: '0.5rem', fontSize: '0.75rem', fontWeight: 700, background: 'rgba(16, 185, 129, 0.15)', color: 'var(--success)' }}>
-                                                                        Approved ✓
-                                                                    </span>
-                                                                )}
-                                                                {req.status === 'rejected' && (
-                                                                    <span style={{ padding: '0.25rem 0.6rem', borderRadius: '0.5rem', fontSize: '0.75rem', fontWeight: 700, background: 'var(--bg-secondary)', color: 'var(--text-muted)' }}>
-                                                                        Rejected
-                                                                    </span>
-                                                                )}
-                                                            </td>
-                                                            <td style={{ padding: '0.85rem 1rem', textAlign: 'right' }}>
-                                                                {isPending ? (
-                                                                    <div style={{ display: 'inline-flex', gap: '0.5rem' }}>
-                                                                        <button
-                                                                            onClick={() => handleApproveTokenRequest(req._id)}
-                                                                            disabled={isProcessing}
-                                                                            className="btn btn-primary"
-                                                                            style={{
-                                                                                padding: '0.4rem 0.8rem',
-                                                                                fontSize: '0.8rem',
-                                                                                fontWeight: 700,
-                                                                                background: 'linear-gradient(135deg, #10b981, #059669)',
-                                                                                borderColor: '#10b981',
-                                                                                display: 'inline-flex',
-                                                                                alignItems: 'center',
-                                                                                gap: '0.35rem'
-                                                                            }}
-                                                                        >
-                                                                            <Zap size={14} fill="currentColor" />
-                                                                            {isProcessing ? 'Processing...' : `Approve & Credit (+${req.tokensRequested || 50})`}
-                                                                        </button>
-                                                                        <button
-                                                                            onClick={() => handleRejectTokenRequest(req._id)}
-                                                                            disabled={isProcessing}
-                                                                            className="btn btn-secondary"
-                                                                            style={{ padding: '0.4rem 0.65rem', fontSize: '0.8rem' }}
-                                                                            title="Reject Request"
-                                                                        >
-                                                                            <X size={14} />
-                                                                        </button>
-                                                                    </div>
-                                                                ) : (
-                                                                    <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
-                                                                        {isApproved ? `Credited on ${new Date(req.reviewedAt || req.updatedAt).toLocaleDateString()}` : 'Closed'}
-                                                                    </span>
-                                                                )}
-                                                            </td>
+                                    {/* Active Pending Requests Section */}
+                                    {pendingTokenRequests.length === 0 ? (
+                                        <div style={{
+                                            padding: '1.25rem 1.5rem',
+                                            background: 'var(--bg-secondary)',
+                                            borderRadius: '0.75rem',
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            justifyContent: 'space-between',
+                                            gap: '1rem',
+                                            border: '1px solid var(--border-color)'
+                                        }}>
+                                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                                                <div style={{ padding: '0.4rem', borderRadius: '50%', background: 'rgba(16, 185, 129, 0.15)', color: 'var(--success)', display: 'flex' }}>
+                                                    <CheckCircle2 size={18} />
+                                                </div>
+                                                <div>
+                                                    <div style={{ fontSize: '0.9rem', fontWeight: 700, color: 'var(--text-primary)' }}>
+                                                        All Caught Up
+                                                    </div>
+                                                    <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
+                                                        No pending token upgrade requests requiring review right now.
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    ) : (
+                                        <div>
+                                            <div className="admin-table-hint">👈 Swipe table horizontally to view full details 👉</div>
+                                            <div className="admin-table-container">
+                                                <table className="admin-table">
+                                                    <thead>
+                                                        <tr style={{ borderBottom: '1.5px solid var(--border-color)', color: 'var(--text-secondary)', fontSize: '0.825rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                                                            <th style={{ padding: '0.85rem 1rem' }}>User</th>
+                                                            <th style={{ padding: '0.85rem 1rem' }}>Tokens Requested</th>
+                                                            <th style={{ padding: '0.85rem 1rem' }}>Amount</th>
+                                                            <th style={{ padding: '0.85rem 1rem' }}>Date & Note</th>
+                                                            <th style={{ padding: '0.85rem 1rem' }}>Status</th>
+                                                            <th style={{ padding: '0.85rem 1rem', textAlign: 'right' }}>Actions</th>
                                                         </tr>
-                                                    );
-                                                })}
-                                            </tbody>
-                                        </table>
-                                    </div>
+                                                    </thead>
+                                                    <tbody>
+                                                        {pendingTokenRequests.map(req => {
+                                                            const isProcessing = isProcessingTokenReq === req._id;
+                                                            return (
+                                                                <tr key={req._id} style={{ borderBottom: '1px solid var(--border-color)', background: 'rgba(245, 158, 11, 0.04)' }}>
+                                                                    <td style={{ padding: '0.85rem 1rem' }}>
+                                                                        <div style={{ fontWeight: 700, color: 'var(--text-primary)' }}>{req.userName}</div>
+                                                                        <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{req.userEmail}</div>
+                                                                    </td>
+                                                                    <td style={{ padding: '0.85rem 1rem' }}>
+                                                                        <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.3rem', fontWeight: 800, color: 'var(--accent-primary)', fontSize: '0.95rem' }}>
+                                                                            <Zap size={14} fill="currentColor" />
+                                                                            {req.tokensRequested || 50} Tokens
+                                                                        </span>
+                                                                    </td>
+                                                                    <td style={{ padding: '0.85rem 1rem', fontWeight: 700, color: 'var(--text-primary)' }}>
+                                                                        ${req.amount || 1}
+                                                                    </td>
+                                                                    <td style={{ padding: '0.85rem 1rem' }}>
+                                                                        <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
+                                                                            {new Date(req.createdAt).toLocaleDateString()} {new Date(req.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                                                        </div>
+                                                                        {req.note && (
+                                                                            <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontStyle: 'italic', marginTop: '0.2rem' }}>
+                                                                                "{req.note}"
+                                                                            </div>
+                                                                        )}
+                                                                    </td>
+                                                                    <td style={{ padding: '0.85rem 1rem' }}>
+                                                                        <span style={{ padding: '0.25rem 0.6rem', borderRadius: '0.5rem', fontSize: '0.75rem', fontWeight: 700, background: 'rgba(245, 158, 11, 0.15)', color: '#f59e0b' }}>
+                                                                            Pending
+                                                                        </span>
+                                                                    </td>
+                                                                    <td style={{ padding: '0.85rem 1rem', textAlign: 'right' }}>
+                                                                        <div style={{ display: 'inline-flex', gap: '0.5rem' }}>
+                                                                            <button
+                                                                                onClick={() => handleApproveTokenRequest(req._id)}
+                                                                                disabled={isProcessing}
+                                                                                className="btn btn-primary"
+                                                                                style={{
+                                                                                    padding: '0.4rem 0.8rem',
+                                                                                    fontSize: '0.8rem',
+                                                                                    fontWeight: 700,
+                                                                                    background: 'linear-gradient(135deg, #10b981, #059669)',
+                                                                                    borderColor: '#10b981',
+                                                                                    display: 'inline-flex',
+                                                                                    alignItems: 'center',
+                                                                                    gap: '0.35rem'
+                                                                                }}
+                                                                            >
+                                                                                <Zap size={14} fill="currentColor" />
+                                                                                {isProcessing ? 'Processing...' : `Approve (+${req.tokensRequested || 50})`}
+                                                                            </button>
+                                                                            <button
+                                                                                onClick={() => handleRejectTokenRequest(req._id)}
+                                                                                disabled={isProcessing}
+                                                                                className="btn btn-secondary"
+                                                                                style={{
+                                                                                    padding: '0.4rem 0.65rem',
+                                                                                    fontSize: '0.8rem',
+                                                                                    color: 'var(--error)',
+                                                                                    borderColor: 'rgba(239, 68, 68, 0.3)',
+                                                                                    display: 'inline-flex',
+                                                                                    alignItems: 'center',
+                                                                                    gap: '0.3rem'
+                                                                                }}
+                                                                                title="Reject and email user"
+                                                                            >
+                                                                                <X size={14} /> Reject
+                                                                            </button>
+                                                                        </div>
+                                                                    </td>
+                                                                </tr>
+                                                            );
+                                                        })}
+                                                    </tbody>
+                                                </table>
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    {/* Collapsible Accordion for Processed / Past Requests */}
+                                    {processedTokenRequests.length > 0 && (
+                                        <div style={{ marginTop: '1.25rem', borderTop: '1px solid var(--border-color)', paddingTop: '1rem' }}>
+                                            <button
+                                                type="button"
+                                                onClick={() => setShowProcessedRequests(!showProcessedRequests)}
+                                                style={{
+                                                    width: '100%',
+                                                    display: 'flex',
+                                                    justifyContent: 'space-between',
+                                                    alignItems: 'center',
+                                                    background: 'var(--bg-secondary)',
+                                                    border: '1px solid var(--border-color)',
+                                                    borderRadius: '0.75rem',
+                                                    padding: '0.75rem 1.15rem',
+                                                    cursor: 'pointer',
+                                                    color: 'var(--text-secondary)',
+                                                    fontSize: '0.85rem',
+                                                    fontWeight: 700,
+                                                    transition: 'all 0.2s'
+                                                }}
+                                            >
+                                                <span style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                                    <Archive size={16} color="var(--accent-primary)" />
+                                                    <span>Processed & Past Requests ({processedTokenRequests.length})</span>
+                                                    <span style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-muted)' }}>
+                                                        ({processedTokenRequests.filter(r => r.status === 'approved').length} Approved, {processedTokenRequests.filter(r => r.status === 'rejected').length} Rejected)
+                                                    </span>
+                                                </span>
+                                                {showProcessedRequests ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
+                                            </button>
+
+                                            {showProcessedRequests && (
+                                                <div style={{ marginTop: '0.75rem' }}>
+                                                    <div className="admin-table-container">
+                                                        <table className="admin-table">
+                                                            <thead>
+                                                                <tr style={{ borderBottom: '1.5px solid var(--border-color)', color: 'var(--text-secondary)', fontSize: '0.775rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                                                                    <th style={{ padding: '0.75rem 1rem' }}>User</th>
+                                                                    <th style={{ padding: '0.75rem 1rem' }}>Tokens</th>
+                                                                    <th style={{ padding: '0.75rem 1rem' }}>Amount</th>
+                                                                    <th style={{ padding: '0.75rem 1rem' }}>Date & Notes</th>
+                                                                    <th style={{ padding: '0.75rem 1rem' }}>Status</th>
+                                                                    <th style={{ padding: '0.75rem 1rem', textAlign: 'right' }}>Actions</th>
+                                                                </tr>
+                                                            </thead>
+                                                            <tbody>
+                                                                {processedTokenRequests.map(req => {
+                                                                    const isApproved = req.status === 'approved';
+                                                                    const isProcessing = isProcessingTokenReq === req._id;
+                                                                    return (
+                                                                        <tr key={req._id} style={{ borderBottom: '1px solid var(--border-color)' }}>
+                                                                            <td style={{ padding: '0.75rem 1rem' }}>
+                                                                                <div style={{ fontWeight: 600, color: 'var(--text-primary)', fontSize: '0.85rem' }}>{req.userName}</div>
+                                                                                <div style={{ fontSize: '0.725rem', color: 'var(--text-muted)' }}>{req.userEmail}</div>
+                                                                            </td>
+                                                                            <td style={{ padding: '0.75rem 1rem' }}>
+                                                                                <span style={{ fontWeight: 700, color: isApproved ? 'var(--success)' : 'var(--text-muted)', fontSize: '0.85rem' }}>
+                                                                                    ⚡ {req.tokensRequested || 50} Tokens
+                                                                                </span>
+                                                                            </td>
+                                                                            <td style={{ padding: '0.75rem 1rem', fontSize: '0.85rem', color: 'var(--text-primary)' }}>
+                                                                                ${req.amount || 1}
+                                                                            </td>
+                                                                            <td style={{ padding: '0.75rem 1rem' }}>
+                                                                                <div style={{ fontSize: '0.775rem', color: 'var(--text-secondary)' }}>
+                                                                                    {new Date(req.createdAt).toLocaleDateString()} {new Date(req.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                                                                </div>
+                                                                                {req.note && (
+                                                                                    <div style={{ fontSize: '0.725rem', color: 'var(--text-muted)', fontStyle: 'italic', marginTop: '0.15rem' }}>
+                                                                                        "{req.note}"
+                                                                                    </div>
+                                                                                )}
+                                                                            </td>
+                                                                            <td style={{ padding: '0.75rem 1rem' }}>
+                                                                                {isApproved ? (
+                                                                                    <span style={{ padding: '0.2rem 0.55rem', borderRadius: '0.4rem', fontSize: '0.725rem', fontWeight: 700, background: 'rgba(16, 185, 129, 0.15)', color: 'var(--success)' }}>
+                                                                                        Approved ✓
+                                                                                    </span>
+                                                                                ) : (
+                                                                                    <span style={{ padding: '0.2rem 0.55rem', borderRadius: '0.4rem', fontSize: '0.725rem', fontWeight: 700, background: 'rgba(239, 68, 68, 0.12)', color: 'var(--error)' }}>
+                                                                                        Rejected ✗
+                                                                                    </span>
+                                                                                )}
+                                                                            </td>
+                                                                            <td style={{ padding: '0.75rem 1rem', textAlign: 'right' }}>
+                                                                                <button
+                                                                                    onClick={() => handleDeleteTokenRequest(req._id)}
+                                                                                    disabled={isProcessing}
+                                                                                    className="btn btn-secondary"
+                                                                                    style={{
+                                                                                        padding: '0.35rem 0.65rem',
+                                                                                        fontSize: '0.75rem',
+                                                                                        color: 'var(--error)',
+                                                                                        borderColor: 'rgba(239, 68, 68, 0.3)',
+                                                                                        display: 'inline-flex',
+                                                                                        alignItems: 'center',
+                                                                                        gap: '0.3rem'
+                                                                                    }}
+                                                                                    title="Delete record from history"
+                                                                                >
+                                                                                    <Trash2 size={13} /> Delete
+                                                                                </button>
+                                                                            </td>
+                                                                        </tr>
+                                                                    );
+                                                                })}
+                                                            </tbody>
+                                                        </table>
+                                                    </div>
+                                                </div>
+                                            )}
+                                        </div>
+                                    )}
                                 </div>
                             )}
                         </div>

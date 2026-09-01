@@ -346,10 +346,57 @@ async function sendTokenApprovedNotification(userEmail, userName, tokensCredited
     });
 }
 
+/**
+ * Notify User that their Token Request could not be approved / was rejected
+ */
+async function sendTokenRejectedNotification(userEmail, userName, tokensRequested, reason = '') {
+    const subject = `Update regarding your CrowdSpark AI Tokens request`;
+    const html = `
+    <!DOCTYPE html>
+    <html>
+    <head><meta charset="utf-8"></head>
+    <body style="margin: 0; padding: 24px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background-color: #f8fafc; color: #0f172a;">
+      <div style="max-width: 500px; margin: 0 auto; background-color: #ffffff; border-radius: 16px; border: 1px solid #e2e8f0; padding: 32px 24px;">
+        <div style="text-align: center; margin-bottom: 20px;">
+          <div style="display: inline-block; background: linear-gradient(135deg, #6366f1, #8b5cf6); color: #ffffff; font-weight: 800; font-size: 18px; padding: 6px 16px; border-radius: 8px;">
+            ⚡ CrowdSpark Tokens
+          </div>
+        </div>
+        <h2 style="margin: 0 0 12px 0; font-size: 20px; font-weight: 800; text-align: center; color: #0f172a;">Token Request Update</h2>
+        <p style="font-size: 15px; color: #475569; line-height: 1.6; text-align: center; margin: 0 0 20px 0;">
+          Hi <strong>${userName}</strong>, thank you for your interest in expanding your AI Question generation quota.
+        </p>
+        <div style="background-color: #f1f5f9; border-radius: 10px; padding: 16px; margin-bottom: 20px;">
+          <div style="margin-bottom: 6px;"><strong>Request:</strong> ⚡ ${tokensRequested || 50} AI Tokens</div>
+          <div style="margin-bottom: 6px;"><strong>Status:</strong> Unable to process / Declined</div>
+          ${reason ? `<div style="margin-top: 8px; color: #334155;"><strong>Reason / Note from Admin:</strong><br/><span style="font-style: italic;">${reason}</span></div>` : ''}
+        </div>
+        <p style="font-size: 14px; color: #64748b; line-height: 1.6; text-align: center; margin: 0 0 24px 0;">
+          If you believe this was in error, or if you need assistance with custom token packages for your institution, please feel free to reply directly to this email.
+        </p>
+        <div style="text-align: center;">
+          <a href="https://crowdspark.nishantmunjal.com/dashboard" style="display: inline-block; background: #6366f1; color: #ffffff; text-decoration: none; font-weight: 700; font-size: 15px; padding: 12px 28px; border-radius: 8px;">
+            Go to Your Dashboard &rarr;
+          </a>
+        </div>
+      </div>
+    </body>
+    </html>
+    `;
+
+    return sendMail({
+        to: userEmail,
+        toName: userName,
+        subject,
+        html
+    });
+}
+
 module.exports = {
     sendMail,
     sendOtpEmail,
     sendWelcomeEmail,
     sendTokenRequestAdminNotification,
-    sendTokenApprovedNotification
+    sendTokenApprovedNotification,
+    sendTokenRejectedNotification
 };
