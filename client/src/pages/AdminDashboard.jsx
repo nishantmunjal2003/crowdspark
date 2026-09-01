@@ -27,6 +27,7 @@ import {
     Trophy
 } from 'lucide-react';
 import ThemeToggle from '../components/ThemeToggle';
+import '../admin.css';
 
 export default function AdminDashboard() {
     const navigate = useNavigate();
@@ -363,20 +364,20 @@ export default function AdminDashboard() {
     const hasLogFilters = logSearch || logActionFilter !== 'all' || logTimeFilter !== 'all' || logSort !== 'newest';
 
     return (
-        <div style={{ minHeight: '100vh', background: 'var(--bg-primary)', padding: '2rem 1.5rem' }}>
-            <div className="container" style={{ maxWidth: '1400px', margin: '0 auto' }}>
+        <div className="admin-page-wrapper">
+            <div className="admin-container">
                 {/* Header */}
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '2rem', flexWrap: 'wrap', gap: '1rem' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-                        <button onClick={() => navigate('/dashboard')} className="btn btn-secondary" style={{ padding: '0.75rem' }} title="Back to Dashboard">
+                <div className="admin-header">
+                    <div className="admin-header-left">
+                        <button onClick={() => navigate('/dashboard')} className="btn btn-secondary" style={{ padding: '0.65rem' }} title="Back to Dashboard">
                             <ArrowLeft size={20} />
                         </button>
                         <div>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                                <Shield size={32} color="var(--accent-primary)" />
-                                <h1 className="title" style={{ fontSize: '2rem', marginBottom: '0' }}>Admin Dashboard</h1>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+                                <Shield size={28} color="var(--accent-primary)" />
+                                <h1 className="title admin-title">Admin Dashboard</h1>
                             </div>
-                            <p className="subtitle" style={{ marginBottom: '0', fontSize: '0.95rem' }}>Manage users, authentication methods, quizzes, and monitor activity</p>
+                            <p className="subtitle admin-subtitle">Manage users, authentication methods, quizzes, and monitor activity</p>
                         </div>
                     </div>
                     <ThemeToggle />
@@ -384,63 +385,63 @@ export default function AdminDashboard() {
 
                 {/* Stats Cards */}
                 {stats && (
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '1.25rem', marginBottom: '2rem' }}>
-                        <div className="card" style={{ padding: '1.25rem' }}>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-                                <div style={{ padding: '0.9rem', background: 'rgba(99, 102, 241, 0.1)', borderRadius: '1rem' }}>
-                                    <Users size={26} color="var(--accent-primary)" />
+                    <div className="admin-stats-grid">
+                        <div className="card admin-stat-card">
+                            <div className="admin-stat-card-inner">
+                                <div className="admin-stat-icon" style={{ background: 'rgba(99, 102, 241, 0.12)' }}>
+                                    <Users size={24} color="var(--accent-primary)" />
                                 </div>
                                 <div>
-                                    <div style={{ fontSize: '1.85rem', fontWeight: '800', color: 'var(--text-primary)', lineHeight: 1.1 }}>{stats.users.total}</div>
-                                    <div style={{ fontSize: '0.875rem', color: 'var(--text-secondary)' }}>Total Users</div>
-                                    <div style={{ fontSize: '0.75rem', color: 'var(--success)', marginTop: '0.2rem', fontWeight: '600' }}>
+                                    <div className="admin-stat-value">{stats.users.total}</div>
+                                    <div className="admin-stat-label">Total Users</div>
+                                    <div className="admin-stat-sub" style={{ color: 'var(--success)' }}>
                                         {stats.users.active} active • {stats.users.admins} admin
                                     </div>
                                 </div>
                             </div>
                         </div>
 
-                        <div className="card" style={{ padding: '1.25rem' }}>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-                                <div style={{ padding: '0.9rem', background: 'rgba(16, 185, 129, 0.1)', borderRadius: '1rem' }}>
-                                    <BookOpen size={26} color="var(--success)" />
+                        <div className="card admin-stat-card">
+                            <div className="admin-stat-card-inner">
+                                <div className="admin-stat-icon" style={{ background: 'rgba(16, 185, 129, 0.12)' }}>
+                                    <BookOpen size={24} color="var(--success)" />
                                 </div>
                                 <div>
-                                    <div style={{ fontSize: '1.85rem', fontWeight: '800', color: 'var(--text-primary)', lineHeight: 1.1 }}>{stats.quizzes.total}</div>
-                                    <div style={{ fontSize: '0.875rem', color: 'var(--text-secondary)' }}>Total Quizzes</div>
-                                    <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '0.2rem' }}>
+                                    <div className="admin-stat-value">{stats.quizzes.total}</div>
+                                    <div className="admin-stat-label">Total Quizzes</div>
+                                    <div className="admin-stat-sub" style={{ color: 'var(--text-muted)' }}>
                                         Interactive & Live
                                     </div>
                                 </div>
                             </div>
                         </div>
 
-                        <div className="card" style={{ padding: '1.25rem' }}>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-                                <div style={{ padding: '0.9rem', background: 'rgba(244, 114, 182, 0.12)', borderRadius: '1rem' }}>
-                                    <Trophy size={26} color="#f472b6" />
+                        <div className="card admin-stat-card">
+                            <div className="admin-stat-card-inner">
+                                <div className="admin-stat-icon" style={{ background: 'rgba(244, 114, 182, 0.14)' }}>
+                                    <Trophy size={24} color="#f472b6" />
                                 </div>
                                 <div>
-                                    <div style={{ fontSize: '1.85rem', fontWeight: '800', color: 'var(--text-primary)', lineHeight: 1.1 }}>
+                                    <div className="admin-stat-value">
                                         {stats.quizzes?.totalParticipants || 0}
                                     </div>
-                                    <div style={{ fontSize: '0.875rem', color: 'var(--text-secondary)' }}>Users Taken Quiz</div>
-                                    <div style={{ fontSize: '0.75rem', color: '#f472b6', marginTop: '0.2rem', fontWeight: '600' }}>
-                                        {stats.quizzes?.uniqueParticipants || 0} unique players • All time
+                                    <div className="admin-stat-label">Users Taken Quiz</div>
+                                    <div className="admin-stat-sub" style={{ color: '#f472b6' }}>
+                                        {stats.quizzes?.uniqueParticipants || 0} unique players
                                     </div>
                                 </div>
                             </div>
                         </div>
 
-                        <div className="card" style={{ padding: '1.25rem' }}>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-                                <div style={{ padding: '0.9rem', background: 'rgba(236, 72, 153, 0.1)', borderRadius: '1rem' }}>
-                                    <Activity size={26} color="var(--accent-tertiary)" />
+                        <div className="card admin-stat-card">
+                            <div className="admin-stat-card-inner">
+                                <div className="admin-stat-icon" style={{ background: 'rgba(236, 72, 153, 0.12)' }}>
+                                    <Activity size={24} color="var(--accent-tertiary)" />
                                 </div>
                                 <div>
-                                    <div style={{ fontSize: '1.85rem', fontWeight: '800', color: 'var(--text-primary)', lineHeight: 1.1 }}>{stats.activities.total}</div>
-                                    <div style={{ fontSize: '0.875rem', color: 'var(--text-secondary)' }}>Activity Logs</div>
-                                    <div style={{ fontSize: '0.75rem', color: 'var(--accent-primary)', marginTop: '0.2rem' }}>
+                                    <div className="admin-stat-value">{stats.activities.total}</div>
+                                    <div className="admin-stat-label">Activity Logs</div>
+                                    <div className="admin-stat-sub" style={{ color: 'var(--accent-primary)' }}>
                                         Audit History
                                     </div>
                                 </div>
@@ -450,7 +451,7 @@ export default function AdminDashboard() {
                 )}
 
                 {/* Navigation Tabs */}
-                <div style={{ display: 'flex', gap: '0.75rem', marginBottom: '2rem', flexWrap: 'wrap' }}>
+                <div className="admin-tabs-nav">
                     {[
                         { id: 'overview', label: 'Overview', icon: TrendingUp },
                         { id: 'users', label: `Users (${users.length})`, icon: Users },
@@ -463,19 +464,11 @@ export default function AdminDashboard() {
                             <button
                                 key={tab.id}
                                 onClick={() => setActiveTab(tab.id)}
-                                className="btn"
+                                className="admin-tab-btn"
                                 style={{
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    gap: '0.5rem',
-                                    padding: '0.65rem 1.25rem',
-                                    fontSize: '0.95rem',
-                                    fontWeight: '600',
-                                    borderRadius: '0.75rem',
                                     background: isActive ? 'var(--accent-primary)' : 'var(--bg-card)',
                                     color: isActive ? 'white' : 'var(--text-secondary)',
                                     border: `1.5px solid ${isActive ? 'var(--accent-primary)' : 'var(--border-color)'}`,
-                                    transition: 'all 0.2s'
                                 }}
                             >
                                 <Icon size={18} />
@@ -513,16 +506,7 @@ export default function AdminDashboard() {
                         </div>
 
                         {/* Filter & Sort Bar */}
-                        <div style={{
-                            display: 'grid',
-                            gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))',
-                            gap: '0.85rem',
-                            marginBottom: '1.5rem',
-                            background: 'var(--bg-secondary)',
-                            padding: '1rem',
-                            borderRadius: '1rem',
-                            border: '1px solid var(--border-color)'
-                        }}>
+                        <div className="admin-filter-bar">
                             {/* Search */}
                             <div style={{ position: 'relative' }}>
                                 <Search size={18} style={{ position: 'absolute', left: '0.85rem', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
@@ -611,20 +595,22 @@ export default function AdminDashboard() {
                                 <p style={{ fontSize: '0.875rem', margin: 0 }}>Try clearing your search query or changing filters.</p>
                             </div>
                         ) : (
-                            <div style={{ overflowX: 'auto' }}>
-                                <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
-                                    <thead>
-                                        <tr style={{ borderBottom: '1.5px solid var(--border-color)', color: 'var(--text-secondary)', fontSize: '0.825rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                                            <th style={{ padding: '0.85rem 1rem' }}>User</th>
-                                            <th style={{ padding: '0.85rem 1rem' }}>Email</th>
-                                            <th style={{ padding: '0.85rem 1rem' }}>Login Method</th>
-                                            <th style={{ padding: '0.85rem 1rem' }}>AI Tokens</th>
-                                            <th style={{ padding: '0.85rem 1rem' }}>Role</th>
-                                            <th style={{ padding: '0.85rem 1rem' }}>Status</th>
-                                            <th style={{ padding: '0.85rem 1rem' }}>Joined / Last Login</th>
-                                            <th style={{ padding: '0.85rem 1rem', textAlign: 'right' }}>Actions</th>
-                                        </tr>
-                                    </thead>
+                            <div>
+                                <div className="admin-table-hint">👈 Swipe table horizontally to view full table 👉</div>
+                                <div className="admin-table-container">
+                                    <table className="admin-table">
+                                        <thead>
+                                            <tr style={{ borderBottom: '1.5px solid var(--border-color)', color: 'var(--text-secondary)', fontSize: '0.825rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                                                <th style={{ padding: '0.85rem 1rem' }}>User</th>
+                                                <th style={{ padding: '0.85rem 1rem' }}>Email</th>
+                                                <th style={{ padding: '0.85rem 1rem' }}>Login Method</th>
+                                                <th style={{ padding: '0.85rem 1rem' }}>AI Tokens</th>
+                                                <th style={{ padding: '0.85rem 1rem' }}>Role</th>
+                                                <th style={{ padding: '0.85rem 1rem' }}>Status</th>
+                                                <th style={{ padding: '0.85rem 1rem' }}>Joined / Last Login</th>
+                                                <th style={{ padding: '0.85rem 1rem', textAlign: 'right' }}>Actions</th>
+                                            </tr>
+                                        </thead>
                                     <tbody>
                                         {filteredUsers.map(u => {
                                             const isGoogle = u.authMethod === 'google' || !!u.googleId;
@@ -808,6 +794,7 @@ export default function AdminDashboard() {
                                     </tbody>
                                 </table>
                             </div>
+                        </div>
                         )}
                     </div>
                 )}
@@ -839,16 +826,7 @@ export default function AdminDashboard() {
                         </div>
 
                         {/* Filter & Sort Bar */}
-                        <div style={{
-                            display: 'grid',
-                            gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
-                            gap: '1rem',
-                            marginBottom: '1.5rem',
-                            background: 'var(--bg-secondary)',
-                            padding: '1rem',
-                            borderRadius: '1rem',
-                            border: '1px solid var(--border-color)'
-                        }}>
+                        <div className="admin-filter-bar">
                             {/* Search */}
                             <div style={{ position: 'relative' }}>
                                 <Search size={18} style={{ position: 'absolute', left: '0.85rem', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
@@ -892,10 +870,10 @@ export default function AdminDashboard() {
                                     value={quizLengthFilter}
                                     onChange={e => setQuizLengthFilter(e.target.value)}
                                 >
-                                    <option value="all">Any Question Count</option>
-                                    <option value="short">Short (1 - 5 Questions)</option>
-                                    <option value="medium">Medium (6 - 15 Questions)</option>
-                                    <option value="long">Long (16+ Questions)</option>
+                                    <option value="all">All Lengths</option>
+                                    <option value="short">Short (1 - 5 Qs)</option>
+                                    <option value="medium">Medium (6 - 15 Qs)</option>
+                                    <option value="long">Long (16+ Qs)</option>
                                 </select>
                             </div>
 
@@ -1002,16 +980,7 @@ export default function AdminDashboard() {
                         </div>
 
                         {/* Filter & Sort Bar */}
-                        <div style={{
-                            display: 'grid',
-                            gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
-                            gap: '1rem',
-                            marginBottom: '1.5rem',
-                            background: 'var(--bg-secondary)',
-                            padding: '1rem',
-                            borderRadius: '1rem',
-                            border: '1px solid var(--border-color)'
-                        }}>
+                        <div className="admin-filter-bar">
                             {/* Search */}
                             <div style={{ position: 'relative' }}>
                                 <Search size={18} style={{ position: 'absolute', left: '0.85rem', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
@@ -1088,57 +1057,60 @@ export default function AdminDashboard() {
                                 <p style={{ fontSize: '0.875rem', margin: 0 }}>Try clearing your search query or changing filters.</p>
                             </div>
                         ) : (
-                            <div style={{ overflowX: 'auto' }}>
-                                <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.875rem' }}>
-                                    <thead>
-                                        <tr style={{ borderBottom: '1.5px solid var(--border-color)', color: 'var(--text-secondary)', fontSize: '0.825rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                                            <th style={{ padding: '0.85rem 1rem' }}>Timestamp</th>
-                                            <th style={{ padding: '0.85rem 1rem' }}>User</th>
-                                            <th style={{ padding: '0.85rem 1rem' }}>Action</th>
-                                            <th style={{ padding: '0.85rem 1rem' }}>Details Summary</th>
-                                            <th style={{ padding: '0.85rem 1rem', textAlign: 'right' }}>View</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        {filteredLogs.map((log, idx) => (
-                                            <tr key={idx} style={{ borderBottom: '1px solid var(--border-color)', transition: 'background 0.15s' }}>
-                                                <td style={{ padding: '0.85rem 1rem', color: 'var(--text-secondary)', whiteSpace: 'nowrap' }}>
-                                                    {new Date(log.timestamp).toLocaleString()}
-                                                </td>
-                                                <td style={{ padding: '0.85rem 1rem', fontWeight: 600, color: 'var(--text-primary)' }}>
-                                                    <div>{log.userName || 'Anonymous'}</div>
-                                                    <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{log.userEmail || ''}</div>
-                                                </td>
-                                                <td style={{ padding: '0.85rem 1rem' }}>
-                                                    <span style={{
-                                                        padding: '0.2rem 0.6rem',
-                                                        borderRadius: '0.5rem',
-                                                        fontSize: '0.75rem',
-                                                        fontWeight: 700,
-                                                        background: log.action.includes('admin') ? 'rgba(236, 72, 153, 0.15)' : 'rgba(99, 102, 241, 0.15)',
-                                                        color: log.action.includes('admin') ? 'var(--accent-tertiary)' : 'var(--accent-primary)',
-                                                        border: `1px solid ${log.action.includes('admin') ? 'rgba(236, 72, 153, 0.3)' : 'rgba(99, 102, 241, 0.3)'}`
-                                                    }}>
-                                                        {log.action}
-                                                    </span>
-                                                </td>
-                                                <td style={{ padding: '0.85rem 1rem', fontSize: '0.8rem', color: 'var(--text-muted)', maxWidth: '320px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                                                    {JSON.stringify(log.details)}
-                                                </td>
-                                                <td style={{ padding: '0.85rem 1rem', textAlign: 'right' }}>
-                                                    <button
-                                                        onClick={() => setSelectedLog(log)}
-                                                        className="btn btn-secondary"
-                                                        style={{ padding: '0.4rem 0.6rem', fontSize: '0.75rem' }}
-                                                        title="View Complete Payload"
-                                                    >
-                                                        <Eye size={15} />
-                                                    </button>
-                                                </td>
+                            <div>
+                                <div className="admin-table-hint">👈 Swipe table horizontally to view full audit log 👉</div>
+                                <div className="admin-table-container">
+                                    <table className="admin-table admin-table-logs">
+                                        <thead>
+                                            <tr style={{ borderBottom: '1.5px solid var(--border-color)', color: 'var(--text-secondary)', fontSize: '0.825rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                                                <th style={{ padding: '0.85rem 1rem' }}>Timestamp</th>
+                                                <th style={{ padding: '0.85rem 1rem' }}>User</th>
+                                                <th style={{ padding: '0.85rem 1rem' }}>Action</th>
+                                                <th style={{ padding: '0.85rem 1rem' }}>Details Summary</th>
+                                                <th style={{ padding: '0.85rem 1rem', textAlign: 'right' }}>View</th>
                                             </tr>
-                                        ))}
-                                    </tbody>
-                                </table>
+                                        </thead>
+                                        <tbody>
+                                            {filteredLogs.map((log, idx) => (
+                                                <tr key={idx} style={{ borderBottom: '1px solid var(--border-color)', transition: 'background 0.15s' }}>
+                                                    <td style={{ padding: '0.85rem 1rem', color: 'var(--text-secondary)', whiteSpace: 'nowrap' }}>
+                                                        {new Date(log.timestamp).toLocaleString()}
+                                                    </td>
+                                                    <td style={{ padding: '0.85rem 1rem', fontWeight: 600, color: 'var(--text-primary)' }}>
+                                                        <div>{log.userName || 'Anonymous'}</div>
+                                                        <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{log.userEmail || ''}</div>
+                                                    </td>
+                                                    <td style={{ padding: '0.85rem 1rem' }}>
+                                                        <span style={{
+                                                            padding: '0.2rem 0.6rem',
+                                                            borderRadius: '0.5rem',
+                                                            fontSize: '0.75rem',
+                                                            fontWeight: 700,
+                                                            background: log.action.includes('admin') ? 'rgba(236, 72, 153, 0.15)' : 'rgba(99, 102, 241, 0.15)',
+                                                            color: log.action.includes('admin') ? 'var(--accent-tertiary)' : 'var(--accent-primary)',
+                                                            border: `1px solid ${log.action.includes('admin') ? 'rgba(236, 72, 153, 0.3)' : 'rgba(99, 102, 241, 0.3)'}`
+                                                        }}>
+                                                            {log.action}
+                                                        </span>
+                                                    </td>
+                                                    <td style={{ padding: '0.85rem 1rem', fontSize: '0.8rem', color: 'var(--text-muted)', maxWidth: '320px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                                                        {JSON.stringify(log.details)}
+                                                    </td>
+                                                    <td style={{ padding: '0.85rem 1rem', textAlign: 'right' }}>
+                                                        <button
+                                                            onClick={() => setSelectedLog(log)}
+                                                            className="btn btn-secondary"
+                                                            style={{ padding: '0.4rem 0.6rem', fontSize: '0.75rem' }}
+                                                            title="View Complete Payload"
+                                                        >
+                                                            <Eye size={15} />
+                                                        </button>
+                                                    </td>
+                                                </tr>
+                                            ))}
+                                        </tbody>
+                                    </table>
+                                </div>
                             </div>
                         )}
                     </div>
@@ -1316,33 +1288,12 @@ export default function AdminDashboard() {
             {/* User Details Modal */}
             {selectedUser && (
                 <div
-                    style={{
-                        position: 'fixed',
-                        top: 0,
-                        left: 0,
-                        right: 0,
-                        bottom: 0,
-                        background: 'rgba(0,0,0,0.7)',
-                        backdropFilter: 'blur(8px)',
-                        WebkitBackdropFilter: 'blur(8px)',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        zIndex: 1000,
-                        padding: '1.5rem'
-                    }}
+                    className="admin-modal-overlay"
                     onClick={() => setSelectedUser(null)}
                 >
                     <div
                         onClick={e => e.stopPropagation()}
-                        className="card animate-fade-in"
-                        style={{
-                            width: '100%',
-                            maxWidth: '650px',
-                            maxHeight: '85vh',
-                            overflowY: 'auto',
-                            padding: '2rem'
-                        }}
+                        className="admin-modal-card animate-fade-in"
                     >
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
                             <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
@@ -1373,29 +1324,29 @@ export default function AdminDashboard() {
                         </div>
 
                         <div style={{ display: 'grid', gap: '1.25rem' }}>
-                            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: '1rem', background: 'var(--bg-secondary)', padding: '1rem', borderRadius: '0.75rem' }}>
+                            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: '0.85rem', background: 'var(--bg-secondary)', padding: '1rem', borderRadius: '0.75rem' }}>
                                 <div>
-                                    <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', textTransform: 'uppercase' }}>Login Method</div>
-                                    <div style={{ fontSize: '0.95rem', fontWeight: 700, marginTop: '0.2rem', color: (selectedUser.user?.authMethod === 'google' || !!selectedUser.user?.googleId) ? '#ea4335' : 'var(--accent-primary)' }}>
-                                        {(selectedUser.user?.authMethod === 'google' || !!selectedUser.user?.googleId) ? 'Google Sign-In' : 'Email & Password'}
+                                    <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', textTransform: 'uppercase' }}>Auth Method</div>
+                                    <div style={{ fontWeight: 700, textTransform: 'capitalize', color: selectedUser.user?.authMethod === 'google' ? '#ea4335' : 'var(--accent-primary)' }}>
+                                        {selectedUser.user?.authMethod === 'google' ? 'Google Account' : 'Email / Password'}
                                     </div>
                                 </div>
                                 <div>
-                                    <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', textTransform: 'uppercase' }}>AI Tokens</div>
-                                    <div style={{ fontSize: '0.95rem', fontWeight: 700, marginTop: '0.2rem', color: 'var(--accent-primary)' }}>
-                                        ⚡ {selectedUser.user?.aiTokens !== undefined ? selectedUser.user?.aiTokens : 50} remaining
-                                    </div>
-                                </div>
-                                <div>
-                                    <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', textTransform: 'uppercase' }}>Role</div>
-                                    <div style={{ fontSize: '0.95rem', fontWeight: 700, marginTop: '0.2rem', color: selectedUser.user?.role === 'admin' ? 'var(--accent-tertiary)' : 'var(--accent-primary)' }}>
-                                        {selectedUser.user?.role?.toUpperCase()}
+                                    <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', textTransform: 'uppercase' }}>Account Role</div>
+                                    <div style={{ fontWeight: 700, textTransform: 'capitalize', color: selectedUser.user?.role === 'admin' ? 'var(--accent-tertiary)' : 'var(--text-primary)' }}>
+                                        {selectedUser.user?.role || 'User'}
                                     </div>
                                 </div>
                                 <div>
                                     <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', textTransform: 'uppercase' }}>Status</div>
-                                    <div style={{ fontSize: '0.95rem', fontWeight: 700, marginTop: '0.2rem', color: selectedUser.user?.isActive ? 'var(--success)' : 'var(--error)' }}>
-                                        {selectedUser.user?.isActive ? 'Active' : 'Inactive'}
+                                    <div style={{ fontWeight: 700, color: selectedUser.user?.isActive ? 'var(--success)' : 'var(--error)' }}>
+                                        {selectedUser.user?.isActive ? 'Active' : 'Deactivated'}
+                                    </div>
+                                </div>
+                                <div>
+                                    <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', textTransform: 'uppercase' }}>AI Tokens</div>
+                                    <div style={{ fontWeight: 800, color: 'var(--accent-primary)' }}>
+                                        ⚡ {selectedUser.user?.aiTokens !== undefined ? selectedUser.user?.aiTokens : 50}
                                     </div>
                                 </div>
                             </div>
@@ -1422,20 +1373,18 @@ export default function AdminDashboard() {
                             </div>
 
                             <div>
-                                <h4 style={{ fontSize: '0.95rem', fontWeight: 700, marginBottom: '0.5rem', color: 'var(--text-primary)' }}>
-                                    Created Quizzes ({selectedUser.quizzes?.count || 0})
-                                </h4>
-                                {selectedUser.quizzes?.items?.length > 0 ? (
+                                <h4 style={{ fontSize: '0.95rem', fontWeight: 700, marginBottom: '0.5rem', color: 'var(--text-primary)' }}>Recent Quizzes Created</h4>
+                                {selectedUser.quizzes?.length === 0 ? (
+                                    <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)', padding: '0.5rem 0' }}>No quizzes created yet</div>
+                                ) : (
                                     <div style={{ display: 'grid', gap: '0.5rem', maxHeight: '180px', overflowY: 'auto' }}>
-                                        {selectedUser.quizzes.items.map(q => (
-                                            <div key={q._id} style={{ padding: '0.6rem 0.85rem', background: 'var(--bg-secondary)', borderRadius: '0.5rem', fontSize: '0.85rem', display: 'flex', justifyContent: 'space-between' }}>
-                                                <span>{q.title}</span>
-                                                <span style={{ color: 'var(--text-muted)' }}>{q.questions?.length || 0} Qs</span>
+                                        {selectedUser.quizzes?.map(q => (
+                                            <div key={q._id} style={{ padding: '0.65rem 0.85rem', background: 'var(--bg-secondary)', borderRadius: '0.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.85rem' }}>
+                                                <span style={{ fontWeight: 600 }}>{q.title}</span>
+                                                <span style={{ color: 'var(--text-muted)', fontSize: '0.75rem' }}>{q.questions?.length || 0} Qs</span>
                                             </div>
                                         ))}
                                     </div>
-                                ) : (
-                                    <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', margin: 0 }}>No quizzes created yet.</p>
                                 )}
                             </div>
                         </div>
@@ -1446,45 +1395,32 @@ export default function AdminDashboard() {
             {/* Manage / Grant AI Tokens Modal */}
             {tokenModalUser && (
                 <div
-                    style={{
-                        position: 'fixed',
-                        top: 0,
-                        left: 0,
-                        right: 0,
-                        bottom: 0,
-                        background: 'rgba(0,0,0,0.7)',
-                        backdropFilter: 'blur(8px)',
-                        WebkitBackdropFilter: 'blur(8px)',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        zIndex: 1100,
-                        padding: '1.5rem'
-                    }}
+                    className="admin-modal-overlay"
                     onClick={() => setTokenModalUser(null)}
                 >
                     <div
                         onClick={e => e.stopPropagation()}
-                        className="card animate-fade-in"
-                        style={{
-                            width: '100%',
-                            maxWidth: '500px',
-                            padding: '2rem',
-                            border: '1.5px solid var(--accent-primary)',
-                            boxShadow: '0 20px 40px rgba(0,0,0,0.3)'
-                        }}
+                        className="admin-modal-card animate-fade-in"
+                        style={{ maxWidth: '520px' }}
                     >
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem' }}>
                             <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
-                                <div style={{ padding: '0.5rem', background: 'rgba(99, 102, 241, 0.12)', borderRadius: '0.6rem' }}>
-                                    <Zap size={22} color="var(--accent-primary)" />
+                                <div style={{
+                                    width: '38px',
+                                    height: '38px',
+                                    borderRadius: '10px',
+                                    background: 'rgba(99, 102, 241, 0.15)',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    color: 'var(--accent-primary)'
+                                }}>
+                                    <Zap size={20} />
                                 </div>
                                 <div>
-                                    <h3 style={{ fontSize: '1.2rem', fontWeight: 800, margin: 0, color: 'var(--text-primary)' }}>
-                                        Manage AI Tokens
-                                    </h3>
-                                    <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', margin: 0 }}>
-                                        for {tokenModalUser.name} ({tokenModalUser.email})
+                                    <h3 style={{ fontSize: '1.2rem', fontWeight: 800, margin: 0, color: 'var(--text-primary)' }}>Manage AI Tokens</h3>
+                                    <p style={{ fontSize: '0.825rem', color: 'var(--text-secondary)', margin: 0 }}>
+                                        For <strong>{tokenModalUser.name}</strong> ({tokenModalUser.email})
                                     </p>
                                 </div>
                             </div>
@@ -1493,27 +1429,27 @@ export default function AdminDashboard() {
                             </button>
                         </div>
 
-                        {/* Current Balance */}
+                        {/* Current Token Stats Banner */}
                         <div style={{
+                            display: 'grid',
+                            gridTemplateColumns: '1fr 1fr',
+                            gap: '0.75rem',
                             background: 'var(--bg-secondary)',
                             padding: '1rem',
-                            borderRadius: '0.75rem',
-                            border: '1px solid var(--border-color)',
+                            borderRadius: '0.85rem',
                             marginBottom: '1.25rem',
-                            display: 'flex',
-                            justifyContent: 'space-between',
-                            alignItems: 'center'
+                            border: '1px solid var(--border-color)'
                         }}>
                             <div>
-                                <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>Current Balance</div>
-                                <div style={{ fontSize: '1.4rem', fontWeight: 800, color: 'var(--accent-primary)' }}>
-                                    ⚡ {tokenModalUser.aiTokens !== undefined ? tokenModalUser.aiTokens : 50} tokens
+                                <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>Available Tokens</div>
+                                <div style={{ fontSize: '1.6rem', fontWeight: 900, color: 'var(--accent-primary)' }}>
+                                    {tokenModalUser.aiTokens !== undefined ? tokenModalUser.aiTokens : 50}
                                 </div>
                             </div>
-                            <div style={{ textAlign: 'right' }}>
-                                <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>Used So Far</div>
-                                <div style={{ fontSize: '1.1rem', fontWeight: 700, color: 'var(--text-muted)' }}>
-                                    {tokenModalUser.aiTokensUsed || 0} questions
+                            <div>
+                                <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>Questions Generated</div>
+                                <div style={{ fontSize: '1.6rem', fontWeight: 800, color: 'var(--text-primary)' }}>
+                                    {tokenModalUser.aiTokensUsed || 0}
                                 </div>
                             </div>
                         </div>
@@ -1521,7 +1457,7 @@ export default function AdminDashboard() {
                         {/* Action Selector */}
                         <div style={{ marginBottom: '1.25rem' }}>
                             <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 700, color: 'var(--text-primary)', marginBottom: '0.5rem' }}>
-                                Choose Action
+                                Token Adjustment Mode
                             </label>
                             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.5rem' }}>
                                 <button
@@ -1642,33 +1578,12 @@ export default function AdminDashboard() {
             {/* Log Details Modal */}
             {selectedLog && (
                 <div
-                    style={{
-                        position: 'fixed',
-                        top: 0,
-                        left: 0,
-                        right: 0,
-                        bottom: 0,
-                        background: 'rgba(0,0,0,0.7)',
-                        backdropFilter: 'blur(8px)',
-                        WebkitBackdropFilter: 'blur(8px)',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        zIndex: 1000,
-                        padding: '1.5rem'
-                    }}
+                    className="admin-modal-overlay"
                     onClick={() => setSelectedLog(null)}
                 >
                     <div
                         onClick={e => e.stopPropagation()}
-                        className="card animate-fade-in"
-                        style={{
-                            width: '100%',
-                            maxWidth: '650px',
-                            maxHeight: '85vh',
-                            overflowY: 'auto',
-                            padding: '2rem'
-                        }}
+                        className="admin-modal-card animate-fade-in"
                     >
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
                             <h3 style={{ fontSize: '1.25rem', fontWeight: 800, margin: 0, color: 'var(--text-primary)' }}>Audit Log Details</h3>
@@ -1683,7 +1598,7 @@ export default function AdminDashboard() {
                                 <div style={{ fontSize: '1.15rem', fontWeight: 800, color: 'var(--accent-primary)' }}>{selectedLog.action}</div>
                             </div>
 
-                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', background: 'var(--bg-secondary)', padding: '0.85rem', borderRadius: '0.75rem' }}>
+                            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '1rem', background: 'var(--bg-secondary)', padding: '0.85rem', borderRadius: '0.75rem' }}>
                                 <div>
                                     <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', textTransform: 'uppercase' }}>User</div>
                                     <div style={{ fontWeight: 600 }}>{selectedLog.userName || 'Unknown'}</div>
@@ -1712,7 +1627,7 @@ export default function AdminDashboard() {
                                 </pre>
                             </div>
 
-                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
+                            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '1rem', fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
                                 <div>IP Address: <strong>{selectedLog.ipAddress || 'N/A'}</strong></div>
                                 <div style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={selectedLog.userAgent}>
                                     User Agent: {selectedLog.userAgent || 'N/A'}
