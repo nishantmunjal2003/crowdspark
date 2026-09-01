@@ -613,11 +613,66 @@ app.get('/api/users/:id/profile', async (req, res) => {
         isActive: user.isActive,
         aiTokens: user.aiTokens !== undefined ? user.aiTokens : 50,
         aiTokensUsed: user.aiTokensUsed || 0,
-        aiTokensTotal: user.aiTokensTotal || 50
+        aiTokensTotal: user.aiTokensTotal || 50,
+        createdAt: user.createdAt
       }
     });
   } catch (err) {
     res.status(500).json({ error: err.message });
+  }
+});
+
+// Update user profile (Name & Picture only - email cannot be changed)
+app.put('/api/users/:id/profile', async (req, res) => {
+  try {
+    const { name, picture } = req.body;
+    if (!name || !name.trim()) {
+      return res.status(400).json({ error: 'Name cannot be empty' });
+    }
+
+    const updates = {
+      name: name.trim()
+    };
+
+    if (picture !== undefined) {
+      updates.picture = picture;
+    }
+
+    // Explicitly prevent email or role tampering from user profile endpoint
+    const user = await User.findByIdAndUpdate(
+      req.params.id,
+      { $set: updates },
+      { new: true }
+    );
+
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    // Log activity
+    await logActivity(user._id, user.email, user.name, 'profile_updated', {
+      newName: user.name
+    }, req);
+
+    res.json({
+      success: true,
+      message: 'Profile updated successfully',
+      user: {
+        _id: user._id,
+        name: user.name,
+        email: user.email,
+        picture: user.picture,
+        role: user.role,
+        isActive: user.isActive,
+        aiTokens: user.aiTokens !== undefined ? user.aiTokens : 50,
+        aiTokensUsed: user.aiTokensUsed || 0,
+        aiTokensTotal: user.aiTokensTotal || 50,
+        createdAt: user.createdAt
+      }
+    });
+  } catch (err) {
+    console.error('Error updating profile:', err);
+    res.status(500).json({ error: 'Failed to update profile' });
   }
 });
 

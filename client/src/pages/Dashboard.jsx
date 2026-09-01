@@ -30,10 +30,12 @@ import {
 } from 'lucide-react';
 import '../dashboard.css';
 import QuizReportModal from '../components/QuizReportModal';
+import UserProfileModal from '../components/UserProfileModal';
 
 export default function Dashboard() {
     const navigate = useNavigate();
     const [user, setUser] = useState(null);
+    const [showProfileModal, setShowProfileModal] = useState(false);
     const [quizzes, setQuizzes] = useState([]);
     const [activeTab, setActiveTab] = useState('all'); // all, quiz, poll
     const [selectedGroup, setSelectedGroup] = useState('all'); // all or group name
@@ -417,7 +419,65 @@ export default function Dashboard() {
                             {isDarkMode ? <Sun size={16} /> : <Moon size={16} />}
                             {isDarkMode ? 'Light' : 'Dark'}
                         </button>
-                        <button onClick={handleLogout} className="btn btn-secondary">
+
+                        {/* User Profile & Role Option Button */}
+                        <button
+                            onClick={() => setShowProfileModal(true)}
+                            className="btn"
+                            style={{
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                gap: '0.65rem',
+                                padding: '0.35rem 0.85rem 0.35rem 0.45rem',
+                                background: 'var(--bg-secondary)',
+                                border: '1px solid var(--border-color)',
+                                borderRadius: '2rem',
+                                cursor: 'pointer',
+                                transition: 'all 0.2s ease',
+                                boxShadow: '0 2px 6px rgba(0,0,0,0.05)'
+                            }}
+                            title="View & Edit Profile"
+                        >
+                            {user.picture ? (
+                                <img
+                                    src={user.picture}
+                                    alt={user.name}
+                                    style={{ width: '30px', height: '30px', borderRadius: '50%', objectFit: 'cover' }}
+                                />
+                            ) : (
+                                <div style={{
+                                    width: '30px',
+                                    height: '30px',
+                                    borderRadius: '50%',
+                                    background: 'linear-gradient(135deg, #6366f1, #8b5cf6)',
+                                    color: 'white',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    fontSize: '0.8rem',
+                                    fontWeight: 800
+                                }}>
+                                    {user.name ? user.name.slice(0, 1).toUpperCase() : 'U'}
+                                </div>
+                            )}
+                            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', textAlign: 'left', lineHeight: 1.15 }}>
+                                <span style={{ fontSize: '0.825rem', fontWeight: 700, color: 'var(--text-primary)', maxWidth: '130px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                                    {user.name}
+                                </span>
+                                <span style={{
+                                    fontSize: '0.675rem',
+                                    fontWeight: 700,
+                                    textTransform: 'uppercase',
+                                    color: user.role === 'admin' ? '#ec4899' : '#818cf8',
+                                    letterSpacing: '0.03em'
+                                }}>
+                                    {user.role === 'admin' ? '🛡️ Admin' : '👤 Host'}
+                                </span>
+                            </div>
+                        </button>
+
+                        {/* Standalone Logout Button */}
+                        <button onClick={handleLogout} className="btn btn-secondary" title="Log out of CrowdSpark">
                             <LogOut size={16} />
                             Logout
                         </button>
@@ -1663,6 +1723,19 @@ export default function Dashboard() {
                         </div>
                     </div>
                 </div>
+            )}
+
+            {/* User Profile Modal */}
+            {showProfileModal && (
+                <UserProfileModal
+                    user={user}
+                    userTokens={userTokens}
+                    totalQuizzes={totalQuizzes}
+                    totalParticipants={totalParticipantsAll}
+                    onClose={() => setShowProfileModal(false)}
+                    onUpdateUser={(updatedUser) => setUser(updatedUser)}
+                    onLogout={handleLogout}
+                />
             )}
         </div>
     );
