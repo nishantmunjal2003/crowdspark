@@ -894,87 +894,111 @@ export default function Dashboard() {
                         </button>
                     </div>
 
-                    {/* Filter Tabs & Groups Section */}
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                        {/* Type Tabs (All, Quizzes, Polls) */}
-                        <div className="dashboard-filter-tabs" style={{ marginBottom: 0 }}>
-                            {['all', 'quiz', 'poll'].map((tab, index) => (
-                                <button
-                                    key={tab}
-                                    onClick={() => setActiveTab(tab)}
-                                    className="animate-fade-in"
-                                    style={{
-                                        padding: '0.6rem 1.25rem',
-                                        borderRadius: '2rem',
-                                        border: activeTab === tab ? '1px solid rgba(129, 140, 248, 0.5)' : '1px solid var(--border-color)',
-                                        background: activeTab === tab ? 'rgba(129, 140, 248, 0.15)' : 'var(--bg-secondary)',
-                                        color: activeTab === tab ? '#818cf8' : 'var(--text-secondary)',
-                                        fontWeight: activeTab === tab ? '700' : '500',
-                                        fontSize: '0.875rem',
-                                        cursor: 'pointer',
-                                        transition: 'all 0.2s ease',
-                                        boxShadow: activeTab === tab ? '0 2px 8px rgba(99, 102, 241, 0.15)' : 'none'
-                                    }}
-                                >
-                                    {tab === 'all' ? `All (${quizzes.length})` : tab === 'quiz' ? `Quizzes (${totalQuizzes})` : `Polls (${totalPolls})`}
-                                </button>
-                            ))}
-                        </div>
-
-                        {/* Groups Filter Section */}
-                        <div className="dashboard-groups-section">
-                            <div className="dashboard-groups-header">
-                                <div className="dashboard-groups-title">
-                                    <Folder size={15} color="#818cf8" />
-                                    <span>Groups & Folders</span>
+                    {/* Filter Tabs & Groups Section (Single Unified Row) */}
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
+                        <div style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'space-between',
+                            gap: '0.75rem',
+                            flexWrap: 'wrap'
+                        }}>
+                            {/* Left: Type Tabs + Group Pills */}
+                            <div style={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '0.5rem',
+                                flexWrap: 'wrap',
+                                flex: 1
+                            }}>
+                                {/* Type Tabs (All, Quizzes, Polls) */}
+                                <div className="dashboard-filter-tabs" style={{ marginBottom: 0, gap: '0.4rem' }}>
+                                    {['all', 'quiz', 'poll'].map((tab) => (
+                                        <button
+                                            key={tab}
+                                            onClick={() => setActiveTab(tab)}
+                                            style={{
+                                                padding: '0.5rem 1.1rem',
+                                                borderRadius: '2rem',
+                                                border: activeTab === tab ? '1.5px solid #818cf8' : '1px solid var(--border-color)',
+                                                background: activeTab === tab ? 'rgba(129, 140, 248, 0.18)' : 'var(--bg-secondary)',
+                                                color: activeTab === tab ? '#818cf8' : 'var(--text-secondary)',
+                                                fontWeight: activeTab === tab ? '700' : '500',
+                                                fontSize: '0.825rem',
+                                                cursor: 'pointer',
+                                                transition: 'all 0.2s ease',
+                                                boxShadow: activeTab === tab ? '0 2px 8px rgba(99, 102, 241, 0.15)' : 'none'
+                                            }}
+                                        >
+                                            {tab === 'all' ? `All (${quizzes.length})` : tab === 'quiz' ? `Quizzes (${totalQuizzes})` : `Polls (${totalPolls})`}
+                                        </button>
+                                    ))}
                                 </div>
-                                <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+
+                                {/* Subtle Vertical Divider */}
+                                <div style={{ width: '1px', height: '22px', background: 'var(--border-color)', margin: '0 0.25rem' }} />
+
+                                {/* Group Pills */}
+                                <div style={{
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: '0.4rem',
+                                    flexWrap: 'wrap'
+                                }}>
                                     <button
                                         type="button"
-                                        onClick={() => setShowManageGroupsModal(true)}
-                                        className="btn"
-                                        style={{
-                                            padding: '0.3rem 0.75rem',
-                                            fontSize: '0.75rem',
-                                            fontWeight: 600,
-                                            background: 'var(--bg-secondary)',
-                                            color: 'var(--text-secondary)',
-                                            border: '1px solid var(--border-color)',
-                                            borderRadius: '0.75rem'
-                                        }}
-                                        title="Manage and rename groups"
+                                        onClick={() => setSelectedGroup('all')}
+                                        className={`group-pill-btn ${selectedGroup === 'all' ? 'active' : ''}`}
+                                        style={{ padding: '0.45rem 0.85rem', fontSize: '0.8rem' }}
                                     >
-                                        Manage Groups
+                                        <Folder size={13} />
+                                        <span>All Groups ({quizzes.length})</span>
                                     </button>
+
+                                    {uniqueGroups.map((g) => {
+                                        const count = groupCounts[g] || 0;
+                                        const isActive = selectedGroup.toLowerCase() === g.toLowerCase();
+                                        return (
+                                            <button
+                                                key={g}
+                                                type="button"
+                                                onClick={() => setSelectedGroup(isActive ? 'all' : g)}
+                                                className={`group-pill-btn ${isActive ? 'active' : ''}`}
+                                                style={{ padding: '0.45rem 0.85rem', fontSize: '0.8rem' }}
+                                            >
+                                                <Folder size={13} />
+                                                <span>{g} ({count})</span>
+                                            </button>
+                                        );
+                                    })}
                                 </div>
                             </div>
 
-                            <div className="dashboard-groups-pills">
-                                <button
-                                    type="button"
-                                    onClick={() => setSelectedGroup('all')}
-                                    className={`group-pill-btn ${selectedGroup === 'all' ? 'active' : ''}`}
-                                >
-                                    <Folder size={14} />
-                                    <span>All Groups ({quizzes.length})</span>
-                                </button>
-
-                                {uniqueGroups.map((g) => {
-                                    const count = groupCounts[g] || 0;
-                                    const isActive = selectedGroup.toLowerCase() === g.toLowerCase();
-                                    return (
-                                        <button
-                                            key={g}
-                                            type="button"
-                                            onClick={() => setSelectedGroup(isActive ? 'all' : g)}
-                                            className={`group-pill-btn ${isActive ? 'active' : ''}`}
-                                        >
-                                            <Folder size={14} />
-                                            <span>{g} ({count})</span>
-                                        </button>
-                                    );
-                                })}
-                            </div>
+                            {/* Right: Manage Groups Button */}
+                            <button
+                                type="button"
+                                onClick={() => setShowManageGroupsModal(true)}
+                                className="btn"
+                                style={{
+                                    display: 'inline-flex',
+                                    alignItems: 'center',
+                                    gap: '0.4rem',
+                                    padding: '0.45rem 0.85rem',
+                                    fontSize: '0.775rem',
+                                    fontWeight: 600,
+                                    background: 'var(--bg-secondary)',
+                                    color: 'var(--text-secondary)',
+                                    border: '1px solid var(--border-color)',
+                                    borderRadius: '0.75rem',
+                                    whiteSpace: 'nowrap',
+                                    cursor: 'pointer',
+                                    transition: 'all 0.15s ease'
+                                }}
+                                title="Manage and rename groups"
+                            >
+                                <Folder size={13} color="#818cf8" />
+                                <span>Manage Groups</span>
+                            </button>
                         </div>
 
                         {/* Active Filter Indicator & Reset Button */}
