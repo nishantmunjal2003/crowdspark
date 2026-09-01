@@ -1443,7 +1443,7 @@ export default function AdminDashboard() {
                                             AI Token Upgrade Requests
                                         </h3>
                                         <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', margin: '0.15rem 0 0 0' }}>
-                                            User requests to purchase AI Tokens ($1 for 100 Tokens)
+                                            User requests to purchase AI Tokens ($1 for 50 Tokens)
                                         </p>
                                     </div>
                                 </div>
@@ -1566,7 +1566,7 @@ export default function AdminDashboard() {
                                                                             }}
                                                                         >
                                                                             <Zap size={14} fill="currentColor" />
-                                                                            {isProcessing ? 'Processing...' : `Approve & Credit (+${req.tokensRequested || 100})`}
+                                                                            {isProcessing ? 'Processing...' : `Approve & Credit (+${req.tokensRequested || 50})`}
                                                                         </button>
                                                                         <button
                                                                             onClick={() => handleRejectTokenRequest(req._id)}

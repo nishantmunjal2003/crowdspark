@@ -536,7 +536,7 @@ router.post('/token-requests/:id/approve', isAdmin, async (req, res) => {
             return res.status(404).json({ error: 'User for this token request no longer exists' });
         }
 
-        const tokensToAdd = tokenReq.tokensRequested || 100;
+        const tokensToAdd = tokenReq.tokensRequested || 50;
         user.aiTokens = (user.aiTokens || 0) + tokensToAdd;
         user.aiTokensTotal = (user.aiTokensTotal || 0) + tokensToAdd;
         await user.save();

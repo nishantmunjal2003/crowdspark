@@ -37,7 +37,7 @@ export default function Dashboard() {
         aiTokensTotal: 50
     });
     const [showBuyTokensModal, setShowBuyTokensModal] = useState(false);
-    const [selectedTokenPack, setSelectedTokenPack] = useState({ tokens: 100, price: 1 });
+    const [selectedTokenPack, setSelectedTokenPack] = useState({ tokens: 50, price: 1 });
     const [isSubmittingTokenReq, setIsSubmittingTokenReq] = useState(false);
     const [tokenReqSuccessMsg, setTokenReqSuccessMsg] = useState('');
     const [tokenReqNote, setTokenReqNote] = useState('');
@@ -865,10 +865,10 @@ export default function Dashboard() {
                                             ⚡ Special Rate
                                         </div>
                                         <div style={{ fontSize: '1.5rem', fontWeight: 900, color: 'var(--text-primary)', marginTop: '0.15rem' }}>
-                                            $1.00 for 100 AI Tokens
+                                            $1.00 for 50 AI Tokens
                                         </div>
                                         <div style={{ fontSize: '0.825rem', color: 'var(--text-secondary)', marginTop: '0.2rem' }}>
-                                            Only $0.01 per AI-generated question • No expiry
+                                            Only $0.02 per AI-generated question • No expiry
                                         </div>
                                     </div>
                                     <div style={{
@@ -880,7 +880,7 @@ export default function Dashboard() {
                                         borderRadius: '0.75rem',
                                         boxShadow: '0 4px 12px rgba(99, 102, 241, 0.3)'
                                     }}>
-                                        100 Qs = $1
+                                        50 Qs = $1
                                     </div>
                                 </div>
 
@@ -891,10 +891,10 @@ export default function Dashboard() {
                                     </label>
                                     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(110px, 1fr))', gap: '0.75rem' }}>
                                         {[
-                                            { tokens: 100, price: 1, label: '100 Tokens', tag: 'Standard' },
-                                            { tokens: 200, price: 2, label: '200 Tokens', tag: 'Popular' },
-                                            { tokens: 500, price: 5, label: '500 Tokens', tag: 'Educator' },
-                                            { tokens: 1000, price: 10, label: '1,000 Tokens', tag: 'Pro Host' }
+                                            { tokens: 50, price: 1, label: '50 Tokens', tag: 'Starter' },
+                                            { tokens: 100, price: 2, label: '100 Tokens', tag: 'Popular' },
+                                            { tokens: 250, price: 5, label: '250 Tokens', tag: 'Educator' },
+                                            { tokens: 500, price: 10, label: '500 Tokens', tag: 'Pro Host' }
                                         ].map(pkg => {
                                             const isSelected = selectedTokenPack.tokens === pkg.tokens;
                                             return (

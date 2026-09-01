@@ -503,10 +503,10 @@ app.get('/api/users/:id/profile', async (req, res) => {
   }
 });
 
-// User Token Request Endpoint ($1 for 100 tokens)
+// User Token Request Endpoint ($1 for 50 tokens)
 app.post('/api/tokens/request', async (req, res) => {
   try {
-    const { userId, tokensRequested = 100, amount = 1, note = '' } = req.body;
+    const { userId, tokensRequested = 50, amount = 1, note = '' } = req.body;
 
     if (!userId || !mongoose.Types.ObjectId.isValid(userId)) {
       return res.status(400).json({ error: 'Valid user ID is required' });
@@ -517,7 +517,7 @@ app.post('/api/tokens/request', async (req, res) => {
       return res.status(404).json({ error: 'User not found' });
     }
 
-    const numTokens = parseInt(tokensRequested) || 100;
+    const numTokens = parseInt(tokensRequested) || 50;
     const numAmount = parseFloat(amount) || 1;
 
     // Create Token Request record

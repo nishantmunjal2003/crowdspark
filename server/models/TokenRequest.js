@@ -16,7 +16,7 @@ const tokenRequestSchema = new mongoose.Schema({
   },
   tokensRequested: {
     type: Number,
-    default: 100
+    default: 50
   },
   amount: {
     type: Number,
