@@ -736,8 +736,8 @@ export default function Dashboard() {
                     </div>
                 </div>
 
-                {/* Create New Buttons (Compact if user already has quizzes, Large if 0 quizzes) */}
-                {quizzes.length === 0 ? (
+                {/* Onboarding Cards if user has 0 quizzes */}
+                {quizzes.length === 0 && (
                     <div className="dashboard-create-grid">
                         <button
                             onClick={() => navigate('/create-quiz', { state: { type: 'quiz' } })}
@@ -787,83 +787,11 @@ export default function Dashboard() {
                             </div>
                         </button>
                     </div>
-                ) : (
-                    <div style={{
-                        display: 'flex',
-                        gap: '0.85rem',
-                        marginBottom: '1.75rem',
-                        flexWrap: 'wrap',
-                        alignItems: 'center'
-                    }}>
-                        <button
-                            onClick={() => navigate('/create-quiz', { state: { type: 'quiz' } })}
-                            className="btn animate-fade-in"
-                            style={{
-                                display: 'inline-flex',
-                                alignItems: 'center',
-                                gap: '0.5rem',
-                                padding: '0.65rem 1.35rem',
-                                background: 'linear-gradient(135deg, #6366f1, #8b5cf6)',
-                                color: 'white',
-                                fontSize: '0.925rem',
-                                fontWeight: 700,
-                                borderRadius: '1rem',
-                                boxShadow: '0 4px 14px rgba(99, 102, 241, 0.3)',
-                                border: 'none',
-                                cursor: 'pointer',
-                                transition: 'all 0.2s ease',
-                                animationDelay: '0.3s'
-                            }}
-                            onMouseEnter={e => {
-                                e.currentTarget.style.transform = 'translateY(-2px)';
-                                e.currentTarget.style.boxShadow = '0 6px 18px rgba(99, 102, 241, 0.45)';
-                            }}
-                            onMouseLeave={e => {
-                                e.currentTarget.style.transform = 'translateY(0)';
-                                e.currentTarget.style.boxShadow = '0 4px 14px rgba(99, 102, 241, 0.3)';
-                            }}
-                        >
-                            <Plus size={18} />
-                            <span>Create Quiz</span>
-                        </button>
-
-                        <button
-                            onClick={() => navigate('/create-quiz', { state: { type: 'poll' } })}
-                            className="btn animate-fade-in"
-                            style={{
-                                display: 'inline-flex',
-                                alignItems: 'center',
-                                gap: '0.5rem',
-                                padding: '0.65rem 1.35rem',
-                                background: 'linear-gradient(135deg, #10b981, #059669)',
-                                color: 'white',
-                                fontSize: '0.925rem',
-                                fontWeight: 700,
-                                borderRadius: '1rem',
-                                boxShadow: '0 4px 14px rgba(16, 185, 129, 0.25)',
-                                border: 'none',
-                                cursor: 'pointer',
-                                transition: 'all 0.2s ease',
-                                animationDelay: '0.4s'
-                            }}
-                            onMouseEnter={e => {
-                                e.currentTarget.style.transform = 'translateY(-2px)';
-                                e.currentTarget.style.boxShadow = '0 6px 18px rgba(16, 185, 129, 0.4)';
-                            }}
-                            onMouseLeave={e => {
-                                e.currentTarget.style.transform = 'translateY(0)';
-                                e.currentTarget.style.boxShadow = '0 4px 14px rgba(16, 185, 129, 0.25)';
-                            }}
-                        >
-                            <Plus size={18} />
-                            <span>Create Poll</span>
-                        </button>
-                    </div>
                 )}
 
                 {/* Search & Groups Toolbar */}
                 <div className="dashboard-toolbar animate-fade-in" style={{ animationDelay: '0.45s' }}>
-                    {/* Search Bar Row */}
+                    {/* Search Bar & Quick Create Actions Row */}
                     <div className="dashboard-search-row">
                         <div className="dashboard-search-container">
                             <span className="dashboard-search-icon">
@@ -894,6 +822,75 @@ export default function Dashboard() {
                         >
                             <Search size={16} />
                             <span>Search</span>
+                        </button>
+
+                        {/* Create Buttons on the Right Side of Search Row */}
+                        <button
+                            onClick={() => navigate('/create-quiz', { state: { type: 'quiz' } })}
+                            className="btn animate-fade-in"
+                            style={{
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                gap: '0.45rem',
+                                height: '50px',
+                                padding: '0 1.25rem',
+                                background: 'linear-gradient(135deg, #6366f1, #8b5cf6)',
+                                color: 'white',
+                                fontSize: '0.9rem',
+                                fontWeight: 700,
+                                borderRadius: '1.25rem',
+                                boxShadow: '0 4px 14px rgba(99, 102, 241, 0.25)',
+                                border: 'none',
+                                cursor: 'pointer',
+                                transition: 'all 0.2s ease',
+                                whiteSpace: 'nowrap'
+                            }}
+                            onMouseEnter={e => {
+                                e.currentTarget.style.transform = 'translateY(-2px)';
+                                e.currentTarget.style.boxShadow = '0 6px 18px rgba(99, 102, 241, 0.4)';
+                            }}
+                            onMouseLeave={e => {
+                                e.currentTarget.style.transform = 'translateY(0)';
+                                e.currentTarget.style.boxShadow = '0 4px 14px rgba(99, 102, 241, 0.25)';
+                            }}
+                            title="Create a new quiz"
+                        >
+                            <Plus size={17} />
+                            <span>Create Quiz</span>
+                        </button>
+
+                        <button
+                            onClick={() => navigate('/create-quiz', { state: { type: 'poll' } })}
+                            className="btn animate-fade-in"
+                            style={{
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                gap: '0.45rem',
+                                height: '50px',
+                                padding: '0 1.25rem',
+                                background: 'linear-gradient(135deg, #10b981, #059669)',
+                                color: 'white',
+                                fontSize: '0.9rem',
+                                fontWeight: 700,
+                                borderRadius: '1.25rem',
+                                boxShadow: '0 4px 14px rgba(16, 185, 129, 0.25)',
+                                border: 'none',
+                                cursor: 'pointer',
+                                transition: 'all 0.2s ease',
+                                whiteSpace: 'nowrap'
+                            }}
+                            onMouseEnter={e => {
+                                e.currentTarget.style.transform = 'translateY(-2px)';
+                                e.currentTarget.style.boxShadow = '0 6px 18px rgba(16, 185, 129, 0.4)';
+                            }}
+                            onMouseLeave={e => {
+                                e.currentTarget.style.transform = 'translateY(0)';
+                                e.currentTarget.style.boxShadow = '0 4px 14px rgba(16, 185, 129, 0.25)';
+                            }}
+                            title="Create a new poll"
+                        >
+                            <Plus size={17} />
+                            <span>Create Poll</span>
                         </button>
                     </div>
 
