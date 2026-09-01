@@ -414,15 +414,24 @@ export default function Dashboard() {
                             <span>{userTokens.aiTokens !== undefined ? userTokens.aiTokens : 50} AI Tokens</span>
                         </button>
 
-                        {/* Theme Toggle Button */}
+                        {/* Theme Toggle Button (Icon Only) */}
                         <button
                             onClick={toggleTheme}
                             className="btn btn-secondary"
                             title={isDarkMode ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
-                            style={{ gap: '0.5rem' }}
+                            style={{
+                                width: '42px',
+                                height: '42px',
+                                padding: 0,
+                                borderRadius: '50%',
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                cursor: 'pointer',
+                                transition: 'all 0.2s ease'
+                            }}
                         >
-                            {isDarkMode ? <Sun size={16} /> : <Moon size={16} />}
-                            {isDarkMode ? 'Light' : 'Dark'}
+                            {isDarkMode ? <Sun size={18} /> : <Moon size={18} />}
                         </button>
 
                         {/* User Profile Dropdown Button & Menu */}
