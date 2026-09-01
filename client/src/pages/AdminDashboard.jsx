@@ -494,17 +494,28 @@ export default function AdminDashboard() {
         });
     }, [users, tokenUserSearch, tokenRoleFilter, tokenBalanceFilter, tokenSort]);
 
-    if (!user || user.role !== 'admin') return null;
-    if (isLoading) return <div style={{ padding: '3rem', textAlign: 'center', color: 'var(--text-secondary)' }}>Loading admin dashboard...</div>;
+    // Derived Pending Token Requests
+    const pendingTokenRequests = useMemo(() => {
+        return tokenRequests.filter(r => r.status === 'pending');
+    }, [tokenRequests]);
 
     const hasUserFilters = userSearch || userRoleFilter !== 'all' || userStatusFilter !== 'all' || userAuthFilter !== 'all' || userSort !== 'newest';
     const hasQuizFilters = quizSearch || quizTypeFilter !== 'all' || quizLengthFilter !== 'all' || quizSort !== 'newest';
     const hasLogFilters = logSearch || logActionFilter !== 'all' || logTimeFilter !== 'all' || logSort !== 'newest';
     const hasTokenFilters = tokenUserSearch || tokenRoleFilter !== 'all' || tokenBalanceFilter !== 'all' || tokenSort !== 'tokens_desc';
 
-    const pendingTokenRequests = useMemo(() => {
-        return tokenRequests.filter(r => r.status === 'pending');
-    }, [tokenRequests]);
+    if (!user || user.role !== 'admin') return null;
+
+    if (isLoading) {
+        return (
+            <div className="admin-page-wrapper" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '80vh' }}>
+                <div style={{ textAlign: 'center', color: 'var(--text-secondary)' }}>
+                    <div style={{ width: '40px', height: '40px', border: '3px solid rgba(99, 102, 241, 0.2)', borderTopColor: 'var(--accent-primary)', borderRadius: '50%', animation: 'spin 1s linear infinite', margin: '0 auto 1rem auto' }} />
+                    <p style={{ fontSize: '1rem', fontWeight: 600 }}>Loading admin dashboard...</p>
+                </div>
+            </div>
+        );
+    }
 
     return (
         <div className="admin-page-wrapper">
