@@ -40,6 +40,8 @@ export default function Dashboard() {
     const [showProfileModal, setShowProfileModal] = useState(false);
     const [showProfileDropdown, setShowProfileDropdown] = useState(false);
     const profileDropdownRef = useRef(null);
+    const [showGroupDropdown, setShowGroupDropdown] = useState(false);
+    const groupDropdownRef = useRef(null);
     const [quizzes, setQuizzes] = useState([]);
     const [activeTab, setActiveTab] = useState('all'); // all, quiz, poll
     const [selectedGroup, setSelectedGroup] = useState('all'); // all or group name
@@ -82,14 +84,17 @@ export default function Dashboard() {
             if (profileDropdownRef.current && !profileDropdownRef.current.contains(event.target)) {
                 setShowProfileDropdown(false);
             }
+            if (groupDropdownRef.current && !groupDropdownRef.current.contains(event.target)) {
+                setShowGroupDropdown(false);
+            }
         }
-        if (showProfileDropdown) {
+        if (showProfileDropdown || showGroupDropdown) {
             document.addEventListener('mousedown', handleClickOutside);
         }
         return () => {
             document.removeEventListener('mousedown', handleClickOutside);
         };
-    }, [showProfileDropdown]);
+    }, [showProfileDropdown, showGroupDropdown]);
 
     const toggleTheme = () => setIsDarkMode(prev => !prev);
 
@@ -947,39 +952,173 @@ export default function Dashboard() {
                                 {/* Subtle Vertical Divider */}
                                 <div style={{ width: '1px', height: '22px', background: 'var(--border-color)', margin: '0 0.25rem' }} />
 
-                                {/* Group Pills */}
-                                <div style={{
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    gap: '0.4rem',
-                                    flexWrap: 'wrap'
-                                }}>
+                                {/* Groups Dropdown Menu */}
+                                <div style={{ position: 'relative' }} ref={groupDropdownRef}>
                                     <button
                                         type="button"
-                                        onClick={() => setSelectedGroup('all')}
-                                        className={`group-pill-btn ${selectedGroup === 'all' ? 'active' : ''}`}
-                                        style={{ padding: '0.45rem 0.85rem', fontSize: '0.8rem' }}
+                                        onClick={() => setShowGroupDropdown(prev => !prev)}
+                                        className="btn"
+                                        style={{
+                                            display: 'inline-flex',
+                                            alignItems: 'center',
+                                            gap: '0.5rem',
+                                            padding: '0.5rem 1rem',
+                                            borderRadius: '2rem',
+                                            border: selectedGroup !== 'all' ? '1.5px solid #818cf8' : '1px solid var(--border-color)',
+                                            background: selectedGroup !== 'all' ? 'rgba(129, 140, 248, 0.18)' : 'var(--bg-secondary)',
+                                            color: selectedGroup !== 'all' ? '#818cf8' : 'var(--text-secondary)',
+                                            fontWeight: selectedGroup !== 'all' ? '700' : '500',
+                                            fontSize: '0.825rem',
+                                            cursor: 'pointer',
+                                            transition: 'all 0.2s ease',
+                                            boxShadow: selectedGroup !== 'all' ? '0 2px 8px rgba(99, 102, 241, 0.15)' : 'none'
+                                        }}
+                                        title="Filter quizzes by group / folder"
                                     >
-                                        <Folder size={13} />
-                                        <span>All Groups ({quizzes.length})</span>
+                                        <Folder size={14} color={selectedGroup !== 'all' ? '#818cf8' : 'currentColor'} />
+                                        <span>{selectedGroup === 'all' ? `All Groups (${quizzes.length})` : `${selectedGroup} (${groupCounts[selectedGroup] || 0})`}</span>
+                                        <ChevronDown
+                                            size={14}
+                                            style={{
+                                                transition: 'transform 0.2s ease',
+                                                transform: showGroupDropdown ? 'rotate(180deg)' : 'rotate(0deg)'
+                                            }}
+                                        />
                                     </button>
 
-                                    {uniqueGroups.map((g) => {
-                                        const count = groupCounts[g] || 0;
-                                        const isActive = selectedGroup.toLowerCase() === g.toLowerCase();
-                                        return (
+                                    {/* Floating Groups Dropdown Menu */}
+                                    {showGroupDropdown && (
+                                        <div
+                                            className="animate-fade-in"
+                                            style={{
+                                                position: 'absolute',
+                                                top: 'calc(100% + 6px)',
+                                                left: 0,
+                                                minWidth: '220px',
+                                                background: 'var(--bg-secondary)',
+                                                border: '1.5px solid var(--border-color)',
+                                                borderRadius: '1rem',
+                                                padding: '0.4rem',
+                                                boxShadow: '0 15px 35px -5px rgba(0, 0, 0, 0.35), 0 0 0 1px var(--border-color)',
+                                                zIndex: 1050,
+                                                display: 'flex',
+                                                flexDirection: 'column',
+                                                gap: '0.2rem'
+                                            }}
+                                        >
+                                            <div style={{
+                                                fontSize: '0.725rem',
+                                                fontWeight: 700,
+                                                color: 'var(--text-secondary)',
+                                                textTransform: 'uppercase',
+                                                letterSpacing: '0.05em',
+                                                padding: '0.4rem 0.6rem 0.2rem 0.6rem'
+                                            }}>
+                                                Filter by Group
+                                            </div>
+
+                                            {/* All Groups Option */}
                                             <button
-                                                key={g}
                                                 type="button"
-                                                onClick={() => setSelectedGroup(isActive ? 'all' : g)}
-                                                className={`group-pill-btn ${isActive ? 'active' : ''}`}
-                                                style={{ padding: '0.45rem 0.85rem', fontSize: '0.8rem' }}
+                                                onClick={() => {
+                                                    setSelectedGroup('all');
+                                                    setShowGroupDropdown(false);
+                                                }}
+                                                className="btn"
+                                                style={{
+                                                    display: 'flex',
+                                                    alignItems: 'center',
+                                                    justifyContent: 'space-between',
+                                                    width: '100%',
+                                                    padding: '0.5rem 0.75rem',
+                                                    borderRadius: '0.6rem',
+                                                    background: selectedGroup === 'all' ? 'rgba(129, 140, 248, 0.15)' : 'transparent',
+                                                    border: 'none',
+                                                    color: selectedGroup === 'all' ? '#818cf8' : 'var(--text-primary)',
+                                                    fontWeight: selectedGroup === 'all' ? 700 : 500,
+                                                    fontSize: '0.825rem',
+                                                    cursor: 'pointer',
+                                                    textAlign: 'left'
+                                                }}
                                             >
-                                                <Folder size={13} />
-                                                <span>{g} ({count})</span>
+                                                <span style={{ display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
+                                                    <Folder size={14} />
+                                                    <span>All Groups</span>
+                                                </span>
+                                                <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', fontWeight: 600 }}>
+                                                    {quizzes.length}
+                                                </span>
                                             </button>
-                                        );
-                                    })}
+
+                                            {uniqueGroups.map((g) => {
+                                                const count = groupCounts[g] || 0;
+                                                const isSelected = selectedGroup.toLowerCase() === g.toLowerCase();
+                                                return (
+                                                    <button
+                                                        key={g}
+                                                        type="button"
+                                                        onClick={() => {
+                                                            setSelectedGroup(g);
+                                                            setShowGroupDropdown(false);
+                                                        }}
+                                                        className="btn"
+                                                        style={{
+                                                            display: 'flex',
+                                                            alignItems: 'center',
+                                                            justifyContent: 'space-between',
+                                                            width: '100%',
+                                                            padding: '0.5rem 0.75rem',
+                                                            borderRadius: '0.6rem',
+                                                            background: isSelected ? 'rgba(129, 140, 248, 0.15)' : 'transparent',
+                                                            border: 'none',
+                                                            color: isSelected ? '#818cf8' : 'var(--text-primary)',
+                                                            fontWeight: isSelected ? 700 : 500,
+                                                            fontSize: '0.825rem',
+                                                            cursor: 'pointer',
+                                                            textAlign: 'left'
+                                                        }}
+                                                    >
+                                                        <span style={{ display: 'flex', alignItems: 'center', gap: '0.45rem', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                                                            <Folder size={14} />
+                                                            <span>{g}</span>
+                                                        </span>
+                                                        <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', fontWeight: 600 }}>
+                                                            {count}
+                                                        </span>
+                                                    </button>
+                                                );
+                                            })}
+
+                                            <div style={{ height: '1px', background: 'var(--border-color)', margin: '0.25rem 0' }} />
+
+                                            <button
+                                                type="button"
+                                                onClick={() => {
+                                                    setShowGroupDropdown(false);
+                                                    setShowManageGroupsModal(true);
+                                                }}
+                                                className="btn"
+                                                style={{
+                                                    display: 'flex',
+                                                    alignItems: 'center',
+                                                    gap: '0.45rem',
+                                                    width: '100%',
+                                                    padding: '0.5rem 0.75rem',
+                                                    borderRadius: '0.6rem',
+                                                    background: 'transparent',
+                                                    border: 'none',
+                                                    color: 'var(--text-secondary)',
+                                                    fontSize: '0.8rem',
+                                                    fontWeight: 600,
+                                                    cursor: 'pointer',
+                                                    textAlign: 'left'
+                                                }}
+                                            >
+                                                <Folder size={14} color="#818cf8" />
+                                                <span>Manage & Rename Groups</span>
+                                            </button>
+                                        </div>
+                                    )}
                                 </div>
                             </div>
 
