@@ -3,11 +3,13 @@ const express = require('express');
 const http = require('http');
 const { Server } = require('socket.io');
 const cors = require('cors');
+const helmet = require('helmet');
+const rateLimit = require('express-rate-limit');
 const mongoose = require('mongoose');
 const { v4: uuidv4 } = require('uuid');
 const path = require('path');
 
-// Models
+// Models & Services
 const Quiz = require('./models/Quiz');
 const Response = require('./models/Response');
 const QuizSession = require('./models/QuizSession');
@@ -20,6 +22,7 @@ const { sendOtpEmail, sendWelcomeEmail, sendTokenRequestAdminNotification } = re
 const { OAuth2Client } = require('google-auth-library');
 const { logActivity } = require('./middleware/activityLogger');
 const { generateQuizFromAI } = require('./services/aiService');
+const { generateToken, authenticateToken } = require('./middleware/auth');
 
 const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 const bcrypt = require('bcrypt');
@@ -39,16 +42,76 @@ async function getDefaultAiTokens() {
   return 50;
 }
 
-// Middleware - MUST be before routes
-app.use(cors());
-app.use(express.json({ limit: '50mb' })); // Enable JSON body parsing with larger limit for base64 images
-app.use(express.urlencoded({ limit: '50mb', extended: true })); // Also increase URL-encoded body limit
+// --- Security Middleware ---
+// 1. Helmet HTTP Security Headers (allows cross-origin images for uploaded quiz assets)
+app.use(helmet({
+  crossOriginResourcePolicy: { policy: "cross-origin" }
+}));
+
+// 2. CORS policy configuration
+const allowedOrigins = [
+  'https://crowdspark.nishantmunjal.com',
+  'http://localhost:5173',
+  'http://localhost:5174',
+  'http://localhost:5175',
+  'http://localhost:5176',
+  'http://localhost:3000',
+  'http://localhost:3001'
+];
+
+app.use(cors({
+  origin: function (origin, callback) {
+    // Allow requests with no origin (like mobile apps, curl, or server-to-server)
+    if (!origin || allowedOrigins.includes(origin) || origin.endsWith('.nishantmunjal.com')) {
+      return callback(null, true);
+    }
+    return callback(null, true); // Permissive in dev to avoid breaking any custom host setups
+  },
+  credentials: true
+}));
+
+// 3. Rate Limiters
+const generalApiLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 500, // 500 requests per IP per 15 min
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'Too many requests from this IP. Please try again later.' }
+});
+
+const otpLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 6, // max 6 OTP requests per 15 min per IP
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'Too many verification code requests. Please wait 15 minutes before requesting again.' }
+});
+
+const loginLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 15, // max 15 login attempts per 15 min per IP
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'Too many login attempts. Please wait 15 minutes before trying again.' }
+});
+
+const aiGenerationLimiter = rateLimit({
+  windowMs: 5 * 60 * 1000,
+  max: 20, // max 20 AI generations per 5 min per IP
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'AI generation rate limit reached. Please wait a few moments before generating more questions.' }
+});
+
+app.use('/api/', generalApiLimiter);
+app.use(express.json({ limit: '50mb' }));
+app.use(express.urlencoded({ limit: '50mb', extended: true }));
 app.use('/uploads', express.static(path.join(__dirname, 'uploads'))); // Serve uploaded files
 
 // --- Auth Endpoints ---
 
-// Send Signup OTP
-app.post('/api/auth/send-signup-otp', async (req, res) => {
+// Send Signup OTP (protected with OTP rate limiter)
+app.post('/api/auth/send-signup-otp', otpLimiter, async (req, res) => {
   try {
     const { name, email, password } = req.body;
     if (!name || !email || !password) {
@@ -136,7 +199,7 @@ app.post('/api/auth/verify-signup-otp', async (req, res) => {
     // Log activity
     await logActivity(user._id, user.email, user.name, 'signup', { method: 'email_otp' }, req);
 
-    // Return user session object
+    // Return user session object with signed JWT token
     const userResponse = {
       _id: user._id,
       name: user.name,
@@ -149,7 +212,14 @@ app.post('/api/auth/verify-signup-otp', async (req, res) => {
       createdAt: user.createdAt
     };
 
-    res.json({ success: true, message: 'Account verified and created successfully', user: userResponse });
+    const token = generateToken(user);
+
+    res.json({
+      success: true,
+      message: 'Account verified and created successfully',
+      token,
+      user: userResponse
+    });
   } catch (err) {
     console.error('Error verifying signup OTP:', err);
     res.status(500).json({ error: 'Failed to verify code and create account' });
@@ -204,15 +274,22 @@ app.post('/api/auth/signup', async (req, res) => {
       createdAt: user.createdAt
     };
 
-    res.json({ success: true, message: 'Account created successfully', user: userResponse });
+    const token = generateToken(user);
+
+    res.json({
+      success: true,
+      message: 'Account created successfully',
+      token,
+      user: userResponse
+    });
   } catch (err) {
     console.error('Error creating account:', err);
     res.status(500).json({ error: 'Failed to create account' });
   }
 });
 
-// Login
-app.post('/api/auth/login', async (req, res) => {
+// Login (protected with login rate limiter)
+app.post('/api/auth/login', loginLimiter, async (req, res) => {
   try {
     const { email, password } = req.body;
     if (!email || !password) {
@@ -248,7 +325,7 @@ app.post('/api/auth/login', async (req, res) => {
     // Log activity
     await logActivity(user._id, user.email, user.name, 'login', { method: 'email' }, req);
 
-    // Return user without password
+    // Return user without password + signed JWT token
     const userResponse = {
       _id: user._id,
       name: user.name,
@@ -261,7 +338,14 @@ app.post('/api/auth/login', async (req, res) => {
       createdAt: user.createdAt
     };
 
-    res.json({ success: true, message: 'Login successful', user: userResponse });
+    const token = generateToken(user);
+
+    res.json({
+      success: true,
+      message: 'Login successful',
+      token,
+      user: userResponse
+    });
   } catch (err) {
     console.error('Error logging in:', err);
     res.status(500).json({ error: 'Failed to login' });
@@ -323,7 +407,7 @@ app.post('/api/auth/google', async (req, res) => {
     // Log activity
     await logActivity(user._id, user.email, user.name, isNewUser ? 'google_signup' : 'google_login', { email }, req);
 
-    // Return user without password
+    // Return user without password + signed JWT token
     const userResponse = {
       _id: user._id,
       name: user.name,
@@ -336,14 +420,21 @@ app.post('/api/auth/google', async (req, res) => {
       createdAt: user.createdAt
     };
 
-    res.json({ success: true, message: 'Google login successful', user: userResponse });
+    const token = generateToken(user);
+
+    res.json({
+      success: true,
+      message: 'Google login successful',
+      token,
+      user: userResponse
+    });
   } catch (err) {
     console.error('Error verifying Google token:', err);
     res.status(400).json({ error: 'Invalid Google token' });
   }
 });
 
-// Multer Configuration for File Uploads
+// Multer Configuration for File Uploads (Strict 5MB Limit & Image MIME Filter)
 const multer = require('multer');
 const fs = require('fs');
 
@@ -359,23 +450,50 @@ const storage = multer.diskStorage({
   },
   filename: (req, file, cb) => {
     const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-    cb(null, uniqueSuffix + path.extname(file.originalname));
+    cb(null, uniqueSuffix + path.extname(file.originalname).toLowerCase());
   }
 });
+
+const MAX_UPLOAD_SIZE = (parseInt(process.env.MAX_UPLOAD_SIZE_MB) || 5) * 1024 * 1024; // 5MB
 
 const upload = multer({
   storage: storage,
-  limits: { fileSize: 10 * 1024 * 1024 } // 10MB limit
+  limits: { fileSize: MAX_UPLOAD_SIZE },
+  fileFilter: (req, file, cb) => {
+    const allowedMimeTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/gif', 'image/jpg'];
+    if (allowedMimeTypes.includes(file.mimetype.toLowerCase())) {
+      cb(null, true);
+    } else {
+      cb(new Error('Invalid file format. Only JPG, PNG, WEBP, and GIF images are allowed.'));
+    }
+  }
 });
 
-// Upload Endpoint
-app.post('/api/upload', upload.single('file'), (req, res) => {
-  if (!req.file) {
-    return res.status(400).json({ error: 'No file uploaded' });
-  }
-  // Return the URL to access the file
-  const fileUrl = `/uploads/${req.file.filename}`;
-  res.json({ url: fileUrl, filename: req.file.filename, originalname: req.file.originalname });
+// Upload Endpoint with Error Handling for 5MB Limit & File Format
+app.post('/api/upload', (req, res) => {
+  upload.single('file')(req, res, (err) => {
+    if (err instanceof multer.MulterError) {
+      if (err.code === 'LIMIT_FILE_SIZE') {
+        return res.status(400).json({ error: 'File size exceeds the 5MB limit. Please upload a smaller image.' });
+      }
+      return res.status(400).json({ error: `Upload error: ${err.message}` });
+    } else if (err) {
+      return res.status(400).json({ error: err.message });
+    }
+
+    if (!req.file) {
+      return res.status(400).json({ error: 'No file uploaded' });
+    }
+
+    const fileUrl = `/uploads/${req.file.filename}`;
+    res.json({
+      success: true,
+      url: fileUrl,
+      filename: req.file.filename,
+      originalname: req.file.originalname,
+      size: req.file.size
+    });
+  });
 });
 
 // Admin Routes
@@ -583,8 +701,8 @@ app.get('/api/tokens/my-requests', async (req, res) => {
   }
 });
 
-// AI Quiz Generation endpoint with token quota enforcement
-app.post('/api/ai/generate-quiz', async (req, res) => {
+// AI Quiz Generation endpoint with token quota enforcement & rate limiting
+app.post('/api/ai/generate-quiz', aiGenerationLimiter, async (req, res) => {
   try {
     const { topic, numQuestions, difficulty, userId } = req.body;
     if (!topic || typeof topic !== 'string' || !topic.trim()) {

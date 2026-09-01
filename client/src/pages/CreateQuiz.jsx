@@ -196,14 +196,14 @@ export default function CreateQuiz() {
         if (!file) return;
 
         // Check file size (10MB limit)
-        if (file.size > 10 * 1024 * 1024) {
-            setError('File size must be less than 10MB');
+        if (file.size > 5 * 1024 * 1024) {
+            setError('File size exceeds the 5MB upload limit. Please choose a smaller image.');
             return;
         }
 
         // Check file type
         if (!file.type.startsWith('image/') && !file.type.startsWith('video/')) {
-            setError('Only image and video files are allowed');
+            setError('Only image and video files are allowed (JPEG, PNG, WEBP, GIF)');
             return;
         }
 
@@ -217,9 +217,11 @@ export default function CreateQuiz() {
                 body: formData
             });
 
-            if (!response.ok) throw new Error('Upload failed');
-
             const data = await response.json();
+
+            if (!response.ok) {
+                throw new Error(data.error || 'Upload failed');
+            }
 
             const updated = [...questions];
             updated[questionIndex].media = {
@@ -230,7 +232,7 @@ export default function CreateQuiz() {
             setQuestions(updated);
             setError('');
         } catch (err) {
-            setError('Error uploading file: ' + err.message);
+            setError(err.message || 'Error uploading file');
         }
 
         e.target.value = ''; // Reset input
@@ -246,8 +248,8 @@ export default function CreateQuiz() {
         const file = e.target.files[0];
         if (!file) return;
 
-        if (file.size > 10 * 1024 * 1024) {
-            setError('File size must be less than 10MB');
+        if (file.size > 5 * 1024 * 1024) {
+            setError('File size exceeds the 5MB upload limit. Please choose a smaller file.');
             return;
         }
 
@@ -260,9 +262,12 @@ export default function CreateQuiz() {
                 body: formData
             });
 
-            if (!response.ok) throw new Error('Upload failed');
-
             const data = await response.json();
+
+            if (!response.ok) {
+                throw new Error(data.error || 'Upload failed');
+            }
+
             if (type === 'background') {
                 setBackgroundImage(data.url);
             } else if (type === 'music') {
@@ -270,7 +275,7 @@ export default function CreateQuiz() {
             }
             setError('');
         } catch (err) {
-            setError('Error uploading file: ' + err.message);
+            setError(err.message || 'Error uploading file');
         }
     };
 

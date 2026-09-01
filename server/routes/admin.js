@@ -8,39 +8,7 @@ const SystemSetting = require('../models/SystemSetting');
 const TokenRequest = require('../models/TokenRequest');
 const { sendTokenApprovedNotification, sendTokenRejectedNotification } = require('../services/mailService');
 const { logActivity } = require('../middleware/activityLogger');
-
-// Middleware to check if user is admin
-async function isAdmin(req, res, next) {
-    try {
-        const userId = req.query.userId || req.body.userId;
-
-        if (!userId) {
-            return res.status(401).json({ error: 'Unauthorized - No user ID provided' });
-        }
-
-        const user = await User.findById(userId);
-
-        if (!user) {
-            return res.status(401).json({ error: 'Unauthorized - User not found' });
-        }
-
-        if (user.role !== 'admin') {
-            return res.status(403).json({ error: 'Forbidden - Admin access required' });
-        }
-
-        // Log admin access
-        await logActivity(user._id, user.email, user.name, 'admin_access', {
-            path: req.path,
-            method: req.method
-        }, req);
-
-        req.adminUser = user;
-        next();
-    } catch (err) {
-        console.error('Admin auth error:', err);
-        res.status(500).json({ error: 'Server error' });
-    }
-}
+const { requireAdmin: isAdmin } = require('../middleware/auth');
 
 // Get all users (admin only)
 router.get('/users', isAdmin, async (req, res) => {

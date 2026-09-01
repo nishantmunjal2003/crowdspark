@@ -87,7 +87,10 @@ export default function Login() {
                 const data = await res.json();
 
                 if (res.ok) {
-                    localStorage.setItem('current_user', JSON.stringify(data.user));
+                    if (data.token) {
+                        localStorage.setItem('auth_token', data.token);
+                    }
+                    localStorage.setItem('current_user', JSON.stringify({ ...data.user, token: data.token }));
                     navigate('/dashboard');
                 } else {
                     setError(data.error || 'Invalid email or password');
@@ -127,7 +130,10 @@ export default function Login() {
             const data = await res.json();
 
             if (res.ok) {
-                localStorage.setItem('current_user', JSON.stringify(data.user));
+                if (data.token) {
+                    localStorage.setItem('auth_token', data.token);
+                }
+                localStorage.setItem('current_user', JSON.stringify({ ...data.user, token: data.token }));
                 navigate('/dashboard');
             } else {
                 setError(data.error || 'Invalid or expired verification code');
@@ -184,7 +190,10 @@ export default function Login() {
             const data = await res.json();
 
             if (res.ok) {
-                localStorage.setItem('current_user', JSON.stringify(data.user));
+                if (data.token) {
+                    localStorage.setItem('auth_token', data.token);
+                }
+                localStorage.setItem('current_user', JSON.stringify({ ...data.user, token: data.token }));
                 navigate('/dashboard');
             } else {
                 setError(data.error || 'Google login failed');

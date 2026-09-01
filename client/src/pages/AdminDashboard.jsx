@@ -122,13 +122,16 @@ export default function AdminDashboard() {
 
     const loadAdminData = async (userId) => {
         try {
+            const token = localStorage.getItem('auth_token') || user?.token || '';
+            const headers = token ? { 'Authorization': `Bearer ${token}` } : {};
+
             const [statsRes, settingsRes, usersRes, quizzesRes, logsRes, tokenReqsRes] = await Promise.allSettled([
-                fetch(`/api/admin/stats?userId=${userId}`).then(r => r.json()),
-                fetch(`/api/admin/settings?userId=${userId}`).then(r => r.json()),
-                fetch(`/api/admin/users?userId=${userId}`).then(r => r.json()),
-                fetch(`/api/admin/quizzes?userId=${userId}`).then(r => r.json()),
-                fetch(`/api/admin/logs?userId=${userId}&limit=250`).then(r => r.json()),
-                fetch(`/api/admin/token-requests?userId=${userId}`).then(r => r.json())
+                fetch(`/api/admin/stats?userId=${userId}`, { headers }).then(r => r.json()),
+                fetch(`/api/admin/settings?userId=${userId}`, { headers }).then(r => r.json()),
+                fetch(`/api/admin/users?userId=${userId}`, { headers }).then(r => r.json()),
+                fetch(`/api/admin/quizzes?userId=${userId}`, { headers }).then(r => r.json()),
+                fetch(`/api/admin/logs?userId=${userId}&limit=250`, { headers }).then(r => r.json()),
+                fetch(`/api/admin/token-requests?userId=${userId}`, { headers }).then(r => r.json())
             ]);
 
             let fetchedStats = null;
