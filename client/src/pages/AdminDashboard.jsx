@@ -493,7 +493,8 @@ export default function AdminDashboard() {
                         { id: 'overview', label: 'Overview', icon: TrendingUp },
                         { id: 'users', label: `Users (${users.length})`, icon: Users },
                         { id: 'quizzes', label: `Quizzes (${quizzes.length})`, icon: BookOpen },
-                        { id: 'logs', label: `Logs (${logs.length})`, icon: Activity }
+                        { id: 'logs', label: `Logs (${logs.length})`, icon: Activity },
+                        { id: 'tokens', label: 'AI Tokens', icon: Zap }
                     ].map(tab => {
                         const Icon = tab.icon;
                         const isActive = activeTab === tab.id;
@@ -1156,6 +1157,45 @@ export default function AdminDashboard() {
                 {/* TAB 4: OVERVIEW */}
                 {activeTab === 'overview' && stats && (
                     <div style={{ display: 'grid', gap: '1.5rem' }}>
+                        {/* User Breakdown & System Status Card */}
+                        <div className="card" style={{ padding: '1.75rem' }}>
+                            <h2 style={{ fontSize: '1.35rem', fontWeight: 800, marginBottom: '1.25rem', display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--text-primary)' }}>
+                                <TrendingUp size={22} color="var(--accent-primary)" />
+                                User Breakdown & System Status
+                            </h2>
+                            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '1.25rem' }}>
+                                <div style={{ padding: '1.25rem', background: 'var(--bg-secondary)', borderRadius: '1rem', border: '1px solid var(--border-color)' }}>
+                                    <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom: '0.5rem' }}>Active Accounts</div>
+                                    <div style={{ fontSize: '2rem', fontWeight: '800', color: 'var(--success)' }}>{stats.users.active}</div>
+                                </div>
+                                <div style={{ padding: '1.25rem', background: 'var(--bg-secondary)', borderRadius: '1rem', border: '1px solid var(--border-color)' }}>
+                                    <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom: '0.5rem' }}>Inactive Accounts</div>
+                                    <div style={{ fontSize: '2rem', fontWeight: '800', color: stats.users.inactive > 0 ? 'var(--error)' : 'var(--text-muted)' }}>{stats.users.inactive}</div>
+                                </div>
+                                <div style={{ padding: '1.25rem', background: 'var(--bg-secondary)', borderRadius: '1rem', border: '1px solid var(--border-color)' }}>
+                                    <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom: '0.5rem' }}>Google Sign-In Users</div>
+                                    <div style={{ fontSize: '2rem', fontWeight: '800', color: '#ea4335' }}>{userAuthStats.googleCount}</div>
+                                </div>
+                                <div style={{ padding: '1.25rem', background: 'var(--bg-secondary)', borderRadius: '1rem', border: '1px solid var(--border-color)' }}>
+                                    <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom: '0.5rem' }}>Email / Password Users</div>
+                                    <div style={{ fontSize: '2rem', fontWeight: '800', color: 'var(--accent-primary)' }}>{userAuthStats.emailCount}</div>
+                                </div>
+                                <div style={{ padding: '1.25rem', background: 'var(--bg-secondary)', borderRadius: '1rem', border: '1px solid var(--border-color)' }}>
+                                    <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom: '0.5rem' }}>Total Quiz Plays / Takers</div>
+                                    <div style={{ fontSize: '2rem', fontWeight: '800', color: '#f472b6' }}>{stats.quizzes?.totalParticipants || 0}</div>
+                                </div>
+                                <div style={{ padding: '1.25rem', background: 'var(--bg-secondary)', borderRadius: '1rem', border: '1px solid var(--border-color)' }}>
+                                    <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom: '0.5rem' }}>Unique Quiz Players</div>
+                                    <div style={{ fontSize: '2rem', fontWeight: '800', color: '#ec4899' }}>{stats.quizzes?.uniqueParticipants || 0}</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                )}
+
+                {/* TAB 5: AI TOKENS CONFIGURATION */}
+                {activeTab === 'tokens' && (
+                    <div style={{ display: 'grid', gap: '1.5rem' }}>
                         {/* AI Token System Configuration Card */}
                         <div className="card" style={{ padding: '1.75rem', border: '1.5px solid rgba(99, 102, 241, 0.3)' }}>
                             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem', flexWrap: 'wrap', gap: '1rem' }}>
@@ -1285,37 +1325,92 @@ export default function AdminDashboard() {
                             )}
                         </div>
 
-                        {/* User Breakdown Card */}
+                        {/* User Token Balances Quick Management Table */}
                         <div className="card" style={{ padding: '1.75rem' }}>
-                            <h2 style={{ fontSize: '1.35rem', fontWeight: 800, marginBottom: '1.25rem', display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--text-primary)' }}>
-                                <TrendingUp size={22} color="var(--accent-primary)" />
-                                User Breakdown & System Status
-                            </h2>
-                            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '1.25rem' }}>
-                                <div style={{ padding: '1.25rem', background: 'var(--bg-secondary)', borderRadius: '1rem', border: '1px solid var(--border-color)' }}>
-                                    <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom: '0.5rem' }}>Active Accounts</div>
-                                    <div style={{ fontSize: '2rem', fontWeight: '800', color: 'var(--success)' }}>{stats.users.active}</div>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem', flexWrap: 'wrap', gap: '1rem' }}>
+                                <div>
+                                    <h3 style={{ fontSize: '1.2rem', fontWeight: 800, margin: 0, color: 'var(--text-primary)' }}>
+                                        User AI Token Balances
+                                    </h3>
+                                    <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', margin: '0.2rem 0 0 0' }}>
+                                        View and adjust AI token allocations for individual users
+                                    </p>
                                 </div>
-                                <div style={{ padding: '1.25rem', background: 'var(--bg-secondary)', borderRadius: '1rem', border: '1px solid var(--border-color)' }}>
-                                    <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom: '0.5rem' }}>Inactive Accounts</div>
-                                    <div style={{ fontSize: '2rem', fontWeight: '800', color: stats.users.inactive > 0 ? 'var(--error)' : 'var(--text-muted)' }}>{stats.users.inactive}</div>
-                                </div>
-                                <div style={{ padding: '1.25rem', background: 'var(--bg-secondary)', borderRadius: '1rem', border: '1px solid var(--border-color)' }}>
-                                    <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom: '0.5rem' }}>Google Sign-In Users</div>
-                                    <div style={{ fontSize: '2rem', fontWeight: '800', color: '#ea4335' }}>{userAuthStats.googleCount}</div>
-                                </div>
-                                <div style={{ padding: '1.25rem', background: 'var(--bg-secondary)', borderRadius: '1rem', border: '1px solid var(--border-color)' }}>
-                                    <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom: '0.5rem' }}>Email / Password Users</div>
-                                    <div style={{ fontSize: '2rem', fontWeight: '800', color: 'var(--accent-primary)' }}>{userAuthStats.emailCount}</div>
-                                </div>
-                                <div style={{ padding: '1.25rem', background: 'var(--bg-secondary)', borderRadius: '1rem', border: '1px solid var(--border-color)' }}>
-                                    <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom: '0.5rem' }}>Total Quiz Plays / Takers</div>
-                                    <div style={{ fontSize: '2rem', fontWeight: '800', color: '#f472b6' }}>{stats.quizzes?.totalParticipants || 0}</div>
-                                </div>
-                                <div style={{ padding: '1.25rem', background: 'var(--bg-secondary)', borderRadius: '1rem', border: '1px solid var(--border-color)' }}>
-                                    <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom: '0.5rem' }}>Unique Quiz Players</div>
-                                    <div style={{ fontSize: '2rem', fontWeight: '800', color: '#ec4899' }}>{stats.quizzes?.uniqueParticipants || 0}</div>
-                                </div>
+                            </div>
+
+                            <div className="admin-table-container">
+                                <table className="admin-table">
+                                    <thead>
+                                        <tr style={{ borderBottom: '1.5px solid var(--border-color)', color: 'var(--text-secondary)', fontSize: '0.825rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                                            <th style={{ padding: '0.85rem 1rem' }}>User</th>
+                                            <th style={{ padding: '0.85rem 1rem' }}>Role</th>
+                                            <th style={{ padding: '0.85rem 1rem' }}>Available Tokens</th>
+                                            <th style={{ padding: '0.85rem 1rem' }}>Questions Produced</th>
+                                            <th style={{ padding: '0.85rem 1rem', textAlign: 'right' }}>Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {users.map(u => (
+                                            <tr key={u._id} style={{ borderBottom: '1px solid var(--border-color)' }}>
+                                                <td style={{ padding: '0.85rem 1rem', fontWeight: 600, color: 'var(--text-primary)' }}>
+                                                    <div>{u.name}</div>
+                                                    <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{u.email}</div>
+                                                </td>
+                                                <td style={{ padding: '0.85rem 1rem' }}>
+                                                    <span style={{
+                                                        padding: '0.2rem 0.55rem',
+                                                        borderRadius: '0.5rem',
+                                                        fontSize: '0.75rem',
+                                                        fontWeight: 700,
+                                                        background: u.role === 'admin' ? 'rgba(236, 72, 153, 0.15)' : 'rgba(99, 102, 241, 0.15)',
+                                                        color: u.role === 'admin' ? 'var(--accent-tertiary)' : 'var(--accent-primary)',
+                                                        textTransform: 'capitalize'
+                                                    }}>
+                                                        {u.role || 'user'}
+                                                    </span>
+                                                </td>
+                                                <td style={{ padding: '0.85rem 1rem' }}>
+                                                    <span style={{
+                                                        display: 'inline-flex',
+                                                        alignItems: 'center',
+                                                        gap: '0.3rem',
+                                                        fontWeight: 800,
+                                                        color: 'var(--accent-primary)',
+                                                        fontSize: '0.95rem'
+                                                    }}>
+                                                        <Zap size={14} fill="currentColor" />
+                                                        {u.aiTokens !== undefined ? u.aiTokens : 50}
+                                                    </span>
+                                                </td>
+                                                <td style={{ padding: '0.85rem 1rem', color: 'var(--text-secondary)', fontWeight: 600 }}>
+                                                    {u.aiTokensUsed || 0} questions
+                                                </td>
+                                                <td style={{ padding: '0.85rem 1rem', textAlign: 'right' }}>
+                                                    <button
+                                                        onClick={() => {
+                                                            setTokenModalUser(u);
+                                                            setTokenAmountInput(50);
+                                                            setTokenActionType('add');
+                                                        }}
+                                                        className="btn btn-secondary"
+                                                        style={{
+                                                            padding: '0.4rem 0.75rem',
+                                                            fontSize: '0.8rem',
+                                                            fontWeight: 700,
+                                                            display: 'inline-flex',
+                                                            alignItems: 'center',
+                                                            gap: '0.35rem',
+                                                            color: 'var(--accent-primary)',
+                                                            borderColor: 'rgba(99, 102, 241, 0.3)'
+                                                        }}
+                                                    >
+                                                        <Zap size={13} /> Manage Tokens
+                                                    </button>
+                                                </td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
                             </div>
                         </div>
                     </div>
