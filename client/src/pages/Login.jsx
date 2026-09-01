@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { LogIn, UserPlus, Mail, Lock, User, ArrowLeft, Zap, ShieldCheck, RefreshCw, CheckCircle, Edit3 } from 'lucide-react';
 import { GoogleLogin } from '@react-oauth/google';
 import ThemeToggle from '../components/ThemeToggle';
+import Footer from '../components/Footer';
 
 export default function Login() {
     const navigate = useNavigate();
@@ -263,30 +264,39 @@ export default function Login() {
             </nav>
 
             {/* Main Content Card */}
-            <div className="grid-center" style={{ flex: 1, padding: '2rem' }}>
-                <div className="card animate-fade-in" style={{ maxWidth: '450px', width: '100%', padding: '2.5rem 2rem' }}>
+            <div style={{
+                flex: 1,
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                justifyContent: 'center',
+                padding: '2.5rem 1.5rem',
+                width: '100%',
+                boxSizing: 'border-box'
+            }}>
+                <div className="card animate-fade-in" style={{ maxWidth: '440px', width: '100%', padding: '2rem 1.75rem', borderRadius: '1.25rem' }}>
                     
                     {/* VIEW 1: OTP VERIFICATION VIEW */}
                     {isSignup && signupStep === 'otp' ? (
                         <div>
-                            <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
+                            <div style={{ textAlign: 'center', marginBottom: '1.5rem' }}>
                                 <div style={{
-                                    width: '80px',
-                                    height: '80px',
+                                    width: '56px',
+                                    height: '56px',
                                     background: 'linear-gradient(135deg, #10b981, #059669)',
                                     borderRadius: '50%',
                                     display: 'flex',
                                     alignItems: 'center',
                                     justifyContent: 'center',
-                                    margin: '0 auto 1.25rem auto',
-                                    boxShadow: '0 10px 30px rgba(16, 185, 129, 0.3)'
+                                    margin: '0 auto 0.75rem auto',
+                                    boxShadow: '0 8px 24px rgba(16, 185, 129, 0.25)'
                                 }}>
-                                    <ShieldCheck size={40} color="white" />
+                                    <ShieldCheck size={28} color="white" />
                                 </div>
-                                <h1 className="title" style={{ fontSize: '1.85rem', marginBottom: '0.5rem' }}>
+                                <h1 className="title" style={{ fontSize: '1.65rem', marginBottom: '0.25rem' }}>
                                     Verify Email
                                 </h1>
-                                <p style={{ color: 'var(--text-secondary)', fontSize: '0.925rem', lineHeight: 1.5, margin: 0 }}>
+                                <p style={{ color: 'var(--text-secondary)', fontSize: '0.875rem', lineHeight: 1.5, margin: 0 }}>
                                     Enter the 6-digit code sent to<br />
                                     <strong style={{ color: 'var(--text-primary)' }}>{formData.email}</strong>
                                 </p>
@@ -422,24 +432,24 @@ export default function Login() {
                         /* VIEW 2: LOGIN / SIGNUP FORM */
                         <div>
                             {/* Header */}
-                            <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
+                            <div style={{ textAlign: 'center', marginBottom: '1.5rem' }}>
                                 <div style={{
-                                    width: '80px',
-                                    height: '80px',
+                                    width: '56px',
+                                    height: '56px',
                                     background: 'linear-gradient(135deg, #8b5cf6, #6366f1)',
                                     borderRadius: '50%',
                                     display: 'flex',
                                     alignItems: 'center',
                                     justifyContent: 'center',
-                                    margin: '0 auto 1.5rem auto',
-                                    boxShadow: '0 10px 30px rgba(139, 92, 246, 0.3)'
+                                    margin: '0 auto 0.75rem auto',
+                                    boxShadow: '0 8px 24px rgba(139, 92, 246, 0.25)'
                                 }}>
-                                    {isSignup ? <UserPlus size={40} color="white" /> : <LogIn size={40} color="white" />}
+                                    {isSignup ? <UserPlus size={28} color="white" /> : <LogIn size={28} color="white" />}
                                 </div>
-                                <h1 className="title" style={{ fontSize: '2rem', marginBottom: '0.5rem' }}>
+                                <h1 className="title" style={{ fontSize: '1.65rem', marginBottom: '0.25rem' }}>
                                     {isSignup ? 'Create Account' : 'Welcome Back'}
                                 </h1>
-                                <p className="subtitle">
+                                <p className="subtitle" style={{ fontSize: '0.875rem', margin: 0 }}>
                                     {isSignup ? 'Sign up to create and host interactive quizzes' : 'Sign in to continue to your account'}
                                 </p>
                             </div>
@@ -586,6 +596,8 @@ export default function Login() {
                     )}
                 </div>
             </div>
+
+            <Footer />
         </div>
     );
 }
