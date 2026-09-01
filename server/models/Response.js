@@ -2,6 +2,7 @@ const mongoose = require('mongoose');
 
 const ResponseSchema = new mongoose.Schema({
     sessionId: { type: String, required: true, index: true },
+    quizId: { type: mongoose.Schema.Types.ObjectId, ref: 'Quiz', index: true },
     participantName: String,
     questionIndex: Number,
     questionText: String,

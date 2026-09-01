@@ -1,7 +1,25 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Plus, Play, Edit, Trash2, LogOut, BookOpen, Users, BarChart3, Download, Sparkles, Shield, Sun, Moon } from 'lucide-react';
+import {
+    Plus,
+    Play,
+    Edit,
+    Trash2,
+    LogOut,
+    BookOpen,
+    Users,
+    BarChart3,
+    Download,
+    Sparkles,
+    Shield,
+    Sun,
+    Moon,
+    FileSpreadsheet,
+    Calendar,
+    Trophy
+} from 'lucide-react';
 import '../dashboard.css';
+import QuizReportModal from '../components/QuizReportModal';
 
 export default function Dashboard() {
     const navigate = useNavigate();
@@ -9,6 +27,7 @@ export default function Dashboard() {
     const [quizzes, setQuizzes] = useState([]);
     const [activeTab, setActiveTab] = useState('all'); // all, quiz, poll
     const [isLoading, setIsLoading] = useState(true);
+    const [selectedQuizReport, setSelectedQuizReport] = useState(null);
     const [isDarkMode, setIsDarkMode] = useState(() => {
         const saved = localStorage.getItem('host_theme');
         return saved ? saved === 'dark' : true;
@@ -21,6 +40,20 @@ export default function Dashboard() {
 
     const toggleTheme = () => setIsDarkMode(prev => !prev);
 
+    const loadQuizzes = (userId) => {
+        setIsLoading(true);
+        fetch(`/api/quizzes?userId=${userId}`)
+            .then(res => res.json())
+            .then(data => {
+                setQuizzes(data);
+                setIsLoading(false);
+            })
+            .catch(err => {
+                console.error('Error fetching quizzes:', err);
+                setIsLoading(false);
+            });
+    };
+
     useEffect(() => {
         // Check if user is logged in
         const currentUser = localStorage.getItem('current_user');
@@ -31,17 +64,7 @@ export default function Dashboard() {
         const userData = JSON.parse(currentUser);
         setUser(userData);
 
-        // Load quizzes from MongoDB API - ONLY for this user
-        fetch(`/api/quizzes?userId=${userData._id}`)
-            .then(res => res.json())
-            .then(data => {
-                setQuizzes(data);
-                setIsLoading(false);
-            })
-            .catch(err => {
-                console.error('Error fetching quizzes:', err);
-                setIsLoading(false);
-            });
+        loadQuizzes(userData._id);
     }, [navigate]);
 
     const handleLogout = () => {
@@ -69,7 +92,6 @@ export default function Dashboard() {
         if (!quizToDelete) return;
 
         try {
-            // Delete from backend first
             const response = await fetch(`/api/quizzes/${quizToDelete}`, {
                 method: 'DELETE'
             });
@@ -79,7 +101,6 @@ export default function Dashboard() {
                 throw new Error(error.error || 'Failed to delete quiz');
             }
 
-            // Update UI only after successful deletion
             const updatedQuizzes = quizzes.filter(q => (q._id || q.id) !== quizToDelete);
             setQuizzes(updatedQuizzes);
 
@@ -119,11 +140,11 @@ export default function Dashboard() {
 
     const totalQuizzes = quizzes.filter(q => (q.type || 'quiz') === 'quiz').length;
     const totalPolls = quizzes.filter(q => q.type === 'poll').length;
-    const totalQuestions = quizzes.reduce((sum, q) => sum + (q.questions?.length || 0), 0);
+    const totalParticipantsAll = quizzes.reduce((sum, q) => sum + (q.totalParticipants || 0), 0);
 
     return (
         <div style={{ minHeight: '100vh', background: 'var(--bg-primary)' }}>
-            {/* Animated Background - Softer */}
+            {/* Animated Background */}
             <div style={{
                 position: 'fixed',
                 top: 0,
@@ -135,7 +156,7 @@ export default function Dashboard() {
                 zIndex: 0
             }}></div>
 
-            {/* Header - Glassmorphic */}
+            {/* Header */}
             <div className="dashboard-header">
                 <div className="dashboard-header-content">
                     <div className="dashboard-user-info">
@@ -183,7 +204,7 @@ export default function Dashboard() {
 
             {/* Content */}
             <div className="dashboard-content">
-                {/* Stats Cards - Softer Glass */}
+                {/* Stats Cards */}
                 <div className="dashboard-stats-grid">
                     <div className="card animate-fade-in" style={{
                         background: 'var(--bg-card)',
@@ -262,17 +283,17 @@ export default function Dashboard() {
                             </div>
                             <div>
                                 <div style={{ fontSize: '2rem', fontWeight: '700', color: 'var(--text-primary)', lineHeight: 1 }}>
-                                    {totalQuestions}
+                                    {totalParticipantsAll}
                                 </div>
                                 <div style={{ color: 'var(--text-secondary)', fontSize: '0.875rem', marginTop: '0.25rem' }}>
-                                    Total Questions
+                                    Total Participants Taken
                                 </div>
                             </div>
                         </div>
                     </div>
                 </div>
 
-                {/* Create New Buttons - Refined Gradients */}
+                {/* Create New Buttons */}
                 <div className="dashboard-create-grid">
                     <button
                         onClick={() => navigate('/create-quiz', { state: { type: 'quiz' } })}
@@ -282,16 +303,6 @@ export default function Dashboard() {
                             border: '1px solid rgba(129, 140, 248, 0.2)',
                             color: 'var(--text-primary)',
                             animationDelay: '0.3s'
-                        }}
-                        onMouseEnter={e => {
-                            e.currentTarget.style.background = 'linear-gradient(135deg, rgba(129, 140, 248, 0.15), rgba(99, 102, 241, 0.1))';
-                            e.currentTarget.style.borderColor = 'rgba(129, 140, 248, 0.4)';
-                            e.currentTarget.style.transform = 'translateY(-4px)';
-                        }}
-                        onMouseLeave={e => {
-                            e.currentTarget.style.background = 'linear-gradient(135deg, rgba(129, 140, 248, 0.1), rgba(99, 102, 241, 0.05))';
-                            e.currentTarget.style.borderColor = 'rgba(129, 140, 248, 0.2)';
-                            e.currentTarget.style.transform = 'translateY(0)';
                         }}
                     >
                         <div style={{
@@ -317,16 +328,6 @@ export default function Dashboard() {
                             color: 'var(--text-primary)',
                             animationDelay: '0.4s'
                         }}
-                        onMouseEnter={e => {
-                            e.currentTarget.style.background = 'linear-gradient(135deg, rgba(52, 211, 153, 0.15), rgba(16, 185, 129, 0.1))';
-                            e.currentTarget.style.borderColor = 'rgba(52, 211, 153, 0.4)';
-                            e.currentTarget.style.transform = 'translateY(-4px)';
-                        }}
-                        onMouseLeave={e => {
-                            e.currentTarget.style.background = 'linear-gradient(135deg, rgba(52, 211, 153, 0.1), rgba(16, 185, 129, 0.05))';
-                            e.currentTarget.style.borderColor = 'rgba(52, 211, 153, 0.2)';
-                            e.currentTarget.style.transform = 'translateY(0)';
-                        }}
                     >
                         <div style={{
                             background: 'linear-gradient(135deg, #34d399, #10b981)',
@@ -343,7 +344,7 @@ export default function Dashboard() {
                     </button>
                 </div>
 
-                {/* Filter Tabs - Pill Design */}
+                {/* Filter Tabs */}
                 <div className="dashboard-filter-tabs">
                     {['all', 'quiz', 'poll'].map((tab, index) => (
                         <button
@@ -353,13 +354,13 @@ export default function Dashboard() {
                             style={{
                                 padding: '0.6rem 1.25rem',
                                 borderRadius: '2rem',
-                                border: activeTab === tab ? '1px solid rgba(129, 140, 248, 0.4)' : '1px solid rgba(255,255,255,0.05)',
+                                border: activeTab === tab ? '1px solid rgba(129, 140, 248, 0.4)' : '1px solid var(--border-color)',
                                 background: activeTab === tab ? 'rgba(129, 140, 248, 0.15)' : 'var(--bg-secondary)',
                                 color: activeTab === tab ? '#818cf8' : 'var(--text-secondary)',
                                 fontWeight: activeTab === tab ? '600' : '500',
                                 fontSize: '0.875rem',
                                 cursor: 'pointer',
-                                transition: 'all 0.3s ease',
+                                transition: 'all 0.2s ease',
                                 animationDelay: `${0.5 + index * 0.1}s`
                             }}
                         >
@@ -368,9 +369,9 @@ export default function Dashboard() {
                     ))}
                 </div>
 
-                {/* Quiz/Poll List - Minimalist Cards */}
+                {/* Quiz List */}
                 {isLoading ? (
-                    <div style={{ textAlign: 'center', padding: '4rem', color: '#94a3b8' }}>Loading...</div>
+                    <div style={{ textAlign: 'center', padding: '4rem', color: '#94a3b8' }}>Loading quizzes...</div>
                 ) : filteredQuizzes.length === 0 ? (
                     <div className="card animate-fade-in" style={{ textAlign: 'center', padding: '4rem 2rem', animationDelay: '0.8s', background: 'var(--bg-card)' }}>
                         <div style={{
@@ -390,96 +391,169 @@ export default function Dashboard() {
                     </div>
                 ) : (
                     <div className="dashboard-quiz-list">
-                        {filteredQuizzes.map((quiz, index) => (
-                            <div key={quiz._id || quiz.id} className="quiz-card animate-fade-in"
-                                style={{ animationDelay: `${0.8 + index * 0.1}s` }}
-                                onMouseEnter={e => {
-                                    e.currentTarget.style.transform = 'translateX(6px)';
-                                    e.currentTarget.style.background = 'var(--bg-secondary)';
-                                    e.currentTarget.style.borderColor = quiz.type === 'poll' ? 'rgba(52, 211, 153, 0.3)' : 'rgba(129, 140, 248, 0.3)';
-                                }}
-                                onMouseLeave={e => {
-                                    e.currentTarget.style.transform = 'translateX(0)';
-                                    e.currentTarget.style.background = 'var(--bg-card)';
-                                    e.currentTarget.style.borderColor = 'var(--border-color)';
-                                }}>
-                                <div className="quiz-info">
-                                    <div className="quiz-header">
-                                        <h3 className="quiz-title">
-                                            {quiz.title}
-                                        </h3>
-                                        <span style={{
-                                            padding: '0.2rem 0.6rem',
-                                            borderRadius: '1rem',
-                                            fontSize: '0.7rem',
-                                            fontWeight: '600',
-                                            background: quiz.type === 'poll' ? 'rgba(52, 211, 153, 0.15)' : 'rgba(129, 140, 248, 0.15)',
-                                            color: quiz.type === 'poll' ? '#34d399' : '#818cf8',
-                                            border: quiz.type === 'poll' ? '1px solid rgba(52, 211, 153, 0.2)' : '1px solid rgba(129, 140, 248, 0.2)'
-                                        }}>
-                                            {quiz.type === 'poll' ? 'POLL' : 'QUIZ'}
-                                        </span>
-                                    </div>
-                                    <div className="quiz-meta">
-                                        <span>{quiz.questions?.length || 0} questions</span>
-                                        <span>{new Date(quiz.createdAt).toLocaleDateString()}</span>
-                                    </div>
-                                </div>
+                        {filteredQuizzes.map((quiz, index) => {
+                            const pCount = quiz.totalParticipants || 0;
+                            const playsCount = quiz.totalPlays || 0;
 
-                                <div className="quiz-actions">
-                                    <button
-                                        onClick={() => handleHostQuiz(quiz)}
-                                        className="btn"
-                                        style={{
-                                            display: 'flex',
-                                            alignItems: 'center',
-                                            gap: '0.5rem',
-                                            padding: '0.5rem 1rem',
-                                            background: 'linear-gradient(135deg, #6366f1, #8b5cf6)',
-                                            color: 'white',
-                                            fontSize: '0.875rem',
-                                            borderRadius: '0.75rem'
-                                        }}
-                                    >
-                                        <Play size={16} />
-                                        Host
-                                    </button>
-                                    <button
-                                        onClick={() => handleEditQuiz(quiz)}
-                                        className="btn"
-                                        style={{ padding: '0.5rem', background: 'var(--bg-secondary)', color: 'var(--text-secondary)', borderRadius: '0.75rem' }}
-                                        title="Edit"
-                                        onMouseEnter={e => e.currentTarget.style.color = 'var(--text-primary)'}
-                                        onMouseLeave={e => e.currentTarget.style.color = 'var(--text-secondary)'}
-                                    >
-                                        <Edit size={16} />
-                                    </button>
-                                    <button
-                                        onClick={() => handleDuplicateQuiz(quiz)}
-                                        className="btn"
-                                        style={{ padding: '0.5rem', background: 'var(--bg-secondary)', color: 'var(--text-secondary)', borderRadius: '0.75rem' }}
-                                        title="Duplicate"
-                                        onMouseEnter={e => e.currentTarget.style.color = 'var(--text-primary)'}
-                                        onMouseLeave={e => e.currentTarget.style.color = 'var(--text-secondary)'}
-                                    >
-                                        <Download size={16} style={{ transform: 'rotate(180deg)' }} />
-                                    </button>
-                                    <button
-                                        onClick={() => handleDeleteClick(quiz._id || quiz.id)}
-                                        className="btn"
-                                        style={{ padding: '0.5rem', background: 'rgba(255,255,255,0.05)', color: '#f87171', borderRadius: '0.75rem' }}
-                                        title="Delete"
-                                        onMouseEnter={e => e.currentTarget.style.background = 'rgba(248, 113, 113, 0.1)'}
-                                        onMouseLeave={e => e.currentTarget.style.background = 'rgba(255,255,255,0.05)'}
-                                    >
-                                        <Trash2 size={16} />
-                                    </button>
+                            return (
+                                <div
+                                    key={quiz._id || quiz.id}
+                                    className="quiz-card animate-fade-in"
+                                    style={{ animationDelay: `${0.8 + index * 0.05}s` }}
+                                    onClick={() => setSelectedQuizReport(quiz)}
+                                    title="Click to view full quiz history, player names & download reports"
+                                    onMouseEnter={e => {
+                                        e.currentTarget.style.transform = 'translateY(-2px)';
+                                        e.currentTarget.style.background = 'var(--bg-secondary)';
+                                        e.currentTarget.style.borderColor = quiz.type === 'poll' ? 'rgba(52, 211, 153, 0.4)' : 'rgba(129, 140, 248, 0.4)';
+                                    }}
+                                    onMouseLeave={e => {
+                                        e.currentTarget.style.transform = 'translateY(0)';
+                                        e.currentTarget.style.background = 'var(--bg-card)';
+                                        e.currentTarget.style.borderColor = 'var(--border-color)';
+                                    }}
+                                >
+                                    <div className="quiz-info">
+                                        <div className="quiz-header">
+                                            <h3 className="quiz-title">
+                                                {quiz.title}
+                                            </h3>
+                                            <span style={{
+                                                padding: '0.2rem 0.6rem',
+                                                borderRadius: '1rem',
+                                                fontSize: '0.7rem',
+                                                fontWeight: '700',
+                                                textTransform: 'uppercase',
+                                                background: quiz.type === 'poll' ? 'rgba(52, 211, 153, 0.15)' : 'rgba(129, 140, 248, 0.15)',
+                                                color: quiz.type === 'poll' ? '#34d399' : '#818cf8',
+                                                border: quiz.type === 'poll' ? '1px solid rgba(52, 211, 153, 0.2)' : '1px solid rgba(129, 140, 248, 0.2)'
+                                            }}>
+                                                {quiz.type === 'poll' ? 'POLL' : 'QUIZ'}
+                                            </span>
+
+                                            {/* Participants & Plays Badges */}
+                                            <span style={{
+                                                padding: '0.2rem 0.65rem',
+                                                borderRadius: '1rem',
+                                                fontSize: '0.725rem',
+                                                fontWeight: '600',
+                                                background: pCount > 0 ? 'rgba(16, 185, 129, 0.12)' : 'rgba(129, 140, 248, 0.1)',
+                                                color: pCount > 0 ? 'var(--success)' : 'var(--text-secondary)',
+                                                display: 'inline-flex',
+                                                alignItems: 'center',
+                                                gap: '0.35rem',
+                                                border: `1px solid ${pCount > 0 ? 'rgba(16, 185, 129, 0.25)' : 'var(--border-color)'}`
+                                            }}>
+                                                <Users size={12} />
+                                                {pCount} {pCount === 1 ? 'Taken' : 'Taken'}
+                                            </span>
+
+                                            {playsCount > 0 && (
+                                                <span style={{
+                                                    padding: '0.2rem 0.6rem',
+                                                    borderRadius: '1rem',
+                                                    fontSize: '0.725rem',
+                                                    fontWeight: '600',
+                                                    background: 'rgba(99, 102, 241, 0.1)',
+                                                    color: 'var(--accent-primary)',
+                                                    display: 'inline-flex',
+                                                    alignItems: 'center',
+                                                    gap: '0.3rem'
+                                                }}>
+                                                    {playsCount} {playsCount === 1 ? 'play' : 'plays'}
+                                                </span>
+                                            )}
+                                        </div>
+                                        <div className="quiz-meta">
+                                            <span>{quiz.questions?.length || 0} questions</span>
+                                            <span>Created: {new Date(quiz.createdAt).toLocaleDateString()}</span>
+                                            {quiz.lastPlayed && (
+                                                <span style={{ color: 'var(--accent-primary)' }}>
+                                                    Last Played: {new Date(quiz.lastPlayed).toLocaleDateString()}
+                                                </span>
+                                            )}
+                                        </div>
+                                    </div>
+
+                                    <div className="quiz-actions" onClick={e => e.stopPropagation()}>
+                                        <button
+                                            onClick={() => setSelectedQuizReport(quiz)}
+                                            className="btn btn-secondary"
+                                            style={{
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                gap: '0.4rem',
+                                                padding: '0.5rem 0.85rem',
+                                                fontSize: '0.85rem',
+                                                borderRadius: '0.75rem',
+                                                fontWeight: '600'
+                                            }}
+                                            title="View Report & Participants History"
+                                        >
+                                            <BarChart3 size={15} color="var(--accent-primary)" />
+                                            Report
+                                        </button>
+                                        <button
+                                            onClick={() => handleHostQuiz(quiz)}
+                                            className="btn"
+                                            style={{
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                gap: '0.5rem',
+                                                padding: '0.5rem 1rem',
+                                                background: 'linear-gradient(135deg, #6366f1, #8b5cf6)',
+                                                color: 'white',
+                                                fontSize: '0.875rem',
+                                                borderRadius: '0.75rem',
+                                                fontWeight: '600'
+                                            }}
+                                        >
+                                            <Play size={15} />
+                                            Host
+                                        </button>
+                                        <button
+                                            onClick={() => handleEditQuiz(quiz)}
+                                            className="btn"
+                                            style={{ padding: '0.5rem', background: 'var(--bg-secondary)', color: 'var(--text-secondary)', borderRadius: '0.75rem' }}
+                                            title="Edit Quiz"
+                                        >
+                                            <Edit size={16} />
+                                        </button>
+                                        <button
+                                            onClick={() => handleDuplicateQuiz(quiz)}
+                                            className="btn"
+                                            style={{ padding: '0.5rem', background: 'var(--bg-secondary)', color: 'var(--text-secondary)', borderRadius: '0.75rem' }}
+                                            title="Duplicate"
+                                        >
+                                            <Download size={16} style={{ transform: 'rotate(180deg)' }} />
+                                        </button>
+                                        <button
+                                            onClick={() => handleDeleteClick(quiz._id || quiz.id)}
+                                            className="btn"
+                                            style={{ padding: '0.5rem', background: 'rgba(239, 68, 68, 0.1)', color: '#ef4444', borderRadius: '0.75rem', border: '1px solid rgba(239, 68, 68, 0.2)' }}
+                                            title="Delete"
+                                        >
+                                            <Trash2 size={16} />
+                                        </button>
+                                    </div>
                                 </div>
-                            </div>
-                        ))}
+                            );
+                        })}
                     </div>
                 )}
             </div>
+
+            {/* Quiz Report & History Modal */}
+            {selectedQuizReport && (
+                <QuizReportModal
+                    quiz={selectedQuizReport}
+                    onClose={() => setSelectedQuizReport(null)}
+                    onHostQuiz={(q) => {
+                        setSelectedQuizReport(null);
+                        handleHostQuiz(q);
+                    }}
+                />
+            )}
 
             {/* Delete Confirmation Modal */}
             {deleteModalOpen && (
@@ -494,8 +568,7 @@ export default function Dashboard() {
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    zIndex: 1000,
-                    animation: 'fadeIn 0.2s ease-out'
+                    zIndex: 1000
                 }}>
                     <div style={{
                         background: 'var(--bg-card)',
@@ -503,10 +576,8 @@ export default function Dashboard() {
                         borderRadius: '1rem',
                         maxWidth: '400px',
                         width: '90%',
-                        border: '1px solid rgba(255, 255, 255, 0.1)',
-                        boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.5), 0 10px 10px -5px rgba(0, 0, 0, 0.04)',
-                        transform: 'scale(1)',
-                        animation: 'scaleIn 0.2s ease-out'
+                        border: '1px solid var(--border-color)',
+                        boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.5)'
                     }}>
                         <div style={{
                             width: '48px',
@@ -521,44 +592,28 @@ export default function Dashboard() {
                         }}>
                             <Trash2 size={24} />
                         </div>
-                        <h3 style={{ fontSize: '1.25rem', fontWeight: '600', color: 'var(--text-primary)', marginBottom: '0.5rem' }}>Delete Quiz?</h3>
-                        <p style={{ color: 'var(--text-secondary)', marginBottom: '1.5rem', lineHeight: 1.5 }}>
-
+                        <h3 style={{ fontSize: '1.25rem', fontWeight: '700', color: 'var(--text-primary)', marginBottom: '0.5rem' }}>Delete Quiz?</h3>
+                        <p style={{ color: 'var(--text-secondary)', marginBottom: '1.5rem', lineHeight: 1.5, fontSize: '0.9rem' }}>
                             Are you sure you want to delete this quiz? This action cannot be undone.
                         </p>
                         <div style={{ display: 'flex', gap: '1rem', justifyContent: 'flex-end' }}>
                             <button
                                 onClick={() => setDeleteModalOpen(false)}
-                                style={{
-                                    padding: '0.75rem 1.5rem',
-                                    borderRadius: '0.5rem',
-                                    background: 'transparent',
-                                    border: '1px solid var(--border-color)',
-                                    color: 'var(--text-primary)',
-                                    cursor: 'pointer',
-                                    fontWeight: '500',
-                                    transition: 'all 0.2s'
-                                }}
-                                onMouseEnter={e => e.target.style.background = 'rgba(255, 255, 255, 0.05)'}
-                                onMouseLeave={e => e.target.style.background = 'transparent'}
+                                className="btn btn-secondary"
+                                style={{ padding: '0.65rem 1.25rem' }}
                             >
                                 Cancel
                             </button>
                             <button
                                 onClick={confirmDelete}
+                                className="btn"
                                 style={{
-                                    padding: '0.75rem 1.5rem',
-                                    borderRadius: '0.5rem',
+                                    padding: '0.65rem 1.25rem',
                                     background: '#ef4444',
-                                    border: 'none',
                                     color: 'white',
-                                    cursor: 'pointer',
-                                    fontWeight: '500',
-                                    transition: 'all 0.2s',
-                                    boxShadow: '0 4px 6px -1px rgba(239, 68, 68, 0.3)'
+                                    border: 'none',
+                                    borderRadius: '0.5rem'
                                 }}
-                                onMouseEnter={e => e.target.style.background = '#dc2626'}
-                                onMouseLeave={e => e.target.style.background = '#ef4444'}
                             >
                                 Delete
                             </button>

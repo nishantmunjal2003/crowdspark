@@ -10,6 +10,7 @@ const path = require('path');
 // Models
 const Quiz = require('./models/Quiz');
 const Response = require('./models/Response');
+const QuizSession = require('./models/QuizSession');
 const Otp = require('./models/Otp');
 const User = require('./models/User');
 const ActivityLog = require('./models/ActivityLog');
@@ -462,7 +463,7 @@ app.post('/api/quizzes', async (req, res) => {
   }
 });
 
-// Get quizzes (optionally filtered by user)
+// Get quizzes (optionally filtered by user) with participants & plays statistics
 app.get('/api/quizzes', async (req, res) => {
   try {
     const { userId } = req.query;
@@ -470,7 +471,42 @@ app.get('/api/quizzes', async (req, res) => {
     // If userId is provided, filter by creator
     const filter = userId ? { creatorId: userId } : {};
 
-    const quizzes = await Quiz.find(filter).sort({ createdAt: -1 });
+    const rawQuizzes = await Quiz.find(filter).sort({ createdAt: -1 });
+
+    // Aggregate sessions for these quizzes to compute totalParticipants and totalPlays
+    const quizIds = rawQuizzes.map(q => q._id);
+    const sessionAgg = await QuizSession.aggregate([
+      { $match: { quizId: { $in: quizIds } } },
+      {
+        $group: {
+          _id: '$quizId',
+          totalPlays: { $sum: 1 },
+          totalParticipants: { $sum: '$totalParticipants' },
+          lastPlayed: { $max: '$startedAt' }
+        }
+      }
+    ]);
+
+    const statsMap = {};
+    sessionAgg.forEach(s => {
+      statsMap[s._id.toString()] = {
+        totalPlays: s.totalPlays || 0,
+        totalParticipants: s.totalParticipants || 0,
+        lastPlayed: s.lastPlayed
+      };
+    });
+
+    const quizzes = rawQuizzes.map(q => {
+      const qObj = q.toObject();
+      const stats = statsMap[q._id.toString()] || { totalPlays: 0, totalParticipants: 0, lastPlayed: null };
+      return {
+        ...qObj,
+        totalPlays: stats.totalPlays,
+        totalParticipants: stats.totalParticipants,
+        lastPlayed: stats.lastPlayed
+      };
+    });
+
     res.json(quizzes);
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -551,7 +587,7 @@ io.on('connection', (socket) => {
 
   // --- Host Events ---
 
-  socket.on('create_session', (payload, callback) => {
+  socket.on('create_session', async (payload, callback) => {
     let quiz = payload;
     let existingSessionId = null;
 
@@ -591,11 +627,35 @@ io.on('connection', (socket) => {
       questionActive: false
     };
     socket.join(sessionId);
+
+    // Persist QuizSession in MongoDB
+    try {
+      const qId = quiz._id || quiz.id;
+      if (qId && mongoose.Types.ObjectId.isValid(qId)) {
+        await QuizSession.findOneAndUpdate(
+          { sessionId },
+          {
+            sessionId,
+            quizId: new mongoose.Types.ObjectId(qId),
+            quizTitle: quiz.title || 'Untitled Quiz',
+            quizType: quiz.type || 'quiz',
+            hostId: (quiz.creatorId && mongoose.Types.ObjectId.isValid(quiz.creatorId)) ? new mongoose.Types.ObjectId(quiz.creatorId) : undefined,
+            totalQuestions: quiz.questions?.length || 0,
+            status: 'waiting',
+            startedAt: new Date()
+          },
+          { upsert: true, new: true }
+        );
+      }
+    } catch (dbErr) {
+      console.error('Error persisting QuizSession in MongoDB:', dbErr);
+    }
+
     callback({ sessionId, reclaimed: false, participants: [] });
     console.log(`Session created: ${sessionId} by ${socket.id}`);
   });
 
-  socket.on('start_quiz', ({ sessionId }) => {
+  socket.on('start_quiz', async ({ sessionId }) => {
     const session = sessions[sessionId];
     if (session && session.hostId === socket.id) {
       session.state = 'active';
@@ -604,10 +664,19 @@ io.on('connection', (socket) => {
       io.to(sessionId).emit('quiz_started');
       io.to(sessionId).emit('new_question', session.quizData.questions[0]);
       console.log(`Quiz started: ${sessionId}`);
+
+      try {
+        await QuizSession.updateOne(
+          { sessionId },
+          { $set: { status: 'active', startedAt: new Date() } }
+        );
+      } catch (err) {
+        console.error('Error updating QuizSession on start:', err);
+      }
     }
   });
 
-  socket.on('next_question', ({ sessionId }) => {
+  socket.on('next_question', async ({ sessionId }) => {
     const session = sessions[sessionId];
     if (session && session.hostId === socket.id) {
       session.currentQuestionIndex++;
@@ -617,6 +686,15 @@ io.on('connection', (socket) => {
       } else {
         session.state = 'finished';
         io.to(sessionId).emit('quiz_finished', getLeaderboard(session));
+
+        try {
+          await QuizSession.updateOne(
+            { sessionId },
+            { $set: { status: 'completed', endedAt: new Date() } }
+          );
+        } catch (err) {
+          console.error('Error marking QuizSession completed:', err);
+        }
       }
     }
   });
@@ -642,7 +720,7 @@ io.on('connection', (socket) => {
 
   // --- Participant Events ---
 
-  socket.on('join_session', ({ sessionId, name }, callback) => {
+  socket.on('join_session', async ({ sessionId, name }, callback) => {
     const session = sessions[sessionId];
     if (session) {
       // Check for reconnection (same name, different socket ID)
@@ -675,6 +753,33 @@ io.on('connection', (socket) => {
         disconnectTimer: null
       };
       socket.join(sessionId);
+
+      // Persist participant in QuizSession
+      try {
+        const participantObj = {
+          name: name.trim(),
+          socketId: socket.id,
+          score: existingScore,
+          joinedAt: new Date(),
+          answers: []
+        };
+
+        const sessionDoc = await QuizSession.findOne({ sessionId });
+        if (sessionDoc) {
+          const exists = sessionDoc.participants.some(p => p.name.trim().toLowerCase() === name.trim().toLowerCase());
+          if (!exists) {
+            await QuizSession.updateOne(
+              { sessionId },
+              {
+                $push: { participants: participantObj },
+                $inc: { totalParticipants: 1 }
+              }
+            );
+          }
+        }
+      } catch (dbErr) {
+        console.error('Error adding participant to QuizSession:', dbErr);
+      }
 
       // Notify host of participant
       io.to(session.hostId).emit('participant_joined', { name, total: Object.keys(session.participants).length });
@@ -713,7 +818,7 @@ io.on('connection', (socket) => {
       // Check correctness
       const currentQuestion = session.quizData.questions[currentQIndex];
       const answerIndex = answer.charCodeAt(0) - 65; // Convert A, B, C, D to 0, 1, 2, 3
-      const answerText = currentQuestion.options[answerIndex];
+      const answerText = currentQuestion.options ? currentQuestion.options[answerIndex] : answer;
       const isCorrect = currentQuestion.correctAnswer === answerText;
 
       if (isCorrect) {
@@ -722,15 +827,39 @@ io.on('connection', (socket) => {
 
       // Store response in MongoDB
       try {
+        const qId = session.quizData?._id || session.quizData?.id;
         await Response.create({
           sessionId,
+          quizId: (qId && mongoose.Types.ObjectId.isValid(qId)) ? new mongoose.Types.ObjectId(qId) : undefined,
           participantName: participant.name,
           questionIndex: currentQIndex,
           questionText: currentQuestion.text,
-          answer: answer, // 'A', 'B', etc.
+          answer: answer,
           isCorrect: isCorrect,
-          quizType: session.quizData.type || 'quiz'
+          quizType: session.quizData?.type || 'quiz'
         });
+
+        // Update QuizSession participant
+        await QuizSession.updateOne(
+          { sessionId, "participants.name": participant.name },
+          {
+            $set: { "participants.$.score": participant.score },
+            $inc: {
+              "participants.$.totalAnswered": 1,
+              ...(isCorrect ? { "participants.$.correctAnswers": 1 } : {})
+            },
+            $push: {
+              "participants.$.answers": {
+                questionIndex: currentQIndex,
+                questionText: currentQuestion.text,
+                selectedOption: answer,
+                answerText: answerText,
+                isCorrect: isCorrect,
+                timestamp: new Date()
+              }
+            }
+          }
+        );
       } catch (err) {
         console.error('Error saving response to MongoDB:', err);
       }
@@ -788,9 +917,299 @@ function getLeaderboard(session) {
     .sort((a, b) => (b.score || 0) - (a.score || 0));
 }
 
-// --- Analytics API Endpoints (Updated to use MongoDB) ---
+// --- Analytics & Report Endpoints ---
 
-// Get all responses for a session
+// Get detailed analytics and session history for a specific quiz
+app.get('/api/quizzes/:id/analytics', async (req, res) => {
+  try {
+    const quiz = await Quiz.findById(req.params.id);
+    if (!quiz) return res.status(404).json({ error: 'Quiz not found' });
+
+    const sessions = await QuizSession.find({ quizId: quiz._id })
+      .sort({ startedAt: -1 });
+
+    // Calculate overall totals across all sessions
+    let totalParticipants = 0;
+    const uniqueParticipantSet = new Set();
+    let totalScoreSum = 0;
+    let participantCountWithScores = 0;
+
+    const formattedSessions = sessions.map(s => {
+      const pList = (s.participants || []).map(p => {
+        uniqueParticipantSet.add(p.name.trim().toLowerCase());
+        totalParticipants++;
+        if (p.score !== undefined) {
+          totalScoreSum += p.score;
+          participantCountWithScores++;
+        }
+
+        const totalQ = p.totalAnswered || (p.answers ? p.answers.length : 0);
+        const correctQ = p.correctAnswers || (p.answers ? p.answers.filter(a => a.isCorrect).length : 0);
+        const accuracy = totalQ > 0 ? Math.round((correctQ / totalQ) * 100) : 0;
+
+        return {
+          _id: p._id,
+          name: p.name,
+          score: p.score || 0,
+          correctAnswers: correctQ,
+          totalAnswered: totalQ,
+          accuracy: accuracy,
+          joinedAt: p.joinedAt,
+          answers: p.answers || []
+        };
+      });
+
+      return {
+        _id: s._id,
+        sessionId: s.sessionId,
+        startedAt: s.startedAt || s.createdAt,
+        endedAt: s.endedAt,
+        status: s.status,
+        totalParticipants: s.totalParticipants || pList.length,
+        participants: pList.sort((a, b) => b.score - a.score)
+      };
+    });
+
+    const averageScore = participantCountWithScores > 0
+      ? Math.round(totalScoreSum / participantCountWithScores)
+      : 0;
+
+    res.json({
+      success: true,
+      quiz: {
+        _id: quiz._id,
+        title: quiz.title,
+        description: quiz.description,
+        type: quiz.type,
+        totalQuestions: quiz.questions?.length || 0,
+        questions: quiz.questions,
+        createdAt: quiz.createdAt
+      },
+      totalPlays: sessions.length,
+      totalParticipants: totalParticipants,
+      uniqueParticipantsCount: uniqueParticipantSet.size,
+      averageScore,
+      sessions: formattedSessions
+    });
+  } catch (err) {
+    console.error('Error fetching quiz analytics:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Export comprehensive CSV report for a Quiz (all sessions & participants)
+app.get('/api/quizzes/:id/export', async (req, res) => {
+  try {
+    const quiz = await Quiz.findById(req.params.id);
+    if (!quiz) return res.status(404).json({ error: 'Quiz not found' });
+
+    const sessions = await QuizSession.find({ quizId: quiz._id }).sort({ startedAt: -1 });
+
+    const headers = [
+      'Quiz Title',
+      'Session Code',
+      'Session Date & Time',
+      'Participant Name',
+      'Total Score',
+      'Correct Answers',
+      'Questions Answered',
+      'Accuracy (%)',
+      'Question Number',
+      'Question Text',
+      'Selected Option',
+      'Correct / Wrong',
+      'Answer Timestamp'
+    ];
+
+    const rows = [];
+
+    sessions.forEach(session => {
+      const sessionDate = (session.startedAt || session.createdAt)
+        ? new Date(session.startedAt || session.createdAt).toLocaleString()
+        : 'N/A';
+
+      if (!session.participants || session.participants.length === 0) {
+        rows.push([
+          quiz.title,
+          session.sessionId,
+          sessionDate,
+          'No participants recorded',
+          '0',
+          '0',
+          '0',
+          '0%',
+          '-',
+          '-',
+          '-',
+          '-',
+          '-'
+        ]);
+        return;
+      }
+
+      session.participants.forEach(p => {
+        const totalQ = p.totalAnswered || (p.answers ? p.answers.length : 0);
+        const correctQ = p.correctAnswers || (p.answers ? p.answers.filter(a => a.isCorrect).length : 0);
+        const accuracy = totalQ > 0 ? `${Math.round((correctQ / totalQ) * 100)}%` : '0%';
+
+        if (!p.answers || p.answers.length === 0) {
+          rows.push([
+            quiz.title,
+            session.sessionId,
+            sessionDate,
+            p.name,
+            p.score || 0,
+            correctQ,
+            totalQ,
+            accuracy,
+            '-',
+            '-',
+            '-',
+            '-',
+            p.joinedAt ? new Date(p.joinedAt).toLocaleString() : '-'
+          ]);
+        } else {
+          p.answers.forEach(ans => {
+            rows.push([
+              quiz.title,
+              session.sessionId,
+              sessionDate,
+              p.name,
+              p.score || 0,
+              correctQ,
+              totalQ,
+              accuracy,
+              (ans.questionIndex !== undefined ? ans.questionIndex + 1 : '-'),
+              ans.questionText || '-',
+              ans.selectedOption || ans.answerText || '-',
+              ans.isCorrect ? 'Correct' : 'Incorrect',
+              ans.timestamp ? new Date(ans.timestamp).toLocaleString() : '-'
+            ]);
+          });
+        }
+      });
+    });
+
+    const csvContent = [
+      headers.map(h => `"${h}"`).join(','),
+      ...rows.map(row => row.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(','))
+    ].join('\r\n');
+
+    const cleanTitle = quiz.title.replace(/[^a-zA-Z0-9_-]/g, '_');
+    res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+    res.setHeader('Content-Disposition', `attachment; filename="Report_${cleanTitle}_${Date.now()}.csv"`);
+    res.send('\uFEFF' + csvContent); // Include BOM for Excel compatibility
+  } catch (err) {
+    console.error('Error exporting quiz report:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Export single session CSV report
+app.get('/api/sessions/:sessionId/export', async (req, res) => {
+  try {
+    const session = await QuizSession.findOne({ sessionId: req.params.sessionId });
+    if (!session) {
+      // Fallback: check Response collection
+      const responses = await Response.find({ sessionId: req.params.sessionId }).sort({ timestamp: 1 });
+      if (responses.length === 0) {
+        return res.status(404).json({ error: 'Session report not found' });
+      }
+
+      const headers = ['Session Code', 'Participant Name', 'Question #', 'Question', 'Selected Answer', 'Is Correct', 'Timestamp'];
+      const rows = responses.map(r => [
+        req.params.sessionId,
+        r.participantName,
+        r.questionIndex + 1,
+        r.questionText,
+        r.answer,
+        r.isCorrect ? 'Correct' : 'Incorrect',
+        new Date(r.timestamp).toLocaleString()
+      ]);
+      const csv = [headers.map(h => `"${h}"`).join(','), ...rows.map(r => r.map(c => `"${String(c).replace(/"/g, '""')}"`).join(','))].join('\r\n');
+      res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+      res.setHeader('Content-Disposition', `attachment; filename="Session_${req.params.sessionId}_Report.csv"`);
+      return res.send('\uFEFF' + csv);
+    }
+
+    const headers = [
+      'Quiz Title',
+      'Session Code',
+      'Session Date & Time',
+      'Participant Name',
+      'Total Score',
+      'Correct Answers',
+      'Total Questions Answered',
+      'Accuracy (%)',
+      'Question #',
+      'Question Text',
+      'Selected Option',
+      'Result',
+      'Timestamp'
+    ];
+
+    const sessionDate = (session.startedAt || session.createdAt)
+      ? new Date(session.startedAt || session.createdAt).toLocaleString()
+      : 'N/A';
+
+    const rows = [];
+    (session.participants || []).forEach(p => {
+      const totalQ = p.totalAnswered || (p.answers ? p.answers.length : 0);
+      const correctQ = p.correctAnswers || (p.answers ? p.answers.filter(a => a.isCorrect).length : 0);
+      const accuracy = totalQ > 0 ? `${Math.round((correctQ / totalQ) * 100)}%` : '0%';
+
+      if (!p.answers || p.answers.length === 0) {
+        rows.push([
+          session.quizTitle,
+          session.sessionId,
+          sessionDate,
+          p.name,
+          p.score || 0,
+          correctQ,
+          totalQ,
+          accuracy,
+          '-',
+          '-',
+          '-',
+          '-',
+          p.joinedAt ? new Date(p.joinedAt).toLocaleString() : '-'
+        ]);
+      } else {
+        p.answers.forEach(ans => {
+          rows.push([
+            session.quizTitle,
+            session.sessionId,
+            sessionDate,
+            p.name,
+            p.score || 0,
+            correctQ,
+            totalQ,
+            accuracy,
+            (ans.questionIndex !== undefined ? ans.questionIndex + 1 : '-'),
+            ans.questionText || '-',
+            ans.selectedOption || ans.answerText || '-',
+            ans.isCorrect ? 'Correct' : 'Incorrect',
+            ans.timestamp ? new Date(ans.timestamp).toLocaleString() : '-'
+          ]);
+        });
+      }
+    });
+
+    const csvContent = [
+      headers.map(h => `"${h}"`).join(','),
+      ...rows.map(row => row.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(','))
+    ].join('\r\n');
+
+    res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+    res.setHeader('Content-Disposition', `attachment; filename="Session_${session.sessionId}_Report.csv"`);
+    res.send('\uFEFF' + csvContent);
+  } catch (err) {
+    console.error('Error exporting session report:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Legacy response endpoints for backward compatibility
 app.get('/api/responses/:sessionId', async (req, res) => {
   try {
     const { sessionId } = req.params;
@@ -805,60 +1224,23 @@ app.get('/api/responses/:sessionId', async (req, res) => {
   }
 });
 
-// Get analytics summary for a session
 app.get('/api/analytics/:sessionId', async (req, res) => {
   try {
     const { sessionId } = req.params;
     const responses = await Response.find({ sessionId });
-    const session = sessions[sessionId]; // Still need session for quiz structure if active, OR fetch from DB if we stored sessions
-
-    // Note: If session is closed, we might not have quizData in memory. 
-    // Ideally, we should store the Session structure in DB too. 
-    // For now, we'll assume we can calculate basic stats from responses alone or active session.
-
-    // Basic analytics from responses
     const totalParticipants = new Set(responses.map(r => r.participantName)).size;
-
     res.json({
       sessionId,
       totalParticipants,
-      totalResponses: responses.length,
-      // More detailed analytics would require reconstructing the quiz structure or saving it
+      totalResponses: responses.length
     });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
 });
 
-// Export responses as CSV
 app.get('/api/export/:sessionId', async (req, res) => {
-  try {
-    const { sessionId } = req.params;
-    const responses = await Response.find({ sessionId }).sort({ timestamp: 1 });
-
-    if (responses.length === 0) {
-      return res.status(404).json({ error: 'No responses found' });
-    }
-
-    // Generate CSV
-    const headers = ['Participant Name', 'Question Index', 'Question', 'Answer', 'Is Correct', 'Timestamp'];
-    const rows = responses.map(r => [
-      r.participantName,
-      r.questionIndex + 1,
-      r.questionText,
-      r.answer,
-      r.isCorrect ? 'Yes' : 'No',
-      r.timestamp.toISOString()
-    ]);
-
-    const csv = [headers, ...rows].map(row => row.map(cell => `"${cell}"`).join(',')).join('\n');
-
-    res.setHeader('Content-Type', 'text/csv');
-    res.setHeader('Content-Disposition', `attachment; filename="responses_${sessionId}.csv"`);
-    res.send(csv);
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
+  res.redirect(`/api/sessions/${req.params.sessionId}/export`);
 });
 
 // --- Production Setup ---
