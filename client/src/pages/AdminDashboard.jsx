@@ -71,62 +71,99 @@ export default function AdminDashboard() {
     const [logSort, setLogSort] = useState('newest'); // newest, oldest, action_asc, user_asc
 
     useEffect(() => {
-        const currentUser = localStorage.getItem('current_user');
-        if (!currentUser) {
-            navigate('/login');
-            return;
-        }
+        const initAdmin = async () => {
+            const currentUser = localStorage.getItem('current_user');
+            if (!currentUser) {
+                navigate('/login');
+                return;
+            }
 
-        const userData = JSON.parse(currentUser);
-        setUser(userData);
+            let userData = JSON.parse(currentUser);
 
-        if (userData.role !== 'admin') {
-            alert('Access denied. Admin privileges required.');
-            navigate('/dashboard');
-            return;
-        }
+            // If local storage role is not admin, verify fresh role from backend
+            if (userData.role !== 'admin') {
+                try {
+                    const profRes = await fetch(`/api/users/${userData._id}/profile`);
+                    const profData = await profRes.json();
+                    if (profData.success && profData.user?.role === 'admin') {
+                        userData = { ...userData, ...profData.user };
+                        localStorage.setItem('current_user', JSON.stringify(userData));
+                    } else {
+                        alert('Access denied. Admin privileges required.');
+                        navigate('/dashboard');
+                        return;
+                    }
+                } catch (e) {
+                    alert('Access denied. Admin privileges required.');
+                    navigate('/dashboard');
+                    return;
+                }
+            }
 
-        loadAdminData(userData._id);
+            setUser(userData);
+            loadAdminData(userData._id);
+        };
+
+        initAdmin();
     }, [navigate]);
 
     const loadAdminData = async (userId) => {
         try {
-            // Fetch stats
-            const statsRes = await fetch(`/api/admin/stats?userId=${userId}`);
-            const statsData = await statsRes.json();
-            if (statsData.success) {
-                setStats(statsData.stats);
+            const [statsRes, settingsRes, usersRes, quizzesRes, logsRes] = await Promise.allSettled([
+                fetch(`/api/admin/stats?userId=${userId}`).then(r => r.json()),
+                fetch(`/api/admin/settings?userId=${userId}`).then(r => r.json()),
+                fetch(`/api/admin/users?userId=${userId}`).then(r => r.json()),
+                fetch(`/api/admin/quizzes?userId=${userId}`).then(r => r.json()),
+                fetch(`/api/admin/logs?userId=${userId}&limit=250`).then(r => r.json())
+            ]);
+
+            let fetchedStats = null;
+            if (statsRes.status === 'fulfilled' && statsRes.value?.success) {
+                fetchedStats = statsRes.value.stats;
+                setStats(statsRes.value.stats);
             }
 
-            // Fetch settings
-            const settingsRes = await fetch(`/api/admin/settings?userId=${userId}`);
-            const settingsData = await settingsRes.json();
-            if (settingsData.success && settingsData.settings) {
-                setSystemSettings(settingsData.settings);
-                setDefaultTokensInput(settingsData.settings.defaultAiTokens !== undefined ? settingsData.settings.defaultAiTokens : 50);
+            if (settingsRes.status === 'fulfilled' && settingsRes.value?.success && settingsRes.value.settings) {
+                setSystemSettings(settingsRes.value.settings);
+                setDefaultTokensInput(settingsRes.value.settings.defaultAiTokens !== undefined ? settingsRes.value.settings.defaultAiTokens : 50);
             }
 
-            // Fetch users
-            const usersRes = await fetch(`/api/admin/users?userId=${userId}`);
-            const usersData = await usersRes.json();
-            if (usersData.success) {
-                setUsers(usersData.users);
+            let userList = [];
+            if (usersRes.status === 'fulfilled' && usersRes.value?.success) {
+                userList = usersRes.value.users || [];
+                setUsers(userList);
             }
 
-            // Fetch quizzes
-            const quizzesRes = await fetch(`/api/admin/quizzes?userId=${userId}`);
-            const quizzesData = await quizzesRes.json();
-            if (quizzesData.success) {
-                setQuizzes(quizzesData.quizzes);
+            let quizList = [];
+            if (quizzesRes.status === 'fulfilled' && quizzesRes.value?.success) {
+                quizList = quizzesRes.value.quizzes || [];
+                setQuizzes(quizList);
             }
 
-            // Fetch logs (full list)
-            const logsRes = await fetch(`/api/admin/logs?userId=${userId}&limit=250`);
-            const logsData = await logsRes.json();
-            if (logsData.success) {
-                setLogs(logsData.logs || []);
-            } else if (statsData.recentActivities) {
-                setLogs(statsData.recentActivities || []);
+            if (logsRes.status === 'fulfilled' && logsRes.value?.success) {
+                setLogs(logsRes.value.logs || []);
+            } else if (statsRes.status === 'fulfilled' && statsRes.value?.recentActivities) {
+                setLogs(statsRes.value.recentActivities || []);
+            }
+
+            // Fallback stats if stats endpoint had an issue
+            if (!fetchedStats) {
+                setStats({
+                    users: {
+                        total: userList.length || 1,
+                        active: userList.filter(u => u.isActive !== false).length || 1,
+                        inactive: userList.filter(u => u.isActive === false).length || 0,
+                        admins: userList.filter(u => u.role === 'admin').length || 1
+                    },
+                    quizzes: {
+                        total: quizList.length || 0,
+                        totalParticipants: quizList.reduce((sum, q) => sum + (q.totalParticipants || 0), 0),
+                        uniqueParticipants: 0
+                    },
+                    activities: {
+                        total: 0
+                    }
+                });
             }
 
             setIsLoading(false);

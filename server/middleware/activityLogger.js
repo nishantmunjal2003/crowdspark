@@ -5,14 +5,19 @@ const ActivityLog = require('../models/ActivityLog');
  */
 async function logActivity(userId, userEmail, userName, action, details = {}, req = null) {
     try {
+        const ipAddress = req
+            ? (req.headers?.['x-forwarded-for'] || req.ip || req.socket?.remoteAddress || req.connection?.remoteAddress || '127.0.0.1')
+            : null;
+        const userAgent = req ? req.headers?.['user-agent'] : null;
+
         const logEntry = {
             userId,
             userEmail,
             userName,
             action,
             details,
-            ipAddress: req ? (req.headers['x-forwarded-for'] || req.connection.remoteAddress) : null,
-            userAgent: req ? req.headers['user-agent'] : null
+            ipAddress,
+            userAgent
         };
 
         await ActivityLog.create(logEntry);

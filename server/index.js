@@ -478,6 +478,30 @@ app.get('/api/users/:id/tokens', async (req, res) => {
   }
 });
 
+// Get user profile & refresh session
+app.get('/api/users/:id/profile', async (req, res) => {
+  try {
+    const user = await User.findById(req.params.id);
+    if (!user) return res.status(404).json({ error: 'User not found' });
+    res.json({
+      success: true,
+      user: {
+        _id: user._id,
+        name: user.name,
+        email: user.email,
+        picture: user.picture,
+        role: user.role,
+        isActive: user.isActive,
+        aiTokens: user.aiTokens !== undefined ? user.aiTokens : 50,
+        aiTokensUsed: user.aiTokensUsed || 0,
+        aiTokensTotal: user.aiTokensTotal || 50
+      }
+    });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // AI Quiz Generation endpoint with token quota enforcement
 app.post('/api/ai/generate-quiz', async (req, res) => {
   try {
