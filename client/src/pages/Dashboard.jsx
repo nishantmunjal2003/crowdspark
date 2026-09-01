@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
     Plus,
@@ -26,7 +26,9 @@ import {
     FolderInput,
     Filter,
     FolderCheck,
-    Tag
+    Tag,
+    User,
+    ChevronDown
 } from 'lucide-react';
 import '../dashboard.css';
 import QuizReportModal from '../components/QuizReportModal';
@@ -36,6 +38,8 @@ export default function Dashboard() {
     const navigate = useNavigate();
     const [user, setUser] = useState(null);
     const [showProfileModal, setShowProfileModal] = useState(false);
+    const [showProfileDropdown, setShowProfileDropdown] = useState(false);
+    const profileDropdownRef = useRef(null);
     const [quizzes, setQuizzes] = useState([]);
     const [activeTab, setActiveTab] = useState('all'); // all, quiz, poll
     const [selectedGroup, setSelectedGroup] = useState('all'); // all or group name
@@ -72,6 +76,20 @@ export default function Dashboard() {
         document.documentElement.setAttribute('data-theme', isDarkMode ? 'dark' : 'light');
         localStorage.setItem('host_theme', isDarkMode ? 'dark' : 'light');
     }, [isDarkMode]);
+
+    useEffect(() => {
+        function handleClickOutside(event) {
+            if (profileDropdownRef.current && !profileDropdownRef.current.contains(event.target)) {
+                setShowProfileDropdown(false);
+            }
+        }
+        if (showProfileDropdown) {
+            document.addEventListener('mousedown', handleClickOutside);
+        }
+        return () => {
+            document.removeEventListener('mousedown', handleClickOutside);
+        };
+    }, [showProfileDropdown]);
 
     const toggleTheme = () => setIsDarkMode(prev => !prev);
 
@@ -396,20 +414,7 @@ export default function Dashboard() {
                             <span>{userTokens.aiTokens !== undefined ? userTokens.aiTokens : 50} AI Tokens</span>
                         </button>
 
-                        {user.role === 'admin' && (
-                            <button
-                                onClick={() => navigate('/admin')}
-                                className="btn"
-                                style={{
-                                    background: 'linear-gradient(135deg, rgba(236, 72, 153, 0.2), rgba(139, 92, 246, 0.2))',
-                                    border: '1px solid rgba(236, 72, 153, 0.3)',
-                                    color: 'var(--accent-tertiary)'
-                                }}
-                            >
-                                <Shield size={16} />
-                                Admin
-                            </button>
-                        )}
+                        {/* Theme Toggle Button */}
                         <button
                             onClick={toggleTheme}
                             className="btn btn-secondary"
@@ -420,67 +425,223 @@ export default function Dashboard() {
                             {isDarkMode ? 'Light' : 'Dark'}
                         </button>
 
-                        {/* User Profile & Role Option Button */}
-                        <button
-                            onClick={() => setShowProfileModal(true)}
-                            className="btn"
-                            style={{
-                                display: 'inline-flex',
-                                alignItems: 'center',
-                                gap: '0.65rem',
-                                padding: '0.35rem 0.85rem 0.35rem 0.45rem',
-                                background: 'var(--bg-secondary)',
-                                border: '1px solid var(--border-color)',
-                                borderRadius: '2rem',
-                                cursor: 'pointer',
-                                transition: 'all 0.2s ease',
-                                boxShadow: '0 2px 6px rgba(0,0,0,0.05)'
-                            }}
-                            title="View & Edit Profile"
-                        >
-                            {user.picture ? (
-                                <img
-                                    src={user.picture}
-                                    alt={user.name}
-                                    style={{ width: '30px', height: '30px', borderRadius: '50%', objectFit: 'cover' }}
-                                />
-                            ) : (
-                                <div style={{
-                                    width: '30px',
-                                    height: '30px',
-                                    borderRadius: '50%',
-                                    background: 'linear-gradient(135deg, #6366f1, #8b5cf6)',
-                                    color: 'white',
-                                    display: 'flex',
+                        {/* User Profile Dropdown Button & Menu */}
+                        <div style={{ position: 'relative' }} ref={profileDropdownRef}>
+                            <button
+                                onClick={() => setShowProfileDropdown(prev => !prev)}
+                                className="btn"
+                                style={{
+                                    display: 'inline-flex',
                                     alignItems: 'center',
-                                    justifyContent: 'center',
-                                    fontSize: '0.8rem',
-                                    fontWeight: 800
-                                }}>
-                                    {user.name ? user.name.slice(0, 1).toUpperCase() : 'U'}
+                                    gap: '0.65rem',
+                                    padding: '0.35rem 0.85rem 0.35rem 0.45rem',
+                                    background: showProfileDropdown ? 'var(--bg-tertiary)' : 'var(--bg-secondary)',
+                                    border: showProfileDropdown ? '1.5px solid var(--accent-primary)' : '1px solid var(--border-color)',
+                                    borderRadius: '2rem',
+                                    cursor: 'pointer',
+                                    transition: 'all 0.2s ease',
+                                    boxShadow: '0 2px 8px rgba(0,0,0,0.06)'
+                                }}
+                                title="Account & Profile Menu"
+                            >
+                                {user.picture ? (
+                                    <img
+                                        src={user.picture}
+                                        alt={user.name}
+                                        style={{ width: '30px', height: '30px', borderRadius: '50%', objectFit: 'cover' }}
+                                    />
+                                ) : (
+                                    <div style={{
+                                        width: '30px',
+                                        height: '30px',
+                                        borderRadius: '50%',
+                                        background: 'linear-gradient(135deg, #6366f1, #8b5cf6)',
+                                        color: 'white',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'center',
+                                        fontSize: '0.8rem',
+                                        fontWeight: 800
+                                    }}>
+                                        {user.name ? user.name.slice(0, 1).toUpperCase() : 'U'}
+                                    </div>
+                                )}
+                                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', textAlign: 'left', lineHeight: 1.15 }}>
+                                    <span style={{ fontSize: '0.825rem', fontWeight: 700, color: 'var(--text-primary)', maxWidth: '130px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                                        {user.name}
+                                    </span>
+                                    <span style={{
+                                        fontSize: '0.675rem',
+                                        fontWeight: 700,
+                                        textTransform: 'uppercase',
+                                        color: user.role === 'admin' ? '#ec4899' : '#818cf8',
+                                        letterSpacing: '0.03em'
+                                    }}>
+                                        {user.role === 'admin' ? '🛡️ Admin' : '👤 Host'}
+                                    </span>
+                                </div>
+                                <ChevronDown
+                                    size={15}
+                                    color="var(--text-secondary)"
+                                    style={{
+                                        transition: 'transform 0.2s ease',
+                                        transform: showProfileDropdown ? 'rotate(180deg)' : 'rotate(0deg)'
+                                    }}
+                                />
+                            </button>
+
+                            {/* Floating Dropdown Menu */}
+                            {showProfileDropdown && (
+                                <div
+                                    className="animate-fade-in"
+                                    style={{
+                                        position: 'absolute',
+                                        top: 'calc(100% + 8px)',
+                                        right: 0,
+                                        width: '230px',
+                                        background: 'var(--bg-card)',
+                                        backdropFilter: 'blur(16px)',
+                                        WebkitBackdropFilter: 'blur(16px)',
+                                        border: '1.5px solid var(--border-color)',
+                                        borderRadius: '1.25rem',
+                                        padding: '0.5rem',
+                                        boxShadow: '0 15px 35px -5px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(255, 255, 255, 0.05)',
+                                        zIndex: 1050,
+                                        display: 'flex',
+                                        flexDirection: 'column',
+                                        gap: '0.25rem'
+                                    }}
+                                >
+                                    {/* Header Info */}
+                                    <div style={{
+                                        padding: '0.65rem 0.85rem',
+                                        borderRadius: '0.85rem',
+                                        background: 'var(--bg-secondary)',
+                                        marginBottom: '0.25rem'
+                                    }}>
+                                        <div style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--text-primary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                                            {user.name}
+                                        </div>
+                                        <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                                            {user.email}
+                                        </div>
+                                    </div>
+
+                                    {/* Option 1: Profile */}
+                                    <button
+                                        onClick={() => {
+                                            setShowProfileDropdown(false);
+                                            setShowProfileModal(true);
+                                        }}
+                                        className="btn"
+                                        style={{
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            gap: '0.75rem',
+                                            width: '100%',
+                                            padding: '0.65rem 0.85rem',
+                                            borderRadius: '0.75rem',
+                                            background: 'transparent',
+                                            border: 'none',
+                                            color: 'var(--text-primary)',
+                                            fontSize: '0.875rem',
+                                            fontWeight: 600,
+                                            cursor: 'pointer',
+                                            justifyContent: 'flex-start',
+                                            textAlign: 'left',
+                                            transition: 'all 0.15s ease'
+                                        }}
+                                        onMouseEnter={e => {
+                                            e.currentTarget.style.background = 'rgba(129, 140, 248, 0.12)';
+                                            e.currentTarget.style.color = '#818cf8';
+                                        }}
+                                        onMouseLeave={e => {
+                                            e.currentTarget.style.background = 'transparent';
+                                            e.currentTarget.style.color = 'var(--text-primary)';
+                                        }}
+                                    >
+                                        <User size={16} color="#818cf8" />
+                                        <span>Profile</span>
+                                    </button>
+
+                                    {/* Option 2: Role: Admin (Only shown if user is admin, otherwise hidden) */}
+                                    {user.role === 'admin' && (
+                                        <button
+                                            onClick={() => {
+                                                setShowProfileDropdown(false);
+                                                navigate('/admin');
+                                            }}
+                                            className="btn"
+                                            style={{
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                gap: '0.75rem',
+                                                width: '100%',
+                                                padding: '0.65rem 0.85rem',
+                                                borderRadius: '0.75rem',
+                                                background: 'transparent',
+                                                border: 'none',
+                                                color: 'var(--text-primary)',
+                                                fontSize: '0.875rem',
+                                                fontWeight: 600,
+                                                cursor: 'pointer',
+                                                justifyContent: 'flex-start',
+                                                textAlign: 'left',
+                                                transition: 'all 0.15s ease'
+                                            }}
+                                            onMouseEnter={e => {
+                                                e.currentTarget.style.background = 'rgba(236, 72, 153, 0.12)';
+                                                e.currentTarget.style.color = '#ec4899';
+                                            }}
+                                            onMouseLeave={e => {
+                                                e.currentTarget.style.background = 'transparent';
+                                                e.currentTarget.style.color = 'var(--text-primary)';
+                                            }}
+                                        >
+                                            <Shield size={16} color="#ec4899" />
+                                            <span>Role: Admin</span>
+                                        </button>
+                                    )}
+
+                                    <div style={{ height: '1px', background: 'var(--border-color)', margin: '0.25rem 0' }} />
+
+                                    {/* Option 3: Logout */}
+                                    <button
+                                        onClick={() => {
+                                            setShowProfileDropdown(false);
+                                            handleLogout();
+                                        }}
+                                        className="btn"
+                                        style={{
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            gap: '0.75rem',
+                                            width: '100%',
+                                            padding: '0.65rem 0.85rem',
+                                            borderRadius: '0.75rem',
+                                            background: 'transparent',
+                                            border: 'none',
+                                            color: '#ef4444',
+                                            fontSize: '0.875rem',
+                                            fontWeight: 600,
+                                            cursor: 'pointer',
+                                            justifyContent: 'flex-start',
+                                            textAlign: 'left',
+                                            transition: 'all 0.15s ease'
+                                        }}
+                                        onMouseEnter={e => {
+                                            e.currentTarget.style.background = 'rgba(239, 68, 68, 0.12)';
+                                        }}
+                                        onMouseLeave={e => {
+                                            e.currentTarget.style.background = 'transparent';
+                                        }}
+                                    >
+                                        <LogOut size={16} color="#ef4444" />
+                                        <span>Logout</span>
+                                    </button>
                                 </div>
                             )}
-                            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', textAlign: 'left', lineHeight: 1.15 }}>
-                                <span style={{ fontSize: '0.825rem', fontWeight: 700, color: 'var(--text-primary)', maxWidth: '130px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                                    {user.name}
-                                </span>
-                                <span style={{
-                                    fontSize: '0.675rem',
-                                    fontWeight: 700,
-                                    textTransform: 'uppercase',
-                                    color: user.role === 'admin' ? '#ec4899' : '#818cf8',
-                                    letterSpacing: '0.03em'
-                                }}>
-                                    {user.role === 'admin' ? '🛡️ Admin' : '👤 Host'}
-                                </span>
-                            </div>
-                        </button>
-
-                        {/* Standalone Logout Button */}
-                        <button onClick={handleLogout} className="btn btn-secondary" title="Log out of CrowdSpark">
-                            <LogOut size={16} />
-                            Logout
-                        </button>
+                        </div>
                     </div>
                 </div>
             </div>
