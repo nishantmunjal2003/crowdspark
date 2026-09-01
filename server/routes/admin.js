@@ -41,9 +41,19 @@ async function isAdmin(req, res, next) {
 // Get all users (admin only)
 router.get('/users', isAdmin, async (req, res) => {
     try {
-        const users = await User.find()
-            .select('-password') // Exclude passwords
-            .sort({ createdAt: -1 });
+        const rawUsers = await User.find().sort({ createdAt: -1 });
+
+        const users = rawUsers.map(u => ({
+            _id: u._id,
+            name: u.name,
+            email: u.email,
+            role: u.role,
+            isActive: u.isActive,
+            googleId: u.googleId,
+            authMethod: u.googleId ? 'google' : 'email',
+            lastLogin: u.lastLogin,
+            createdAt: u.createdAt
+        }));
 
         res.json({
             success: true,
@@ -306,6 +316,11 @@ router.get('/users/:userId', isAdmin, async (req, res) => {
             return res.status(404).json({ error: 'User not found' });
         }
 
+        const userWithAuth = {
+            ...user.toObject(),
+            authMethod: user.googleId ? 'google' : 'email'
+        };
+
         // Get user's quizzes
         const quizzes = await Quiz.find({ creatorId: userId });
 
@@ -328,7 +343,7 @@ router.get('/users/:userId', isAdmin, async (req, res) => {
 
         res.json({
             success: true,
-            user,
+            user: userWithAuth,
             quizzes: {
                 count: quizzes.length,
                 items: quizzes
