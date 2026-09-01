@@ -12,83 +12,96 @@ export default function About() {
         <div className="about-page" style={{ minHeight: '100vh', paddingBottom: '4rem' }}>
             {/* Navigation Bar */}
             <nav style={{
-                padding: '1rem 1.5rem',
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-                backdropFilter: 'blur(10px)',
                 position: 'sticky',
                 top: 0,
                 zIndex: 100,
+                background: 'var(--bg-card)',
+                backdropFilter: 'blur(16px)',
+                WebkitBackdropFilter: 'blur(16px)',
                 borderBottom: '1px solid var(--border-color)',
-                background: 'var(--bg-card)'
+                padding: '1rem 2rem'
             }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer' }} onClick={() => navigate('/')}>
-                    <Zap size={24} color="#fbbf24" fill="#fbbf24" />
-                    <span style={{ fontSize: '1.25rem', fontWeight: '700', letterSpacing: '-0.02em' }}>CrowdSpark</span>
-                </div>
+                <div style={{ maxWidth: '1400px', margin: '0 auto', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', cursor: 'pointer' }} onClick={() => navigate('/')}>
+                        <div style={{
+                            background: 'linear-gradient(135deg, #fbbf24, #f59e0b)',
+                            padding: '0.5rem',
+                            borderRadius: '0.75rem',
+                            boxShadow: '0 4px 12px rgba(251, 191, 36, 0.3)',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center'
+                        }}>
+                            <Zap size={22} color="white" fill="white" />
+                        </div>
+                        <span style={{ fontSize: '1.35rem', fontWeight: '800', letterSpacing: '-0.02em', color: 'var(--text-primary)' }}>CrowdSpark</span>
+                    </div>
 
-                {/* Desktop Menu */}
-                <div className="desktop-menu" style={{ display: 'flex', gap: '1.5rem', alignItems: 'center' }}>
-                    <span onClick={() => navigate('/pricing')} style={{ cursor: 'pointer', color: 'var(--text-secondary)', fontWeight: '500' }}>Pricing</span>
-                    <ThemeToggle />
-                    <button onClick={() => navigate('/login')} className="btn btn-secondary" style={{ padding: '0.5rem 1rem', fontSize: '0.9rem' }}>Host Login</button>
-                    <button onClick={() => navigate('/')} className="btn btn-primary" style={{ padding: '0.5rem 1rem', fontSize: '0.9rem' }}>Join Session</button>
-                </div>
+                    {/* Desktop Menu */}
+                    <div className="desktop-menu" style={{ display: 'flex', gap: '1.75rem', alignItems: 'center' }}>
+                        <span onClick={() => navigate('/')} style={{ cursor: 'pointer', color: 'var(--text-secondary)', fontWeight: '600', fontSize: '0.95rem' }}>Home</span>
+                        <span style={{ cursor: 'pointer', color: 'var(--accent-primary)', fontWeight: '700', fontSize: '0.95rem' }}>About</span>
+                        <span onClick={() => navigate('/pricing')} style={{ cursor: 'pointer', color: 'var(--text-secondary)', fontWeight: '600', fontSize: '0.95rem' }}>Pricing</span>
+                        <ThemeToggle />
+                        <button onClick={() => navigate('/login')} className="btn btn-secondary" style={{ padding: '0.5rem 1.15rem', fontSize: '0.9rem', borderRadius: '0.75rem' }}>Host Login</button>
+                        <button onClick={() => navigate('/')} className="btn btn-primary" style={{ padding: '0.5rem 1.25rem', fontSize: '0.9rem', borderRadius: '0.75rem' }}>Join Session</button>
+                    </div>
 
-                {/* Mobile Menu Button */}
-                <button
-                    className="mobile-menu-btn"
-                    onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-                    style={{
-                        display: 'none',
-                        background: 'none',
-                        border: 'none',
-                        color: 'var(--text-primary)',
-                        cursor: 'pointer',
-                        padding: '0.5rem'
-                    }}
-                >
-                    {mobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
-                </button>
+                    {/* Mobile Menu Button */}
+                    <button
+                        className="mobile-menu-btn"
+                        onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+                        style={{
+                            display: 'none',
+                            background: 'none',
+                            border: 'none',
+                            color: 'var(--text-primary)',
+                            cursor: 'pointer',
+                            padding: '0.5rem'
+                        }}
+                    >
+                        {mobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
+                    </button>
+                </div>
             </nav>
 
             {/* Mobile Menu Dropdown */}
             {mobileMenuOpen && (
-                <div className="mobile-menu-dropdown" style={{
+                <div style={{
                     position: 'fixed',
-                    top: '60px',
+                    top: '70px',
                     left: 0,
                     right: 0,
                     background: 'var(--bg-card)',
-                    backdropFilter: 'blur(10px)',
                     borderBottom: '1px solid var(--border-color)',
                     padding: '1.5rem',
                     zIndex: 99,
                     display: 'flex',
                     flexDirection: 'column',
-                    gap: '1rem'
+                    gap: '1rem',
+                    boxShadow: '0 10px 25px rgba(0,0,0,0.2)'
                 }}>
-                    <span onClick={() => { navigate('/pricing'); setMobileMenuOpen(false); }} style={{ cursor: 'pointer', color: 'var(--text-secondary)', fontWeight: '500', padding: '0.5rem' }}>Pricing</span>
+                    <span onClick={() => { navigate('/'); setMobileMenuOpen(false); }} style={{ fontWeight: '600', padding: '0.5rem 0' }}>Home</span>
+                    <span onClick={() => setMobileMenuOpen(false)} style={{ color: 'var(--accent-primary)', fontWeight: '700', padding: '0.5rem 0' }}>About</span>
+                    <span onClick={() => { navigate('/pricing'); setMobileMenuOpen(false); }} style={{ fontWeight: '600', padding: '0.5rem 0' }}>Pricing</span>
                     <div style={{ display: 'flex', justifyContent: 'center', padding: '0.5rem' }}>
                         <ThemeToggle />
                     </div>
-                    <button onClick={() => { navigate('/login'); setMobileMenuOpen(false); }} className="btn btn-secondary" style={{ padding: '0.75rem 1rem', fontSize: '0.9rem', width: '100%' }}>Host Login</button>
-                    <button onClick={() => { navigate('/'); setMobileMenuOpen(false); }} className="btn btn-primary" style={{ padding: '0.75rem 1rem', fontSize: '0.9rem', width: '100%' }}>Join Session</button>
+                    <button onClick={() => { navigate('/login'); setMobileMenuOpen(false); }} className="btn btn-secondary" style={{ width: '100%', padding: '0.75rem' }}>Host Login</button>
+                    <button onClick={() => { navigate('/'); setMobileMenuOpen(false); }} className="btn btn-primary" style={{ width: '100%', padding: '0.75rem' }}>Join Session</button>
                 </div>
             )}
 
             {/* Hero Section */}
-            <header className="about-hero" style={{ textAlign: 'center', padding: '4rem 1.5rem', position: 'relative', overflow: 'hidden' }}>
+            <header className="about-hero" style={{ textAlign: 'center', padding: '3.5rem 1.5rem', position: 'relative', overflow: 'hidden' }}>
                 <div className="blob blob-1" style={{ top: '10%', left: '20%', opacity: 0.15 }}></div>
                 <div className="blob blob-2" style={{ bottom: '10%', right: '20%', opacity: 0.15 }}></div>
 
                 <div style={{ position: 'relative', zIndex: 10, maxWidth: '800px', margin: '0 auto' }}>
-                    <h1 className="title about-title" style={{ fontSize: '3.5rem', marginBottom: '1.5rem' }}>
-                        Spark Engagement in <br className="hide-mobile" />
-                        <span style={{ color: 'var(--accent)' }}>Real-Time</span>
+                    <h1 style={{ fontSize: 'clamp(2.25rem, 5vw, 3.5rem)', fontWeight: 900, marginBottom: '1.25rem', color: 'var(--text-primary)', letterSpacing: '-0.03em', lineHeight: 1.2 }}>
+                        Spark Engagement in Real-Time
                     </h1>
-                    <p className="subtitle about-subtitle" style={{ fontSize: '1.25rem', lineHeight: '1.8' }}>
+                    <p className="subtitle about-subtitle" style={{ fontSize: 'clamp(1rem, 2vw, 1.25rem)', lineHeight: '1.8', color: 'var(--text-secondary)' }}>
                         CrowdSpark is the ultimate platform for live interactive quizzes and polls.
                         Whether you're in a classroom, a conference, or a team meeting,
                         we make it easy to connect and get instant feedback.
