@@ -46,74 +46,76 @@ export default function Home() {
             <div className="blob blob-2"></div>
             <div className="blob blob-3"></div>
 
-            <div className="hero-content animate-fade-in">
-                <div style={{ textAlign: 'center', marginBottom: '3.5rem' }}>
-                    <div style={{
-                        display: 'inline-flex',
-                        padding: '1.25rem',
-                        background: 'linear-gradient(135deg, rgba(251, 191, 36, 0.1), rgba(245, 158, 11, 0.1))',
-                        borderRadius: '1.5rem',
-                        marginBottom: '2rem',
-                        border: '2px solid rgba(251, 191, 36, 0.2)',
-                        boxShadow: '0 8px 32px rgba(251, 191, 36, 0.15)',
-                        animation: 'float 6s ease-in-out infinite'
-                    }}>
-                        <Zap size={48} color="#fbbf24" fill="#fbbf24" />
-                    </div>
-                    <h1 className="title" style={{ fontSize: 'clamp(2.5rem, 8vw, 4rem)', marginBottom: '1rem' }}>CrowdSpark</h1>
-                    <p className="subtitle" style={{ marginBottom: '0.5rem', fontSize: 'clamp(1rem, 3vw, 1.3rem)', fontWeight: '500' }}>Join the conversation. Live.</p>
-                    <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', justifyContent: 'center', color: 'var(--text-muted)', fontSize: '0.9rem' }}>
-                        <Sparkles size={16} color="var(--accent-primary)" />
-                        <span>Interactive quizzes & polls in real-time</span>
-                    </div>
-                </div>
-
-                <div className="card" style={{ padding: '2.5rem 2rem', border: '2px solid var(--border-color)' }}>
-                    <form onSubmit={handleJoin} style={{ display: 'flex', flexDirection: 'column', gap: '1.75rem' }}>
-                        <div>
-                            <label style={{
-                                display: 'block',
-                                marginBottom: '1rem',
-                                color: 'var(--text-secondary)',
-                                fontSize: '0.875rem',
-                                fontWeight: '700',
-                                letterSpacing: '0.05em',
-                                textTransform: 'uppercase'
-                            }}>
-                                Enter Session Code
-                            </label>
-                            <input
-                                type="text"
-                                className="input input-large"
-                                placeholder="ABC123"
-                                value={sessionId}
-                                onChange={(e) => setSessionId(e.target.value.toUpperCase())}
-                                maxLength={6}
-                                autoFocus
-                                style={{
-                                    border: '2px solid var(--border-color)',
-                                    boxShadow: 'var(--shadow-sm)'
-                                }}
-                            />
+            <div className="hero-content-wrapper">
+                <div className="hero-content animate-fade-in">
+                    <div style={{ textAlign: 'center', marginBottom: '3.5rem' }}>
+                        <div style={{
+                            display: 'inline-flex',
+                            padding: '1.25rem',
+                            background: 'linear-gradient(135deg, rgba(251, 191, 36, 0.1), rgba(245, 158, 11, 0.1))',
+                            borderRadius: '1.5rem',
+                            marginBottom: '2rem',
+                            border: '2px solid rgba(251, 191, 36, 0.2)',
+                            boxShadow: '0 8px 32px rgba(251, 191, 36, 0.15)',
+                            animation: 'float 6s ease-in-out infinite'
+                        }}>
+                            <Zap size={48} color="#fbbf24" fill="#fbbf24" />
                         </div>
+                        <h1 className="title" style={{ fontSize: 'clamp(2.5rem, 8vw, 4rem)', marginBottom: '1rem' }}>CrowdSpark</h1>
+                        <p className="subtitle" style={{ marginBottom: '0.5rem', fontSize: 'clamp(1rem, 3vw, 1.3rem)', fontWeight: '500' }}>Join the conversation. Live.</p>
+                        <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', justifyContent: 'center', color: 'var(--text-muted)', fontSize: '0.9rem' }}>
+                            <Sparkles size={16} color="var(--accent-primary)" />
+                            <span>Interactive quizzes & polls in real-time</span>
+                        </div>
+                    </div>
 
-                        <button
-                            type="submit"
-                            className="btn btn-primary"
-                            style={{ width: '100%', padding: '1.25rem', fontSize: '1.125rem', fontWeight: '700' }}
-                            disabled={!sessionId.trim()}
-                        >
-                            Join Session <ArrowRight size={22} />
-                        </button>
-                    </form>
-                </div>
+                    <div className="card" style={{ padding: '2.5rem 2rem', border: '2px solid var(--border-color)' }}>
+                        <form onSubmit={handleJoin} style={{ display: 'flex', flexDirection: 'column', gap: '1.75rem' }}>
+                            <div>
+                                <label style={{
+                                    display: 'block',
+                                    marginBottom: '1rem',
+                                    color: 'var(--text-secondary)',
+                                    fontSize: '0.875rem',
+                                    fontWeight: '700',
+                                    letterSpacing: '0.05em',
+                                    textTransform: 'uppercase'
+                                }}>
+                                    Enter Session Code
+                                </label>
+                                <input
+                                    type="text"
+                                    className="input input-large"
+                                    placeholder="ABC123"
+                                    value={sessionId}
+                                    onChange={(e) => setSessionId(e.target.value.toUpperCase())}
+                                    maxLength={6}
+                                    autoFocus
+                                    style={{
+                                        border: '2px solid var(--border-color)',
+                                        boxShadow: 'var(--shadow-sm)'
+                                    }}
+                                />
+                            </div>
 
-                <div className="host-link" onClick={() => navigate('/login')}>
-                    Want to host a quiz? <span>Sign in →</span>
+                            <button
+                                type="submit"
+                                className="btn btn-primary"
+                                style={{ width: '100%', padding: '1.25rem', fontSize: '1.125rem', fontWeight: '700' }}
+                                disabled={!sessionId.trim()}
+                            >
+                                Join Session <ArrowRight size={22} />
+                            </button>
+                        </form>
+                    </div>
+
+                    <div className="host-link" onClick={() => navigate('/login')}>
+                        Want to host a quiz? <span>Sign in →</span>
+                    </div>
                 </div>
             </div>
 
-            <Footer style={{ zIndex: 20 }} />
+            <Footer />
         </div>
     );
 }
