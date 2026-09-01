@@ -15,7 +15,8 @@ import {
     CheckCircle2,
     Menu,
     X,
-    MessageCircle
+    MessageCircle,
+    Gift
 } from 'lucide-react';
 import Footer from '../components/Footer';
 import ThemeToggle from '../components/ThemeToggle';
@@ -23,21 +24,24 @@ import ThemeToggle from '../components/ThemeToggle';
 export default function Pricing() {
     const navigate = useNavigate();
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-    const [billingCycle, setBillingCycle] = useState('monthly'); // monthly, annual
     const [openFaq, setOpenFaq] = useState(0);
 
     const faqs = [
         {
-            q: "Is CrowdSpark really free to start?",
-            a: "Yes! Our Community plan is 100% free with unlimited quiz creation, live sessions, and participant reports. No credit card required."
+            q: "How does the 1 Year Free Pro Educator plan work?",
+            a: "During our launch celebration, everyone who signs up gets full access to the Pro Educator plan 100% free for an entire year. No credit card is required to claim this offer."
+        },
+        {
+            q: "Is the Community plan permanently free?",
+            a: "Yes! The Community plan is and always will be 100% free with unlimited quiz creation, live sessions, and participant reports."
         },
         {
             q: "How many participants can join a live quiz?",
-            a: "The free Community plan supports up to 50 simultaneous participants. If you need more capacity, our Pro and Enterprise plans scale up to thousands of players."
+            a: "With the 1-Year Free Pro Educator plan, you can host up to 500 simultaneous participants with live leaderboards and instant response tracking."
         },
         {
-            q: "Can I export player results and reports?",
-            a: "Yes! You can download full CSV reports containing player names, timestamps, individual scores, and per-question answer breakdowns directly from your Dashboard."
+            q: "Can I download and export participant scores?",
+            a: "Yes! You can download full Excel/CSV reports containing player names, timestamps, individual scores, and per-question answer breakdowns directly from your Dashboard."
         },
         {
             q: "Do participants need to create an account to play?",
@@ -158,7 +162,7 @@ export default function Pricing() {
             )}
 
             {/* Main Content */}
-            <main style={{ flex: 1, padding: '3rem 1.5rem 5rem 1.5rem', position: 'relative', overflow: 'hidden' }}>
+            <main style={{ flex: 1, padding: '3.5rem 1.5rem 5rem 1.5rem', position: 'relative', overflow: 'hidden' }}>
                 {/* Background Ambient Glows */}
                 <div style={{
                     position: 'absolute',
@@ -175,24 +179,6 @@ export default function Pricing() {
                 <div style={{ maxWidth: '1200px', margin: '0 auto', position: 'relative', zIndex: 1 }}>
                     {/* Hero Header */}
                     <div style={{ textAlign: 'center', marginBottom: '3.5rem' }}>
-                        <div style={{
-                            display: 'inline-flex',
-                            alignItems: 'center',
-                            gap: '0.5rem',
-                            padding: '0.35rem 0.95rem',
-                            borderRadius: '2rem',
-                            background: 'rgba(99, 102, 241, 0.1)',
-                            border: '1px solid rgba(99, 102, 241, 0.25)',
-                            color: 'var(--accent-primary)',
-                            fontSize: '0.85rem',
-                            fontWeight: 700,
-                            marginBottom: '1.25rem',
-                            textTransform: 'uppercase',
-                            letterSpacing: '0.05em'
-                        }}>
-                            <Sparkles size={15} /> Simple & Transparent Pricing
-                        </div>
-
                         <h1 style={{
                             fontSize: 'clamp(2.25rem, 5vw, 3.75rem)',
                             fontWeight: 900,
@@ -208,78 +194,20 @@ export default function Pricing() {
                             fontSize: 'clamp(1rem, 2vw, 1.25rem)',
                             color: 'var(--text-secondary)',
                             maxWidth: '650px',
-                            margin: '0 auto 2rem auto',
+                            margin: '0 auto',
                             lineHeight: 1.6
                         }}>
                             Host live interactive quizzes, polls, and assessments with real-time participation analytics and instant reporting.
                         </p>
-
-                        {/* Billing Cycle Switch */}
-                        <div style={{
-                            display: 'inline-flex',
-                            alignItems: 'center',
-                            background: 'var(--bg-secondary)',
-                            padding: '0.35rem',
-                            borderRadius: '2rem',
-                            border: '1px solid var(--border-color)',
-                            boxShadow: 'var(--shadow-sm)'
-                        }}>
-                            <button
-                                onClick={() => setBillingCycle('monthly')}
-                                style={{
-                                    padding: '0.5rem 1.25rem',
-                                    borderRadius: '1.5rem',
-                                    border: 'none',
-                                    background: billingCycle === 'monthly' ? 'var(--bg-card)' : 'transparent',
-                                    color: billingCycle === 'monthly' ? 'var(--text-primary)' : 'var(--text-secondary)',
-                                    fontWeight: billingCycle === 'monthly' ? '700' : '500',
-                                    fontSize: '0.875rem',
-                                    cursor: 'pointer',
-                                    boxShadow: billingCycle === 'monthly' ? '0 2px 8px rgba(0,0,0,0.1)' : 'none',
-                                    transition: 'all 0.2s'
-                                }}
-                            >
-                                Monthly Billing
-                            </button>
-                            <button
-                                onClick={() => setBillingCycle('annual')}
-                                style={{
-                                    padding: '0.5rem 1.25rem',
-                                    borderRadius: '1.5rem',
-                                    border: 'none',
-                                    background: billingCycle === 'annual' ? 'var(--bg-card)' : 'transparent',
-                                    color: billingCycle === 'annual' ? 'var(--text-primary)' : 'var(--text-secondary)',
-                                    fontWeight: billingCycle === 'annual' ? '700' : '500',
-                                    fontSize: '0.875rem',
-                                    cursor: 'pointer',
-                                    boxShadow: billingCycle === 'annual' ? '0 2px 8px rgba(0,0,0,0.1)' : 'none',
-                                    transition: 'all 0.2s',
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    gap: '0.4rem'
-                                }}
-                            >
-                                Annual Billing
-                                <span style={{
-                                    padding: '0.15rem 0.5rem',
-                                    borderRadius: '1rem',
-                                    background: 'rgba(16, 185, 129, 0.15)',
-                                    color: 'var(--success)',
-                                    fontSize: '0.725rem',
-                                    fontWeight: 800
-                                }}>
-                                    SAVE 20%
-                                </span>
-                            </button>
-                        </div>
                     </div>
 
-                    {/* Pricing Cards Grid */}
+                    {/* Pricing Cards Grid with Top Clearance */}
                     <div style={{
                         display: 'grid',
                         gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
-                        gap: '2rem',
+                        gap: '2.5rem 2rem',
                         alignItems: 'stretch',
+                        paddingTop: '1.5rem',
                         marginBottom: '5rem'
                     }}>
                         {/* 1. Community Plan */}
@@ -321,7 +249,7 @@ export default function Pricing() {
                                 </div>
 
                                 <p style={{ fontSize: '0.9rem', color: 'var(--text-secondary)', marginBottom: '1.75rem', lineHeight: 1.5 }}>
-                                    Everything you need to create, host, and analyze interactive quizzes with your classroom or team.
+                                    Everything you need to create, host, and analyze interactive quizzes with your classroom or small group.
                                 </p>
 
                                 <div style={{ marginBottom: '2rem' }}>
@@ -348,7 +276,7 @@ export default function Pricing() {
                             </div>
                         </div>
 
-                        {/* 2. Pro Plan (Highlighted) */}
+                        {/* 2. Pro Educator Plan (1 YEAR FREE SPECIAL) */}
                         <div
                             className="card animate-fade-in"
                             style={{
@@ -371,25 +299,27 @@ export default function Pricing() {
                                 e.currentTarget.style.transform = 'scale(1.02) translateY(0)';
                             }}
                         >
-                            {/* Featured Badge */}
+                            {/* Featured Badge - Positioned with proper z-index and spacing */}
                             <div style={{
                                 position: 'absolute',
-                                top: '-14px',
+                                top: '-15px',
                                 left: '50%',
                                 transform: 'translateX(-50%)',
-                                background: 'linear-gradient(135deg, var(--accent-primary), var(--accent-secondary))',
+                                background: 'linear-gradient(135deg, #6366f1, #8b5cf6)',
                                 color: 'white',
-                                padding: '0.35rem 1rem',
-                                borderRadius: '1rem',
+                                padding: '0.4rem 1.25rem',
+                                borderRadius: '2rem',
                                 fontSize: '0.75rem',
                                 fontWeight: 800,
                                 letterSpacing: '0.05em',
                                 display: 'flex',
                                 alignItems: 'center',
-                                gap: '0.35rem',
-                                boxShadow: '0 4px 12px rgba(99, 102, 241, 0.4)'
+                                gap: '0.4rem',
+                                boxShadow: '0 4px 14px rgba(99, 102, 241, 0.45)',
+                                whiteSpace: 'nowrap',
+                                zIndex: 10
                             }}>
-                                <Crown size={14} /> MOST POPULAR
+                                <Crown size={15} /> 1 YEAR 100% FREE
                             </div>
 
                             <div>
@@ -400,24 +330,30 @@ export default function Pricing() {
                                         borderRadius: '1rem',
                                         fontSize: '0.75rem',
                                         fontWeight: 700,
-                                        background: 'rgba(99, 102, 241, 0.15)',
-                                        color: 'var(--accent-primary)'
+                                        background: 'rgba(16, 185, 129, 0.15)',
+                                        color: 'var(--success)'
                                     }}>
-                                        POWER USERS
+                                        FREE FOR 1 YEAR
                                     </span>
                                 </div>
 
-                                <p style={{ fontSize: '0.9rem', color: 'var(--text-secondary)', marginBottom: '1.75rem', lineHeight: 1.5 }}>
-                                    Ideal for schools, instructors, team leads, and live event hosts who need high capacity and deeper analytics.
+                                <p style={{ fontSize: '0.9rem', color: 'var(--text-secondary)', marginBottom: '1.5rem', lineHeight: 1.5 }}>
+                                    All premium features unlocked for schools, instructors, team leads, and live hosts during our launch.
                                 </p>
 
-                                <div style={{ marginBottom: '2rem' }}>
-                                    <span style={{ fontSize: '3.25rem', fontWeight: 900, color: 'var(--text-primary)', lineHeight: 1 }}>
-                                        {billingCycle === 'monthly' ? '$12' : '$9'}
-                                    </span>
-                                    <span style={{ fontSize: '1rem', color: 'var(--text-secondary)', marginLeft: '0.5rem', fontWeight: 500 }}>
-                                        / month {billingCycle === 'annual' ? '(billed yearly)' : ''}
-                                    </span>
+                                <div style={{ marginBottom: '1.75rem' }}>
+                                    <div style={{ display: 'flex', alignItems: 'baseline', gap: '0.5rem', flexWrap: 'wrap' }}>
+                                        <span style={{ fontSize: '3.25rem', fontWeight: 900, color: 'var(--text-primary)', lineHeight: 1 }}>$0</span>
+                                        <span style={{ fontSize: '1.1rem', color: 'var(--success)', fontWeight: 700 }}>
+                                            Free for 1 Year
+                                        </span>
+                                        <span style={{ fontSize: '0.95rem', color: 'var(--text-muted)', textDecoration: 'line-through' }}>
+                                            $144/yr
+                                        </span>
+                                    </div>
+                                    <div style={{ fontSize: '0.8rem', color: 'var(--accent-primary)', marginTop: '0.4rem', fontWeight: '600' }}>
+                                        ✨ Special Launch Access • No credit card required
+                                    </div>
                                 </div>
 
                                 <button
@@ -430,18 +366,19 @@ export default function Pricing() {
                                         fontWeight: 700,
                                         borderRadius: '0.85rem',
                                         marginBottom: '2rem',
+                                        background: 'linear-gradient(135deg, #6366f1, #8b5cf6)',
                                         boxShadow: '0 8px 20px rgba(99, 102, 241, 0.35)'
                                     }}
                                 >
-                                    Start 14-Day Free Trial
+                                    Claim 1 Year Free Access
                                 </button>
 
                                 <div style={{ borderTop: '1px solid var(--border-color)', paddingTop: '1.75rem', display: 'grid', gap: '0.85rem' }}>
                                     <FeatureItem text="Up to 500 Live Players per session" highlighted />
                                     <FeatureItem text="Unlimited AI Quiz Generations" highlighted />
-                                    <FeatureItem text="Custom Branding & Themes" highlighted />
+                                    <FeatureItem text="Custom Branding & Background Themes" highlighted />
                                     <FeatureItem text="Full Per-Question Player Breakdown" highlighted />
-                                    <FeatureItem text="Detailed Excel & CSV Export" highlighted />
+                                    <FeatureItem text="Detailed Excel & CSV Audit Export" highlighted />
                                     <FeatureItem text="Priority Email & Chat Support" />
                                 </div>
                             </div>
