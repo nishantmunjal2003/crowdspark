@@ -34,7 +34,8 @@ export default function Home() {
                     </div>
                     <span style={{ fontSize: '1.5rem', fontWeight: '800', letterSpacing: '-0.02em', background: 'linear-gradient(135deg, var(--text-primary), var(--text-secondary))', backgroundClip: 'text', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>CrowdSpark</span>
                 </div>
-                <div style={{ display: 'flex', gap: '2rem', alignItems: 'center' }}>
+                <div style={{ display: 'flex', gap: '1.75rem', alignItems: 'center' }}>
+                    <span onClick={() => navigate('/how-it-works')} style={{ cursor: 'pointer', color: 'var(--text-secondary)', fontWeight: '600', transition: 'all 0.3s', fontSize: '0.95rem' }} onMouseOver={(e) => { e.target.style.color = 'var(--text-primary)'; e.target.style.transform = 'translateY(-2px)'; }} onMouseOut={(e) => { e.target.style.color = 'var(--text-secondary)'; e.target.style.transform = 'translateY(0)'; }}>How it Works</span>
                     <span onClick={() => navigate('/about')} style={{ cursor: 'pointer', color: 'var(--text-secondary)', fontWeight: '600', transition: 'all 0.3s', fontSize: '0.95rem' }} onMouseOver={(e) => { e.target.style.color = 'var(--text-primary)'; e.target.style.transform = 'translateY(-2px)'; }} onMouseOut={(e) => { e.target.style.color = 'var(--text-secondary)'; e.target.style.transform = 'translateY(0)'; }}>About</span>
                     <span onClick={() => navigate('/pricing')} style={{ cursor: 'pointer', color: 'var(--text-secondary)', fontWeight: '600', transition: 'all 0.3s', fontSize: '0.95rem' }} onMouseOver={(e) => { e.target.style.color = 'var(--text-primary)'; e.target.style.transform = 'translateY(-2px)'; }} onMouseOut={(e) => { e.target.style.color = 'var(--text-secondary)'; e.target.style.transform = 'translateY(0)'; }}>Pricing</span>
                     <ThemeToggle />
@@ -112,7 +113,7 @@ export default function Home() {
                 </div>
             </div>
 
-            <Footer style={{ position: 'absolute', bottom: 0, zIndex: 20 }} />
+            <Footer style={{ zIndex: 20 }} />
         </div>
     );
 }

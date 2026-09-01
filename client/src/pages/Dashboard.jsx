@@ -33,6 +33,7 @@ import {
 import '../dashboard.css';
 import QuizReportModal from '../components/QuizReportModal';
 import UserProfileModal from '../components/UserProfileModal';
+import Footer from '../components/Footer';
 
 export default function Dashboard() {
     const navigate = useNavigate();
@@ -2140,6 +2141,9 @@ export default function Dashboard() {
                     onLogout={handleLogout}
                 />
             )}
+
+            {/* Dashboard Footer */}
+            <Footer style={{ marginTop: '4rem' }} />
         </div>
     );
 }

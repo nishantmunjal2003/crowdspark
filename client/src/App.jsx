@@ -9,6 +9,9 @@ import CreateQuiz from './pages/CreateQuiz';
 import Host from './pages/Host';
 import Participant from './pages/Participant';
 import AdminDashboard from './pages/AdminDashboard';
+import TermsOfService from './pages/TermsOfService';
+import PrivacyPolicy from './pages/PrivacyPolicy';
+import HowItWorks from './pages/HowItWorks';
 
 import { GoogleOAuthProvider } from '@react-oauth/google';
 
@@ -75,7 +78,10 @@ function App() {
         <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/about" element={<About />} />
+          <Route path="/how-it-works" element={<HowItWorks />} />
           <Route path="/pricing" element={<Pricing />} />
+          <Route path="/terms" element={<TermsOfService />} />
+          <Route path="/privacy" element={<PrivacyPolicy />} />
           <Route path="/login" element={<Login />} />
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/admin" element={<AdminDashboard />} />
