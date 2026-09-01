@@ -395,11 +395,11 @@ textarea::placeholder,
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
+  justify-content: space-between;
   min-height: 100vh;
-  padding: 1.5rem;
+  padding: 0;
   position: relative;
-  overflow: hidden;
+  overflow-x: hidden;
   background: radial-gradient(circle at 50% 50%, rgba(99, 102, 241, 0.1) 0%, transparent 50%),
     radial-gradient(circle at 80% 20%, rgba(139, 92, 246, 0.08) 0%, transparent 50%),
     radial-gradient(circle at 20% 80%, rgba(236, 72, 153, 0.08) 0%, transparent 50%);
@@ -410,6 +410,8 @@ textarea::placeholder,
   max-width: 480px;
   z-index: 10;
   position: relative;
+  margin: 6rem auto 3rem auto;
+  padding: 0 1.5rem;
 }
 
 .input-large {
@@ -532,7 +534,7 @@ textarea::placeholder,
 
 @media (max-width: 480px) {
   .hero-container {
-    padding: 1rem;
+    padding: 0;
   }
 
   .hero-content {
