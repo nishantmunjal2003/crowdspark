@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { Plus, Trash2, Save, ArrowLeft, Check, Upload, Download, Image, Video, X, Music, Palette, Clock, Sparkles, Zap } from 'lucide-react';
+import { Plus, Trash2, Save, ArrowLeft, Check, Upload, Download, Image, Video, X, Music, Palette, Clock, Sparkles, Zap, Folder } from 'lucide-react';
 
 export default function CreateQuiz() {
     const navigate = useNavigate();
@@ -11,6 +11,8 @@ export default function CreateQuiz() {
     const [currentUser, setCurrentUser] = useState(null);
     const [userTokens, setUserTokens] = useState({ aiTokens: 50, aiTokensUsed: 0 });
     const [quizTitle, setQuizTitle] = useState(editingQuiz?.title || '');
+    const [group, setGroup] = useState(editingQuiz?.group || 'General');
+    const [availableGroups, setAvailableGroups] = useState(['General']);
     const [questions, setQuestions] = useState(editingQuiz?.questions || []);
     const [backgroundImage, setBackgroundImage] = useState(editingQuiz?.backgroundImage || '');
     const [music, setMusic] = useState(editingQuiz?.music || '');
@@ -47,6 +49,18 @@ export default function CreateQuiz() {
                 }
             })
             .catch(err => console.error('Error loading user tokens:', err));
+
+        // Fetch existing quizzes to extract available groups
+        fetch(`/api/quizzes?userId=${userData._id}`)
+            .then(res => res.json())
+            .then(quizzes => {
+                if (Array.isArray(quizzes)) {
+                    const uniqueGroups = Array.from(new Set(quizzes.map(q => q.group?.trim()).filter(Boolean)));
+                    if (!uniqueGroups.includes('General')) uniqueGroups.unshift('General');
+                    setAvailableGroups(uniqueGroups);
+                }
+            })
+            .catch(err => console.error('Error fetching existing groups:', err));
     }, [navigate]);
 
     const handleAIGenerate = async () => {
@@ -324,6 +338,7 @@ export default function CreateQuiz() {
         // Save quiz to MongoDB
         const quizData = {
             title: quizTitle,
+            group: group.trim() || 'General',
             questions: questions.map(q => ({ ...q, timeLimit })), // Apply global time limit to all questions
             type: quizType,
             backgroundImage,
@@ -392,19 +407,69 @@ export default function CreateQuiz() {
                     </div>
                 </div>
 
-                {/* Quiz Title */}
-                <div className="card animate-fade-in" style={{ marginBottom: '2rem' }}>
-                    <label style={{ display: 'block', marginBottom: '0.75rem', fontSize: '1rem', fontWeight: '600' }}>
-                        Quiz Title
-                    </label>
-                    <input
-                        className="input"
-                        type="text"
-                        placeholder="Enter quiz title (e.g., General Knowledge Quiz)"
-                        value={quizTitle}
-                        onChange={e => setQuizTitle(e.target.value)}
-                        style={{ fontSize: '1.125rem', padding: '1rem' }}
-                    />
+                {/* Quiz Title & Group Grid */}
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(280px, 100%), 1fr))', gap: '1.5rem', marginBottom: '2rem' }}>
+                    {/* Quiz Title */}
+                    <div className="card animate-fade-in" style={{ margin: 0 }}>
+                        <label style={{ display: 'block', marginBottom: '0.75rem', fontSize: '1rem', fontWeight: '600' }}>
+                            Quiz Title
+                        </label>
+                        <input
+                            className="input"
+                            type="text"
+                            placeholder="Enter quiz title (e.g., General Knowledge Quiz)"
+                            value={quizTitle}
+                            onChange={e => setQuizTitle(e.target.value)}
+                            style={{ fontSize: '1.05rem', padding: '0.875rem', width: '100%' }}
+                        />
+                    </div>
+
+                    {/* Quiz Group / Folder */}
+                    <div className="card animate-fade-in" style={{ margin: 0 }}>
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.75rem' }}>
+                            <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '1rem', fontWeight: '600', margin: 0 }}>
+                                <Folder size={18} color="#818cf8" />
+                                Group / Folder
+                            </label>
+                            <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>Organize your content</span>
+                        </div>
+                        <input
+                            className="input"
+                            type="text"
+                            list="group-suggestions"
+                            placeholder="e.g. Linux Administration, Grade 10 Science..."
+                            value={group}
+                            onChange={e => setGroup(e.target.value)}
+                            style={{ fontSize: '1.05rem', padding: '0.875rem', width: '100%', marginBottom: '0.5rem' }}
+                        />
+                        <datalist id="group-suggestions">
+                            {availableGroups.map((g, idx) => (
+                                <option key={idx} value={g} />
+                            ))}
+                        </datalist>
+                        {availableGroups.length > 0 && (
+                            <div style={{ display: 'flex', gap: '0.35rem', flexWrap: 'wrap', marginTop: '0.25rem' }}>
+                                {availableGroups.slice(0, 5).map((g, idx) => (
+                                    <button
+                                        key={idx}
+                                        type="button"
+                                        onClick={() => setGroup(g)}
+                                        style={{
+                                            border: group.toLowerCase() === g.toLowerCase() ? '1px solid #818cf8' : '1px solid var(--border-color)',
+                                            background: group.toLowerCase() === g.toLowerCase() ? 'rgba(129, 140, 248, 0.2)' : 'var(--bg-secondary)',
+                                            color: group.toLowerCase() === g.toLowerCase() ? '#818cf8' : 'var(--text-secondary)',
+                                            fontSize: '0.75rem',
+                                            padding: '0.2rem 0.6rem',
+                                            borderRadius: '1rem',
+                                            cursor: 'pointer'
+                                        }}
+                                    >
+                                        📁 {g}
+                                    </button>
+                                ))}
+                            </div>
+                        )}
+                    </div>
                 </div>
 
                 {/* Time Limit */}

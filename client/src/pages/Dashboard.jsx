@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
     Plus,
@@ -19,7 +19,14 @@ import {
     Trophy,
     Zap,
     Check,
-    X
+    X,
+    Search,
+    Folder,
+    FolderPlus,
+    FolderInput,
+    Filter,
+    FolderCheck,
+    Tag
 } from 'lucide-react';
 import '../dashboard.css';
 import QuizReportModal from '../components/QuizReportModal';
@@ -29,6 +36,8 @@ export default function Dashboard() {
     const [user, setUser] = useState(null);
     const [quizzes, setQuizzes] = useState([]);
     const [activeTab, setActiveTab] = useState('all'); // all, quiz, poll
+    const [selectedGroup, setSelectedGroup] = useState('all'); // all or group name
+    const [searchQuery, setSearchQuery] = useState('');
     const [isLoading, setIsLoading] = useState(true);
     const [selectedQuizReport, setSelectedQuizReport] = useState(null);
     const [userTokens, setUserTokens] = useState({
@@ -41,6 +50,17 @@ export default function Dashboard() {
     const [isSubmittingTokenReq, setIsSubmittingTokenReq] = useState(false);
     const [tokenReqSuccessMsg, setTokenReqSuccessMsg] = useState('');
     const [tokenReqNote, setTokenReqNote] = useState('');
+    
+    // Group management states
+    const [quickMoveQuiz, setQuickMoveQuiz] = useState(null);
+    const [targetGroup, setTargetGroup] = useState('');
+    const [isMovingGroup, setIsMovingGroup] = useState(false);
+    const [showManageGroupsModal, setShowManageGroupsModal] = useState(false);
+    const [groupToRename, setGroupToRename] = useState('');
+    const [renamedGroupName, setRenamedGroupName] = useState('');
+    const [isRenamingGroup, setIsRenamingGroup] = useState(false);
+    const [groupActionSuccess, setGroupActionSuccess] = useState('');
+
     const [isDarkMode, setIsDarkMode] = useState(() => {
         const saved = localStorage.getItem('host_theme');
         return saved ? saved === 'dark' : true;
@@ -191,11 +211,133 @@ export default function Dashboard() {
         }
     };
 
+    const handleMoveQuizToGroup = async (e) => {
+        if (e) e.preventDefault();
+        if (!quickMoveQuiz || !targetGroup.trim()) return;
+
+        setIsMovingGroup(true);
+        const cleanGroup = targetGroup.trim();
+
+        try {
+            const res = await fetch(`/api/quizzes/${quickMoveQuiz._id || quickMoveQuiz.id}/group`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ group: cleanGroup })
+            });
+            const data = await res.json();
+            if (res.ok) {
+                setQuizzes(prev => prev.map(q => 
+                    (q._id || q.id) === (quickMoveQuiz._id || quickMoveQuiz.id)
+                        ? { ...q, group: cleanGroup }
+                        : q
+                ));
+                setGroupActionSuccess(`Quiz moved to group "${cleanGroup}"!`);
+                setQuickMoveQuiz(null);
+                setTargetGroup('');
+                setTimeout(() => setGroupActionSuccess(''), 3000);
+            } else {
+                alert(data.error || 'Failed to move quiz to group');
+            }
+        } catch (err) {
+            console.error('Error moving quiz group:', err);
+            alert('Network error moving quiz to group');
+        } finally {
+            setIsMovingGroup(false);
+        }
+    };
+
+    const handleRenameGroup = async (e) => {
+        if (e) e.preventDefault();
+        if (!user?._id || !groupToRename || !renamedGroupName.trim()) return;
+
+        setIsRenamingGroup(true);
+        const cleanNewGroup = renamedGroupName.trim();
+
+        try {
+            const res = await fetch('/api/quizzes/rename-group', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    userId: user._id,
+                    oldGroup: groupToRename,
+                    newGroup: cleanNewGroup
+                })
+            });
+            const data = await res.json();
+            if (res.ok) {
+                setQuizzes(prev => prev.map(q => {
+                    if ((q.group || 'General').trim().toLowerCase() === groupToRename.toLowerCase()) {
+                        return { ...q, group: cleanNewGroup };
+                    }
+                    return q;
+                }));
+                if (selectedGroup.toLowerCase() === groupToRename.toLowerCase()) {
+                    setSelectedGroup(cleanNewGroup);
+                }
+                setGroupActionSuccess(`Group renamed from "${groupToRename}" to "${cleanNewGroup}"`);
+                setGroupToRename('');
+                setRenamedGroupName('');
+                setTimeout(() => setGroupActionSuccess(''), 3000);
+            } else {
+                alert(data.error || 'Failed to rename group');
+            }
+        } catch (err) {
+            console.error('Error renaming group:', err);
+            alert('Network error renaming group');
+        } finally {
+            setIsRenamingGroup(false);
+        }
+    };
+
+    const uniqueGroups = useMemo(() => {
+        const set = new Set();
+        quizzes.forEach(q => {
+            const g = (q.group || 'General').trim();
+            if (g) set.add(g);
+        });
+        const list = Array.from(set).sort((a, b) => {
+            if (a.toLowerCase() === 'general') return -1;
+            if (b.toLowerCase() === 'general') return 1;
+            return a.localeCompare(b);
+        });
+        if (!list.some(g => g.toLowerCase() === 'general')) {
+            list.unshift('General');
+        }
+        return list;
+    }, [quizzes]);
+
+    const groupCounts = useMemo(() => {
+        const counts = {};
+        quizzes.forEach(q => {
+            const g = (q.group || 'General').trim();
+            counts[g] = (counts[g] || 0) + 1;
+        });
+        return counts;
+    }, [quizzes]);
+
     if (!user) return null;
 
-    const filteredQuizzes = activeTab === 'all'
-        ? quizzes
-        : quizzes.filter(q => (q.type || 'quiz') === activeTab);
+    const filteredQuizzes = quizzes.filter(quiz => {
+        // 1. Tab filter (all, quiz, poll)
+        const matchesTab = activeTab === 'all' || (quiz.type || 'quiz') === activeTab;
+        if (!matchesTab) return false;
+
+        // 2. Group filter (all or specific group)
+        const quizGroup = (quiz.group || 'General').trim();
+        const matchesGroup = selectedGroup === 'all' || quizGroup.toLowerCase() === selectedGroup.toLowerCase();
+        if (!matchesGroup) return false;
+
+        // 3. Search query filter
+        if (searchQuery.trim()) {
+            const query = searchQuery.toLowerCase().trim();
+            const titleMatch = quiz.title?.toLowerCase().includes(query);
+            const groupMatch = quizGroup.toLowerCase().includes(query);
+            const questionMatch = quiz.questions?.some(q => q.text?.toLowerCase().includes(query));
+            return titleMatch || groupMatch || questionMatch;
+        }
+
+        return true;
+    });
 
     const totalQuizzes = quizzes.filter(q => (q.type || 'quiz') === 'quiz').length;
     const totalPolls = quizzes.filter(q => q.type === 'poll').length;
@@ -425,29 +567,184 @@ export default function Dashboard() {
                     </button>
                 </div>
 
-                {/* Filter Tabs */}
-                <div className="dashboard-filter-tabs">
-                    {['all', 'quiz', 'poll'].map((tab, index) => (
+                {/* Search & Groups Toolbar */}
+                <div className="dashboard-toolbar animate-fade-in" style={{ animationDelay: '0.45s' }}>
+                    {/* Search Bar Row */}
+                    <div className="dashboard-search-row">
+                        <div className="dashboard-search-container">
+                            <span className="dashboard-search-icon">
+                                <Search size={19} />
+                            </span>
+                            <input
+                                type="text"
+                                className="dashboard-search-input"
+                                placeholder="Search quizzes by title, question text, or group..."
+                                value={searchQuery}
+                                onChange={(e) => setSearchQuery(e.target.value)}
+                            />
+                            {searchQuery && (
+                                <button
+                                    type="button"
+                                    className="dashboard-search-clear"
+                                    onClick={() => setSearchQuery('')}
+                                    title="Clear search"
+                                >
+                                    <X size={14} />
+                                </button>
+                            )}
+                        </div>
                         <button
-                            key={tab}
-                            onClick={() => setActiveTab(tab)}
-                            className="animate-fade-in"
-                            style={{
-                                padding: '0.6rem 1.25rem',
-                                borderRadius: '2rem',
-                                border: activeTab === tab ? '1px solid rgba(129, 140, 248, 0.4)' : '1px solid var(--border-color)',
-                                background: activeTab === tab ? 'rgba(129, 140, 248, 0.15)' : 'var(--bg-secondary)',
-                                color: activeTab === tab ? '#818cf8' : 'var(--text-secondary)',
-                                fontWeight: activeTab === tab ? '600' : '500',
-                                fontSize: '0.875rem',
-                                cursor: 'pointer',
-                                transition: 'all 0.2s ease',
-                                animationDelay: `${0.5 + index * 0.1}s`
-                            }}
+                            type="button"
+                            className="dashboard-search-btn"
+                            onClick={() => {}}
                         >
-                            {tab === 'all' ? `All (${quizzes.length})` : tab === 'quiz' ? `Quizzes (${totalQuizzes})` : `Polls (${totalPolls})`}
+                            <Search size={16} />
+                            <span>Search</span>
                         </button>
-                    ))}
+                    </div>
+
+                    {/* Filter Tabs & Groups Section */}
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                        {/* Type Tabs (All, Quizzes, Polls) */}
+                        <div className="dashboard-filter-tabs" style={{ marginBottom: 0 }}>
+                            {['all', 'quiz', 'poll'].map((tab, index) => (
+                                <button
+                                    key={tab}
+                                    onClick={() => setActiveTab(tab)}
+                                    className="animate-fade-in"
+                                    style={{
+                                        padding: '0.6rem 1.25rem',
+                                        borderRadius: '2rem',
+                                        border: activeTab === tab ? '1px solid rgba(129, 140, 248, 0.5)' : '1px solid var(--border-color)',
+                                        background: activeTab === tab ? 'rgba(129, 140, 248, 0.15)' : 'var(--bg-secondary)',
+                                        color: activeTab === tab ? '#818cf8' : 'var(--text-secondary)',
+                                        fontWeight: activeTab === tab ? '700' : '500',
+                                        fontSize: '0.875rem',
+                                        cursor: 'pointer',
+                                        transition: 'all 0.2s ease',
+                                        boxShadow: activeTab === tab ? '0 2px 8px rgba(99, 102, 241, 0.15)' : 'none'
+                                    }}
+                                >
+                                    {tab === 'all' ? `All (${quizzes.length})` : tab === 'quiz' ? `Quizzes (${totalQuizzes})` : `Polls (${totalPolls})`}
+                                </button>
+                            ))}
+                        </div>
+
+                        {/* Groups Filter Section */}
+                        <div className="dashboard-groups-section">
+                            <div className="dashboard-groups-header">
+                                <div className="dashboard-groups-title">
+                                    <Folder size={15} color="#818cf8" />
+                                    <span>Groups & Folders</span>
+                                </div>
+                                <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+                                    <button
+                                        type="button"
+                                        onClick={() => setShowManageGroupsModal(true)}
+                                        className="btn"
+                                        style={{
+                                            padding: '0.3rem 0.75rem',
+                                            fontSize: '0.75rem',
+                                            fontWeight: 600,
+                                            background: 'var(--bg-secondary)',
+                                            color: 'var(--text-secondary)',
+                                            border: '1px solid var(--border-color)',
+                                            borderRadius: '0.75rem'
+                                        }}
+                                        title="Manage and rename groups"
+                                    >
+                                        Manage Groups
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div className="dashboard-groups-pills">
+                                <button
+                                    type="button"
+                                    onClick={() => setSelectedGroup('all')}
+                                    className={`group-pill-btn ${selectedGroup === 'all' ? 'active' : ''}`}
+                                >
+                                    <Folder size={14} />
+                                    <span>All Groups ({quizzes.length})</span>
+                                </button>
+
+                                {uniqueGroups.map((g) => {
+                                    const count = groupCounts[g] || 0;
+                                    const isActive = selectedGroup.toLowerCase() === g.toLowerCase();
+                                    return (
+                                        <button
+                                            key={g}
+                                            type="button"
+                                            onClick={() => setSelectedGroup(isActive ? 'all' : g)}
+                                            className={`group-pill-btn ${isActive ? 'active' : ''}`}
+                                        >
+                                            <Folder size={14} />
+                                            <span>{g} ({count})</span>
+                                        </button>
+                                    );
+                                })}
+                            </div>
+                        </div>
+
+                        {/* Active Filter Indicator & Reset Button */}
+                        {(searchQuery.trim() || selectedGroup !== 'all' || activeTab !== 'all') && (
+                            <div style={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'space-between',
+                                background: 'rgba(129, 140, 248, 0.08)',
+                                border: '1px solid rgba(129, 140, 248, 0.2)',
+                                padding: '0.6rem 1rem',
+                                borderRadius: '0.75rem',
+                                fontSize: '0.85rem'
+                            }}>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--text-primary)' }}>
+                                    <Filter size={15} color="#818cf8" />
+                                    <span>
+                                        Showing <strong>{filteredQuizzes.length}</strong> of {quizzes.length} quizzes
+                                        {selectedGroup !== 'all' && <> in group <strong style={{ color: '#818cf8' }}>📁 {selectedGroup}</strong></>}
+                                        {searchQuery.trim() && <> matching "<strong style={{ color: '#818cf8' }}>{searchQuery.trim()}</strong>"</>}
+                                    </span>
+                                </div>
+                                <button
+                                    onClick={() => {
+                                        setSearchQuery('');
+                                        setSelectedGroup('all');
+                                        setActiveTab('all');
+                                    }}
+                                    style={{
+                                        background: 'none',
+                                        border: 'none',
+                                        color: '#818cf8',
+                                        fontWeight: 600,
+                                        fontSize: '0.825rem',
+                                        cursor: 'pointer',
+                                        textDecoration: 'underline'
+                                    }}
+                                >
+                                    Reset Filters
+                                </button>
+                            </div>
+                        )}
+
+                        {groupActionSuccess && (
+                            <div style={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '0.5rem',
+                                background: 'rgba(16, 185, 129, 0.12)',
+                                border: '1px solid rgba(16, 185, 129, 0.3)',
+                                color: 'var(--success)',
+                                padding: '0.6rem 1rem',
+                                borderRadius: '0.75rem',
+                                fontSize: '0.85rem',
+                                fontWeight: 600
+                            }}>
+                                <Check size={16} />
+                                <span>{groupActionSuccess}</span>
+                            </div>
+                        )}
+                    </div>
                 </div>
 
                 {/* Quiz List */}
@@ -467,20 +764,39 @@ export default function Dashboard() {
                         }}>
                             <BookOpen size={40} color="#818cf8" />
                         </div>
-                        <h2 style={{ fontSize: '1.5rem', marginBottom: '0.5rem', color: 'var(--text-primary)' }}>No {activeTab === 'all' ? 'Content' : activeTab === 'quiz' ? 'Quizzes' : 'Polls'} Yet</h2>
-                        <p style={{ color: 'var(--text-secondary)' }}>Create your first {activeTab === 'all' ? 'quiz or poll' : activeTab} to get started!</p>
+                        <h2 style={{ fontSize: '1.5rem', marginBottom: '0.5rem', color: 'var(--text-primary)' }}>
+                            {searchQuery.trim() || selectedGroup !== 'all' ? 'No Matching Quizzes' : `No ${activeTab === 'all' ? 'Content' : activeTab === 'quiz' ? 'Quizzes' : 'Polls'} Yet`}
+                        </h2>
+                        <p style={{ color: 'var(--text-secondary)', marginBottom: '1.5rem' }}>
+                            {searchQuery.trim() || selectedGroup !== 'all'
+                                ? 'Try searching for something else or clearing your active filters.'
+                                : `Create your first ${activeTab === 'all' ? 'quiz or poll' : activeTab} to get started!`}
+                        </p>
+                        {(searchQuery.trim() || selectedGroup !== 'all') && (
+                            <button
+                                onClick={() => {
+                                    setSearchQuery('');
+                                    setSelectedGroup('all');
+                                }}
+                                className="btn btn-secondary"
+                                style={{ padding: '0.6rem 1.25rem' }}
+                            >
+                                Clear Search & Group Filters
+                            </button>
+                        )}
                     </div>
                 ) : (
                     <div className="dashboard-quiz-list">
                         {filteredQuizzes.map((quiz, index) => {
                             const pCount = quiz.totalParticipants || 0;
                             const playsCount = quiz.totalPlays || 0;
+                            const quizGroup = quiz.group || 'General';
 
                             return (
                                 <div
                                     key={quiz._id || quiz.id}
                                     className="quiz-card animate-fade-in"
-                                    style={{ animationDelay: `${0.8 + index * 0.05}s` }}
+                                    style={{ animationDelay: `${0.6 + index * 0.04}s` }}
                                     onClick={() => setSelectedQuizReport(quiz)}
                                     title="Click to view full quiz history, player names & download reports"
                                     onMouseEnter={e => {
@@ -511,6 +827,20 @@ export default function Dashboard() {
                                             }}>
                                                 {quiz.type === 'poll' ? 'POLL' : 'QUIZ'}
                                             </span>
+
+                                            {/* Clickable Group Tag */}
+                                            <button
+                                                type="button"
+                                                className="quiz-group-tag"
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    setSelectedGroup(quizGroup);
+                                                }}
+                                                title={`Filter by group "${quizGroup}"`}
+                                            >
+                                                <Folder size={11} />
+                                                <span>{quizGroup}</span>
+                                            </button>
 
                                             {/* Participants & Plays Badges */}
                                             <span style={{
@@ -591,6 +921,17 @@ export default function Dashboard() {
                                         >
                                             <Play size={15} />
                                             Host
+                                        </button>
+                                        <button
+                                            onClick={() => {
+                                                setQuickMoveQuiz(quiz);
+                                                setTargetGroup(quiz.group || 'General');
+                                            }}
+                                            className="btn"
+                                            style={{ padding: '0.5rem', background: 'var(--bg-secondary)', color: 'var(--text-secondary)', borderRadius: '0.75rem' }}
+                                            title="Move to Group / Folder"
+                                        >
+                                            <FolderInput size={16} />
                                         </button>
                                         <button
                                             onClick={() => handleEditQuiz(quiz)}
@@ -978,6 +1319,348 @@ export default function Dashboard() {
                         <p style={{ fontSize: '0.775rem', color: 'var(--text-muted)', textAlign: 'center', marginTop: '1.25rem', marginBottom: 0, lineHeight: 1.5 }}>
                             Upon submitting, your administrator will receive an alert to approve and credit tokens to your account.
                         </p>
+                    </div>
+                </div>
+            )}
+
+            {/* Quick Move Quiz to Group Modal */}
+            {quickMoveQuiz && (
+                <div
+                    style={{
+                        position: 'fixed',
+                        top: 0,
+                        left: 0,
+                        right: 0,
+                        bottom: 0,
+                        background: 'rgba(0, 0, 0, 0.75)',
+                        backdropFilter: 'blur(6px)',
+                        WebkitBackdropFilter: 'blur(6px)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        zIndex: 1100,
+                        padding: '1.5rem'
+                    }}
+                    onClick={() => setQuickMoveQuiz(null)}
+                >
+                    <div
+                        onClick={e => e.stopPropagation()}
+                        className="card animate-fade-in"
+                        style={{
+                            background: 'var(--bg-card)',
+                            padding: '2rem',
+                            borderRadius: '1.5rem',
+                            maxWidth: '480px',
+                            width: '100%',
+                            border: '1.5px solid rgba(129, 140, 248, 0.3)',
+                            boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)'
+                        }}
+                    >
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
+                                <div style={{
+                                    width: '38px',
+                                    height: '38px',
+                                    borderRadius: '10px',
+                                    background: 'rgba(129, 140, 248, 0.15)',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    color: '#818cf8'
+                                }}>
+                                    <FolderInput size={20} />
+                                </div>
+                                <div>
+                                    <h3 style={{ fontSize: '1.15rem', fontWeight: 700, margin: 0, color: 'var(--text-primary)' }}>
+                                        Move to Group
+                                    </h3>
+                                    <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', margin: 0, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '300px' }}>
+                                        {quickMoveQuiz.title}
+                                    </p>
+                                </div>
+                            </div>
+                            <button
+                                onClick={() => setQuickMoveQuiz(null)}
+                                className="btn btn-secondary"
+                                style={{ padding: '0.4rem' }}
+                            >
+                                <X size={16} />
+                            </button>
+                        </div>
+
+                        <form onSubmit={handleMoveQuizToGroup}>
+                            <div style={{ marginBottom: '1.25rem' }}>
+                                <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 600, marginBottom: '0.5rem', color: 'var(--text-primary)' }}>
+                                    Select or Enter Group Name
+                                </label>
+                                <input
+                                    type="text"
+                                    list="quick-group-list"
+                                    className="input"
+                                    placeholder="e.g. Linux Administration, Science Grade 10..."
+                                    value={targetGroup}
+                                    onChange={(e) => setTargetGroup(e.target.value)}
+                                    style={{ width: '100%', padding: '0.75rem 1rem', fontSize: '0.95rem' }}
+                                    autoFocus
+                                    required
+                                />
+                                <datalist id="quick-group-list">
+                                    {uniqueGroups.map((g, idx) => (
+                                        <option key={idx} value={g} />
+                                    ))}
+                                </datalist>
+                            </div>
+
+                            {/* Existing Groups Fast Buttons */}
+                            <div style={{ marginBottom: '1.5rem' }}>
+                                <div style={{ fontSize: '0.775rem', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '0.4rem' }}>
+                                    Existing Groups:
+                                </div>
+                                <div style={{ display: 'flex', gap: '0.4rem', flexWrap: 'wrap' }}>
+                                    {uniqueGroups.map((g, idx) => (
+                                        <button
+                                            key={idx}
+                                            type="button"
+                                            onClick={() => setTargetGroup(g)}
+                                            style={{
+                                                border: targetGroup.toLowerCase() === g.toLowerCase() ? '1px solid #818cf8' : '1px solid var(--border-color)',
+                                                background: targetGroup.toLowerCase() === g.toLowerCase() ? 'rgba(129, 140, 248, 0.2)' : 'var(--bg-secondary)',
+                                                color: targetGroup.toLowerCase() === g.toLowerCase() ? '#818cf8' : 'var(--text-secondary)',
+                                                fontSize: '0.775rem',
+                                                padding: '0.3rem 0.7rem',
+                                                borderRadius: '1rem',
+                                                cursor: 'pointer',
+                                                transition: 'all 0.15s ease'
+                                            }}
+                                        >
+                                            📁 {g}
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
+
+                            <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'flex-end' }}>
+                                <button
+                                    type="button"
+                                    onClick={() => setQuickMoveQuiz(null)}
+                                    className="btn btn-secondary"
+                                    style={{ padding: '0.65rem 1.25rem' }}
+                                >
+                                    Cancel
+                                </button>
+                                <button
+                                    type="submit"
+                                    disabled={isMovingGroup || !targetGroup.trim()}
+                                    className="btn btn-primary"
+                                    style={{
+                                        padding: '0.65rem 1.5rem',
+                                        fontWeight: 700,
+                                        display: 'inline-flex',
+                                        alignItems: 'center',
+                                        gap: '0.4rem'
+                                    }}
+                                >
+                                    <FolderCheck size={16} />
+                                    {isMovingGroup ? 'Saving...' : 'Move Quiz'}
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            )}
+
+            {/* Manage Groups Modal */}
+            {showManageGroupsModal && (
+                <div
+                    style={{
+                        position: 'fixed',
+                        top: 0,
+                        left: 0,
+                        right: 0,
+                        bottom: 0,
+                        background: 'rgba(0, 0, 0, 0.75)',
+                        backdropFilter: 'blur(6px)',
+                        WebkitBackdropFilter: 'blur(6px)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        zIndex: 1100,
+                        padding: '1.5rem'
+                    }}
+                    onClick={() => setShowManageGroupsModal(false)}
+                >
+                    <div
+                        onClick={e => e.stopPropagation()}
+                        className="card animate-fade-in"
+                        style={{
+                            background: 'var(--bg-card)',
+                            padding: '2.25rem',
+                            borderRadius: '1.5rem',
+                            maxWidth: '560px',
+                            width: '100%',
+                            border: '1.5px solid var(--border-color)',
+                            boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)',
+                            maxHeight: '85vh',
+                            overflowY: 'auto'
+                        }}
+                    >
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                                <div style={{
+                                    width: '42px',
+                                    height: '42px',
+                                    borderRadius: '12px',
+                                    background: 'rgba(129, 140, 248, 0.15)',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    color: '#818cf8'
+                                }}>
+                                    <Folder size={22} />
+                                </div>
+                                <div>
+                                    <h3 style={{ fontSize: '1.3rem', fontWeight: 800, margin: 0, color: 'var(--text-primary)' }}>
+                                        Manage Quiz Groups
+                                    </h3>
+                                    <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', margin: 0 }}>
+                                        Organize, rename, and filter by groups
+                                    </p>
+                                </div>
+                            </div>
+                            <button
+                                onClick={() => setShowManageGroupsModal(false)}
+                                className="btn btn-secondary"
+                                style={{ padding: '0.45rem 0.65rem' }}
+                            >
+                                <X size={18} />
+                            </button>
+                        </div>
+
+                        {/* All Groups Breakdown Table */}
+                        <div style={{ marginBottom: '1.75rem' }}>
+                            <h4 style={{ fontSize: '0.9rem', fontWeight: 700, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.75rem' }}>
+                                Your Groups & Quiz Counts
+                            </h4>
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                                {uniqueGroups.map((g) => {
+                                    const count = groupCounts[g] || 0;
+                                    return (
+                                        <div
+                                            key={g}
+                                            style={{
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                justifyContent: 'space-between',
+                                                padding: '0.75rem 1rem',
+                                                borderRadius: '0.75rem',
+                                                background: 'var(--bg-secondary)',
+                                                border: '1px solid var(--border-color)'
+                                            }}
+                                        >
+                                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+                                                <Folder size={16} color="#818cf8" />
+                                                <span style={{ fontWeight: 600, color: 'var(--text-primary)' }}>{g}</span>
+                                                <span style={{
+                                                    fontSize: '0.75rem',
+                                                    padding: '0.15rem 0.5rem',
+                                                    borderRadius: '1rem',
+                                                    background: 'rgba(129, 140, 248, 0.15)',
+                                                    color: '#818cf8',
+                                                    fontWeight: 700
+                                                }}>
+                                                    {count} {count === 1 ? 'quiz' : 'quizzes'}
+                                                </span>
+                                            </div>
+                                            <div style={{ display: 'flex', gap: '0.4rem' }}>
+                                                <button
+                                                    type="button"
+                                                    onClick={() => {
+                                                        setSelectedGroup(g);
+                                                        setShowManageGroupsModal(false);
+                                                    }}
+                                                    className="btn btn-secondary"
+                                                    style={{ padding: '0.35rem 0.75rem', fontSize: '0.775rem' }}
+                                                >
+                                                    View
+                                                </button>
+                                                <button
+                                                    type="button"
+                                                    onClick={() => {
+                                                        setGroupToRename(g);
+                                                        setRenamedGroupName(g);
+                                                    }}
+                                                    className="btn btn-secondary"
+                                                    style={{ padding: '0.35rem 0.75rem', fontSize: '0.775rem' }}
+                                                >
+                                                    Rename
+                                                </button>
+                                            </div>
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                        </div>
+
+                        {/* Rename Group Section */}
+                        {groupToRename && (
+                            <form
+                                onSubmit={handleRenameGroup}
+                                style={{
+                                    background: 'rgba(129, 140, 248, 0.08)',
+                                    border: '1px solid rgba(129, 140, 248, 0.3)',
+                                    padding: '1.25rem',
+                                    borderRadius: '1rem',
+                                    marginBottom: '1.5rem'
+                                }}
+                            >
+                                <h4 style={{ fontSize: '0.95rem', fontWeight: 700, margin: '0 0 0.5rem 0', color: '#818cf8' }}>
+                                    Rename Group "{groupToRename}"
+                                </h4>
+                                <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', margin: '0 0 1rem 0' }}>
+                                    All quizzes currently in "{groupToRename}" will be updated to the new name.
+                                </p>
+                                <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '0.75rem' }}>
+                                    <input
+                                        type="text"
+                                        className="input"
+                                        value={renamedGroupName}
+                                        onChange={(e) => setRenamedGroupName(e.target.value)}
+                                        placeholder="Enter new group name..."
+                                        style={{ flex: 1, padding: '0.65rem 0.85rem' }}
+                                        required
+                                        autoFocus
+                                    />
+                                    <button
+                                        type="submit"
+                                        disabled={isRenamingGroup || !renamedGroupName.trim() || renamedGroupName.trim() === groupToRename}
+                                        className="btn btn-primary"
+                                        style={{ padding: '0.65rem 1.25rem', whiteSpace: 'nowrap' }}
+                                    >
+                                        {isRenamingGroup ? 'Renaming...' : 'Save Name'}
+                                    </button>
+                                </div>
+                                <button
+                                    type="button"
+                                    onClick={() => {
+                                        setGroupToRename('');
+                                        setRenamedGroupName('');
+                                    }}
+                                    style={{ background: 'none', border: 'none', color: 'var(--text-secondary)', fontSize: '0.8rem', cursor: 'pointer', textDecoration: 'underline' }}
+                                >
+                                    Cancel rename
+                                </button>
+                            </form>
+                        )}
+
+                        <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+                            <button
+                                onClick={() => setShowManageGroupsModal(false)}
+                                className="btn btn-secondary"
+                                style={{ padding: '0.65rem 1.5rem' }}
+                            >
+                                Done
+                            </button>
+                        </div>
                     </div>
                 </div>
             )}

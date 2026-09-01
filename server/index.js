@@ -917,6 +917,40 @@ app.delete('/api/quizzes/:id', async (req, res) => {
   }
 });
 
+// Quick update quiz group
+app.patch('/api/quizzes/:id/group', async (req, res) => {
+  try {
+    const { group = 'General' } = req.body;
+    const cleanGroup = group.trim() || 'General';
+    const quiz = await Quiz.findByIdAndUpdate(
+      req.params.id,
+      { group: cleanGroup, updatedAt: new Date() },
+      { new: true }
+    );
+    if (!quiz) return res.status(404).json({ error: 'Quiz not found' });
+    res.json({ success: true, quiz });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Rename a group across all quizzes for a user
+app.post('/api/quizzes/rename-group', async (req, res) => {
+  try {
+    const { userId, oldGroup, newGroup } = req.body;
+    if (!userId || !oldGroup || !newGroup) {
+      return res.status(400).json({ error: 'userId, oldGroup, and newGroup are required' });
+    }
+    const result = await Quiz.updateMany(
+      { creatorId: userId, group: oldGroup.trim() },
+      { $set: { group: newGroup.trim(), updatedAt: new Date() } }
+    );
+    res.json({ success: true, modifiedCount: result.modifiedCount });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // --- Socket.IO Logic ---
 
 io.on('connection', (socket) => {

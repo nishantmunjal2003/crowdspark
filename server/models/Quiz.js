@@ -12,6 +12,7 @@ const QuestionSchema = new mongoose.Schema({
 const QuizSchema = new mongoose.Schema({
     title: { type: String, required: true },
     description: String,
+    group: { type: String, default: 'General', trim: true },
     type: { type: String, enum: ['quiz', 'poll'], default: 'quiz' },
     questions: [QuestionSchema],
     backgroundImage: String,
