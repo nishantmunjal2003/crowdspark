@@ -10,7 +10,7 @@ export default function Footer({ style }) {
             background: 'var(--bg-secondary)',
             borderTop: '1px solid var(--border-color)',
             color: 'var(--text-secondary)',
-            padding: '1.25rem 2rem',
+            padding: '0.85rem 2rem',
             width: '100%',
             boxSizing: 'border-box',
             marginTop: 'auto',

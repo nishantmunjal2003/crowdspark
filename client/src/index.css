@@ -394,41 +394,43 @@ textarea::placeholder,
 .hero-container {
   display: flex;
   flex-direction: column;
+  height: 100vh;
   min-height: 100vh;
   width: 100%;
   padding: 0;
   margin: 0;
   position: relative;
-  overflow-x: hidden;
+  overflow: hidden;
   background: radial-gradient(circle at 50% 50%, rgba(99, 102, 241, 0.1) 0%, transparent 50%),
     radial-gradient(circle at 80% 20%, rgba(139, 92, 246, 0.08) 0%, transparent 50%),
     radial-gradient(circle at 20% 80%, rgba(236, 72, 153, 0.08) 0%, transparent 50%);
 }
 
 .hero-content-wrapper {
-  flex: 1 0 auto;
+  flex: 1 1 auto;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   width: 100%;
-  padding: 6rem 1.5rem 2.5rem 1.5rem;
+  padding: 4.25rem 1.5rem 1rem 1.5rem;
   z-index: 10;
+  overflow: hidden;
 }
 
 .hero-content {
   width: 100%;
-  max-width: 480px;
+  max-width: 440px;
   position: relative;
 }
 
 .input-large {
-  font-size: 1.75rem;
+  font-size: 1.5rem;
   text-align: center;
   letter-spacing: 0.2em;
   text-transform: uppercase;
   font-family: 'Inter', monospace;
-  padding: 1.5rem;
+  padding: 0.85rem 1.25rem;
   font-weight: 800;
   background: var(--bg-input);
   border: 2px solid var(--border-color);
@@ -443,13 +445,13 @@ textarea::placeholder,
 }
 
 .host-link {
-  margin-top: 2.5rem;
+  margin-top: 1rem;
   text-align: center;
   color: var(--text-secondary);
-  font-size: 0.95rem;
+  font-size: 0.9rem;
   cursor: pointer;
   transition: all 0.3s;
-  padding: 0.75rem;
+  padding: 0.4rem;
   border-radius: 0.75rem;
 }
 
