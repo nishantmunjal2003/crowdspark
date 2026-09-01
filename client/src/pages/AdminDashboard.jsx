@@ -424,11 +424,11 @@ export default function AdminDashboard() {
                                 <Search size={18} style={{ position: 'absolute', left: '0.85rem', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
                                 <input
                                     type="text"
-                                    className="input"
+                                    className="admin-filter-control"
                                     placeholder="Search by name or email..."
                                     value={userSearch}
                                     onChange={e => setUserSearch(e.target.value)}
-                                    style={{ paddingLeft: '2.5rem', paddingRight: userSearch ? '2rem' : '1rem', height: '42px', fontSize: '0.875rem' }}
+                                    style={{ paddingLeft: '2.5rem', paddingRight: userSearch ? '2rem' : '0.85rem' }}
                                 />
                                 {userSearch && (
                                     <button
@@ -444,10 +444,9 @@ export default function AdminDashboard() {
                             <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                                 <KeyRound size={16} color="var(--text-secondary)" />
                                 <select
-                                    className="input"
+                                    className="admin-filter-control"
                                     value={userAuthFilter}
                                     onChange={e => setUserAuthFilter(e.target.value)}
-                                    style={{ height: '42px', fontSize: '0.875rem', flex: 1 }}
                                 >
                                     <option value="all">All Login Methods</option>
                                     <option value="google">Google Login Only</option>
@@ -459,10 +458,9 @@ export default function AdminDashboard() {
                             <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                                 <Filter size={16} color="var(--text-secondary)" />
                                 <select
-                                    className="input"
+                                    className="admin-filter-control"
                                     value={userRoleFilter}
                                     onChange={e => setUserRoleFilter(e.target.value)}
-                                    style={{ height: '42px', fontSize: '0.875rem', flex: 1 }}
                                 >
                                     <option value="all">All Roles</option>
                                     <option value="admin">Admin Only</option>
@@ -474,10 +472,9 @@ export default function AdminDashboard() {
                             <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                                 <CheckCircle2 size={16} color="var(--text-secondary)" />
                                 <select
-                                    className="input"
+                                    className="admin-filter-control"
                                     value={userStatusFilter}
                                     onChange={e => setUserStatusFilter(e.target.value)}
-                                    style={{ height: '42px', fontSize: '0.875rem', flex: 1 }}
                                 >
                                     <option value="all">All Status</option>
                                     <option value="active">Active Accounts</option>
@@ -489,10 +486,9 @@ export default function AdminDashboard() {
                             <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                                 <ArrowUpDown size={16} color="var(--text-secondary)" />
                                 <select
-                                    className="input"
+                                    className="admin-filter-control"
                                     value={userSort}
                                     onChange={e => setUserSort(e.target.value)}
-                                    style={{ height: '42px', fontSize: '0.875rem', flex: 1 }}
                                 >
                                     <option value="newest">Sort: Newest First</option>
                                     <option value="oldest">Sort: Oldest First</option>
@@ -713,11 +709,11 @@ export default function AdminDashboard() {
                                 <Search size={18} style={{ position: 'absolute', left: '0.85rem', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
                                 <input
                                     type="text"
-                                    className="input"
+                                    className="admin-filter-control"
                                     placeholder="Search by title or creator..."
                                     value={quizSearch}
                                     onChange={e => setQuizSearch(e.target.value)}
-                                    style={{ paddingLeft: '2.5rem', paddingRight: quizSearch ? '2rem' : '1rem', height: '42px', fontSize: '0.875rem' }}
+                                    style={{ paddingLeft: '2.5rem', paddingRight: quizSearch ? '2rem' : '0.85rem' }}
                                 />
                                 {quizSearch && (
                                     <button
@@ -733,10 +729,9 @@ export default function AdminDashboard() {
                             <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                                 <Filter size={16} color="var(--text-secondary)" />
                                 <select
-                                    className="input"
+                                    className="admin-filter-control"
                                     value={quizTypeFilter}
                                     onChange={e => setQuizTypeFilter(e.target.value)}
-                                    style={{ height: '42px', fontSize: '0.875rem', flex: 1 }}
                                 >
                                     <option value="all">All Types</option>
                                     <option value="quiz">Quizzes Only</option>
@@ -748,10 +743,9 @@ export default function AdminDashboard() {
                             <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                                 <BookOpen size={16} color="var(--text-secondary)" />
                                 <select
-                                    className="input"
+                                    className="admin-filter-control"
                                     value={quizLengthFilter}
                                     onChange={e => setQuizLengthFilter(e.target.value)}
-                                    style={{ height: '42px', fontSize: '0.875rem', flex: 1 }}
                                 >
                                     <option value="all">Any Question Count</option>
                                     <option value="short">Short (1 - 5 Questions)</option>
@@ -764,10 +758,9 @@ export default function AdminDashboard() {
                             <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                                 <ArrowUpDown size={16} color="var(--text-secondary)" />
                                 <select
-                                    className="input"
+                                    className="admin-filter-control"
                                     value={quizSort}
                                     onChange={e => setQuizSort(e.target.value)}
-                                    style={{ height: '42px', fontSize: '0.875rem', flex: 1 }}
                                 >
                                     <option value="newest">Sort: Newest First</option>
                                     <option value="oldest">Sort: Oldest First</option>
@@ -879,11 +872,11 @@ export default function AdminDashboard() {
                                 <Search size={18} style={{ position: 'absolute', left: '0.85rem', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
                                 <input
                                     type="text"
-                                    className="input"
+                                    className="admin-filter-control"
                                     placeholder="Search user, action, IP, details..."
                                     value={logSearch}
                                     onChange={e => setLogSearch(e.target.value)}
-                                    style={{ paddingLeft: '2.5rem', paddingRight: logSearch ? '2rem' : '1rem', height: '42px', fontSize: '0.875rem' }}
+                                    style={{ paddingLeft: '2.5rem', paddingRight: logSearch ? '2rem' : '0.85rem' }}
                                 />
                                 {logSearch && (
                                     <button
@@ -899,10 +892,9 @@ export default function AdminDashboard() {
                             <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                                 <Filter size={16} color="var(--text-secondary)" />
                                 <select
-                                    className="input"
+                                    className="admin-filter-control"
                                     value={logActionFilter}
                                     onChange={e => setLogActionFilter(e.target.value)}
-                                    style={{ height: '42px', fontSize: '0.875rem', flex: 1 }}
                                 >
                                     <option value="all">All Actions</option>
                                     <option value="login">Logins</option>
@@ -916,10 +908,9 @@ export default function AdminDashboard() {
                             <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                                 <Clock size={16} color="var(--text-secondary)" />
                                 <select
-                                    className="input"
+                                    className="admin-filter-control"
                                     value={logTimeFilter}
                                     onChange={e => setLogTimeFilter(e.target.value)}
-                                    style={{ height: '42px', fontSize: '0.875rem', flex: 1 }}
                                 >
                                     <option value="all">All Time</option>
                                     <option value="24h">Past 24 Hours</option>
@@ -932,10 +923,9 @@ export default function AdminDashboard() {
                             <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                                 <ArrowUpDown size={16} color="var(--text-secondary)" />
                                 <select
-                                    className="input"
+                                    className="admin-filter-control"
                                     value={logSort}
                                     onChange={e => setLogSort(e.target.value)}
-                                    style={{ height: '42px', fontSize: '0.875rem', flex: 1 }}
                                 >
                                     <option value="newest">Sort: Most Recent First</option>
                                     <option value="oldest">Sort: Oldest First</option>

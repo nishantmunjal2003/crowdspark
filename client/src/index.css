@@ -210,18 +210,37 @@ input[type="text"],
 input[type="number"],
 input[type="password"],
 input[type="email"],
-textarea,
-select {
+textarea {
   width: 100%;
-  padding: 1rem 1.25rem;
+  padding: 0.85rem 1.15rem;
   background: var(--bg-input);
   border: 1.5px solid var(--border-color);
-  border-radius: 1.25rem;
+  border-radius: 1rem;
   color: var(--text-primary);
-  font-size: 1rem;
-  transition: all 0.3s ease;
+  font-size: 0.95rem;
+  transition: all 0.2s ease;
   font-family: var(--font-family);
   box-sizing: border-box;
+}
+
+select {
+  width: 100%;
+  padding: 0.65rem 1rem;
+  background: var(--bg-input);
+  border: 1.5px solid var(--border-color);
+  border-radius: 0.85rem;
+  color: var(--text-primary);
+  font-size: 0.9rem;
+  transition: all 0.2s ease;
+  font-family: var(--font-family);
+  box-sizing: border-box;
+  cursor: pointer;
+}
+
+select option {
+  background: var(--bg-card);
+  color: var(--text-primary);
+  padding: 0.5rem;
 }
 
 .input:focus,
@@ -234,12 +253,44 @@ select:focus {
   outline: none;
   border-color: var(--accent-primary);
   background: var(--bg-input-focus);
-  box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.15), 0 4px 12px rgba(99, 102, 241, 0.12);
-  transform: translateY(-1px);
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.18);
+}
+
+.admin-filter-control {
+  width: 100%;
+  padding: 0.5rem 0.85rem !important;
+  background: var(--bg-input) !important;
+  border: 1.5px solid var(--border-color) !important;
+  border-radius: 0.75rem !important;
+  color: var(--text-primary) !important;
+  font-size: 0.875rem !important;
+  line-height: 1.4 !important;
+  font-family: var(--font-family) !important;
+  box-sizing: border-box !important;
+  height: 42px !important;
+  outline: none;
+  transition: all 0.2s ease;
+}
+
+.admin-filter-control:focus {
+  border-color: var(--accent-primary) !important;
+  background: var(--bg-input-focus) !important;
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.18) !important;
+}
+
+select.admin-filter-control {
+  cursor: pointer;
+}
+
+select.admin-filter-control option {
+  background: var(--bg-card);
+  color: var(--text-primary);
+  padding: 0.5rem;
 }
 
 .input::placeholder,
-textarea::placeholder {
+textarea::placeholder,
+.admin-filter-control::placeholder {
   color: var(--text-muted);
 }
 
