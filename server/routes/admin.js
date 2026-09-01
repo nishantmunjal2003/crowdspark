@@ -3,6 +3,7 @@ const router = express.Router();
 const User = require('../models/User');
 const Quiz = require('../models/Quiz');
 const ActivityLog = require('../models/ActivityLog');
+const SystemSetting = require('../models/SystemSetting');
 const { logActivity } = require('../middleware/activityLogger');
 
 // Middleware to check if user is admin
@@ -51,6 +52,9 @@ router.get('/users', isAdmin, async (req, res) => {
             isActive: u.isActive,
             googleId: u.googleId,
             authMethod: u.googleId ? 'google' : 'email',
+            aiTokens: u.aiTokens !== undefined ? u.aiTokens : 50,
+            aiTokensUsed: u.aiTokensUsed || 0,
+            aiTokensTotal: u.aiTokensTotal || 50,
             lastLogin: u.lastLogin,
             createdAt: u.createdAt
         }));
@@ -356,6 +360,123 @@ router.get('/users/:userId', isAdmin, async (req, res) => {
     } catch (err) {
         console.error('Error fetching user details:', err);
         res.status(500).json({ error: 'Failed to fetch user details' });
+    }
+});
+
+// --- System Settings Endpoints ---
+
+// Get all system settings (admin only)
+router.get('/settings', isAdmin, async (req, res) => {
+    try {
+        const settingsList = await SystemSetting.find();
+        const settingsObj = {
+            defaultAiTokens: 50
+        };
+
+        settingsList.forEach(s => {
+            settingsObj[s.key] = s.value;
+        });
+
+        res.json({
+            success: true,
+            settings: settingsObj
+        });
+    } catch (err) {
+        console.error('Error fetching settings:', err);
+        res.status(500).json({ error: 'Failed to fetch system settings' });
+    }
+});
+
+// Update system setting (admin only)
+router.put('/settings', isAdmin, async (req, res) => {
+    try {
+        const { key, value, description } = req.body;
+        if (!key || value === undefined) {
+            return res.status(400).json({ error: 'Key and value are required' });
+        }
+
+        const updated = await SystemSetting.findOneAndUpdate(
+            { key },
+            {
+                key,
+                value,
+                ...(description ? { description } : {}),
+                updatedAt: new Date()
+            },
+            { upsert: true, new: true }
+        );
+
+        // Log admin activity
+        await logActivity(req.adminUser._id, req.adminUser.email, req.adminUser.name, 'admin_settings_update', {
+            key,
+            value
+        }, req);
+
+        res.json({
+            success: true,
+            message: `Setting '${key}' updated successfully`,
+            setting: updated
+        });
+    } catch (err) {
+        console.error('Error updating system setting:', err);
+        res.status(500).json({ error: 'Failed to update system setting' });
+    }
+});
+
+// Manage / Grant AI tokens to a user (admin only)
+router.post('/users/:userId/tokens', isAdmin, async (req, res) => {
+    try {
+        const { userId } = req.params;
+        const { amount, action } = req.body; // action: 'add' (default) or 'set'
+
+        const numAmount = parseInt(amount);
+        if (isNaN(numAmount) || numAmount < 0) {
+            return res.status(400).json({ error: 'Valid positive token amount is required' });
+        }
+
+        const targetUser = await User.findById(userId);
+        if (!targetUser) {
+            return res.status(404).json({ error: 'User not found' });
+        }
+
+        const previousTokens = targetUser.aiTokens || 0;
+
+        if (action === 'set') {
+            targetUser.aiTokens = numAmount;
+            targetUser.aiTokensTotal = Math.max(targetUser.aiTokensTotal || 0, numAmount + (targetUser.aiTokensUsed || 0));
+        } else {
+            // Default: 'add'
+            targetUser.aiTokens = (targetUser.aiTokens || 0) + numAmount;
+            targetUser.aiTokensTotal = (targetUser.aiTokensTotal || 0) + numAmount;
+        }
+
+        await targetUser.save();
+
+        // Log admin activity
+        await logActivity(req.adminUser._id, req.adminUser.email, req.adminUser.name, 'admin_grant_tokens', {
+            targetUserId: targetUser._id,
+            targetUserEmail: targetUser.email,
+            amount: numAmount,
+            action: action || 'add',
+            previousTokens,
+            newTokens: targetUser.aiTokens
+        }, req);
+
+        res.json({
+            success: true,
+            message: `Successfully ${action === 'set' ? 'set' : 'added'} tokens for ${targetUser.name}`,
+            user: {
+                _id: targetUser._id,
+                email: targetUser.email,
+                name: targetUser.name,
+                aiTokens: targetUser.aiTokens,
+                aiTokensUsed: targetUser.aiTokensUsed || 0,
+                aiTokensTotal: targetUser.aiTokensTotal || 50
+            }
+        });
+    } catch (err) {
+        console.error('Error managing user tokens:', err);
+        res.status(500).json({ error: 'Failed to update user tokens' });
     }
 });
 

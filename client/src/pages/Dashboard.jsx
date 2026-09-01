@@ -16,7 +16,10 @@ import {
     Moon,
     FileSpreadsheet,
     Calendar,
-    Trophy
+    Trophy,
+    Zap,
+    Check,
+    X
 } from 'lucide-react';
 import '../dashboard.css';
 import QuizReportModal from '../components/QuizReportModal';
@@ -28,6 +31,12 @@ export default function Dashboard() {
     const [activeTab, setActiveTab] = useState('all'); // all, quiz, poll
     const [isLoading, setIsLoading] = useState(true);
     const [selectedQuizReport, setSelectedQuizReport] = useState(null);
+    const [userTokens, setUserTokens] = useState({
+        aiTokens: 50,
+        aiTokensUsed: 0,
+        aiTokensTotal: 50
+    });
+    const [showBuyTokensModal, setShowBuyTokensModal] = useState(false);
     const [isDarkMode, setIsDarkMode] = useState(() => {
         const saved = localStorage.getItem('host_theme');
         return saved ? saved === 'dark' : true;
@@ -54,6 +63,21 @@ export default function Dashboard() {
             });
     };
 
+    const loadUserTokens = (userId) => {
+        fetch(`/api/users/${userId}/tokens`)
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    setUserTokens({
+                        aiTokens: data.aiTokens !== undefined ? data.aiTokens : 50,
+                        aiTokensUsed: data.aiTokensUsed || 0,
+                        aiTokensTotal: data.aiTokensTotal || 50
+                    });
+                }
+            })
+            .catch(err => console.error('Error fetching user tokens:', err));
+    };
+
     useEffect(() => {
         // Check if user is logged in
         const currentUser = localStorage.getItem('current_user');
@@ -65,6 +89,7 @@ export default function Dashboard() {
         setUser(userData);
 
         loadQuizzes(userData._id);
+        loadUserTokens(userData._id);
     }, [navigate]);
 
     const handleLogout = () => {
@@ -171,6 +196,28 @@ export default function Dashboard() {
                         </div>
                     </div>
                     <div className="dashboard-actions">
+                        {/* AI Tokens Indicator Chip */}
+                        <button
+                            onClick={() => setShowBuyTokensModal(true)}
+                            className="btn"
+                            style={{
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                gap: '0.45rem',
+                                background: (userTokens.aiTokens || 0) > 10 ? 'rgba(99, 102, 241, 0.15)' : 'rgba(239, 68, 68, 0.15)',
+                                color: (userTokens.aiTokens || 0) > 10 ? 'var(--accent-primary)' : 'var(--error)',
+                                border: `1px solid ${(userTokens.aiTokens || 0) > 10 ? 'rgba(99, 102, 241, 0.3)' : 'rgba(239, 68, 68, 0.3)'}`,
+                                padding: '0.5rem 0.9rem',
+                                fontSize: '0.85rem',
+                                fontWeight: 700,
+                                borderRadius: '0.75rem'
+                            }}
+                            title="Click to view AI Token Balance & Top Up"
+                        >
+                            <Zap size={16} fill="currentColor" />
+                            <span>{userTokens.aiTokens !== undefined ? userTokens.aiTokens : 50} AI Tokens</span>
+                        </button>
+
                         {user.role === 'admin' && (
                             <button
                                 onClick={() => navigate('/admin')}
@@ -289,6 +336,55 @@ export default function Dashboard() {
                                     Total Participants Taken
                                 </div>
                             </div>
+                        </div>
+                    </div>
+
+                    {/* AI Tokens Card */}
+                    <div
+                        className="card animate-fade-in"
+                        onClick={() => setShowBuyTokensModal(true)}
+                        style={{
+                            background: 'var(--bg-card)',
+                            border: '1px solid var(--accent-primary)',
+                            animationDelay: '0.25s',
+                            cursor: 'pointer',
+                            boxShadow: '0 8px 24px rgba(99, 102, 241, 0.12)'
+                        }}
+                    >
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '1.25rem' }}>
+                                <div style={{
+                                    width: '56px',
+                                    height: '56px',
+                                    background: 'rgba(99, 102, 241, 0.12)',
+                                    borderRadius: '14px',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    border: '1px solid rgba(99, 102, 241, 0.3)'
+                                }}>
+                                    <Zap size={26} color="var(--accent-primary)" fill="var(--accent-primary)" />
+                                </div>
+                                <div>
+                                    <div style={{ fontSize: '2rem', fontWeight: '700', color: 'var(--text-primary)', lineHeight: 1 }}>
+                                        {userTokens.aiTokens !== undefined ? userTokens.aiTokens : 50}
+                                    </div>
+                                    <div style={{ color: 'var(--text-secondary)', fontSize: '0.875rem', marginTop: '0.25rem' }}>
+                                        AI Tokens Left
+                                    </div>
+                                </div>
+                            </div>
+                            <span style={{
+                                fontSize: '0.75rem',
+                                padding: '0.35rem 0.65rem',
+                                fontWeight: 700,
+                                background: 'rgba(99, 102, 241, 0.15)',
+                                color: 'var(--accent-primary)',
+                                borderRadius: '0.5rem',
+                                border: '1px solid rgba(99, 102, 241, 0.3)'
+                            }}>
+                                + Buy More
+                            </span>
                         </div>
                     </div>
                 </div>
@@ -618,6 +714,226 @@ export default function Dashboard() {
                                 Delete
                             </button>
                         </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Buy / Top-Up AI Tokens Modal */}
+            {showBuyTokensModal && (
+                <div
+                    style={{
+                        position: 'fixed',
+                        top: 0,
+                        left: 0,
+                        right: 0,
+                        bottom: 0,
+                        background: 'rgba(0, 0, 0, 0.75)',
+                        backdropFilter: 'blur(8px)',
+                        WebkitBackdropFilter: 'blur(8px)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        zIndex: 1000,
+                        padding: '1.5rem'
+                    }}
+                    onClick={() => setShowBuyTokensModal(false)}
+                >
+                    <div
+                        onClick={e => e.stopPropagation()}
+                        className="card animate-fade-in"
+                        style={{
+                            background: 'var(--bg-card)',
+                            padding: '2.25rem',
+                            borderRadius: '1.5rem',
+                            maxWidth: '680px',
+                            width: '100%',
+                            maxHeight: '90vh',
+                            overflowY: 'auto',
+                            border: '1.5px solid var(--accent-primary)',
+                            boxShadow: '0 25px 50px -12px rgba(99, 102, 241, 0.35)'
+                        }}
+                    >
+                        {/* Header */}
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1.5rem' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                                <div style={{
+                                    width: '46px',
+                                    height: '46px',
+                                    borderRadius: '12px',
+                                    background: 'linear-gradient(135deg, #6366f1, #8b5cf6)',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    color: 'white',
+                                    boxShadow: '0 4px 12px rgba(99, 102, 241, 0.3)'
+                                }}>
+                                    <Zap size={24} fill="currentColor" />
+                                </div>
+                                <div>
+                                    <h3 style={{ fontSize: '1.4rem', fontWeight: 800, margin: 0, color: 'var(--text-primary)' }}>
+                                        AI Question Tokens
+                                    </h3>
+                                    <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', margin: '0.2rem 0 0 0' }}>
+                                        ⚡ <strong>1 Token = 1 AI Question Generated</strong>
+                                    </p>
+                                </div>
+                            </div>
+                            <button
+                                onClick={() => setShowBuyTokensModal(false)}
+                                className="btn btn-secondary"
+                                style={{ padding: '0.45rem 0.65rem' }}
+                            >
+                                <X size={18} />
+                            </button>
+                        </div>
+
+                        {/* Current Balance Banner */}
+                        <div style={{
+                            background: 'var(--bg-secondary)',
+                            padding: '1.25rem 1.5rem',
+                            borderRadius: '1rem',
+                            border: '1px solid var(--border-color)',
+                            marginBottom: '1.75rem',
+                            display: 'flex',
+                            justifyContent: 'space-between',
+                            alignItems: 'center',
+                            flexWrap: 'wrap',
+                            gap: '1rem'
+                        }}>
+                            <div>
+                                <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>Your Available Balance</div>
+                                <div style={{ fontSize: '2.25rem', fontWeight: 900, color: 'var(--accent-primary)', lineHeight: 1.1 }}>
+                                    {userTokens.aiTokens !== undefined ? userTokens.aiTokens : 50} <span style={{ fontSize: '1rem', fontWeight: 600, color: 'var(--text-muted)' }}>Tokens Remaining</span>
+                                </div>
+                            </div>
+                            <div style={{ textAlign: 'right' }}>
+                                <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>Total Questions Generated</div>
+                                <div style={{ fontSize: '1.25rem', fontWeight: 700, color: 'var(--text-primary)' }}>
+                                    {userTokens.aiTokensUsed || 0} questions
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Token Package Options */}
+                        <div style={{ marginBottom: '1.75rem' }}>
+                            <h4 style={{ fontSize: '1rem', fontWeight: 800, color: 'var(--text-primary)', marginBottom: '1rem' }}>
+                                Choose a Token Package:
+                            </h4>
+
+                            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '1rem' }}>
+                                {/* Pack 1 */}
+                                <div style={{
+                                    background: 'var(--bg-secondary)',
+                                    border: '1px solid var(--border-color)',
+                                    borderRadius: '1rem',
+                                    padding: '1.25rem',
+                                    textAlign: 'center',
+                                    display: 'flex',
+                                    flexDirection: 'column',
+                                    justifyContent: 'space-between'
+                                }}>
+                                    <div>
+                                        <div style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--text-secondary)', textTransform: 'uppercase' }}>Starter</div>
+                                        <div style={{ fontSize: '1.75rem', fontWeight: 900, color: 'var(--text-primary)', margin: '0.4rem 0' }}>50 Tokens</div>
+                                        <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', margin: '0 0 1rem 0' }}>
+                                            50 AI Questions<br />($0.10 / question)
+                                        </p>
+                                    </div>
+                                    <div style={{ fontSize: '1.35rem', fontWeight: 800, color: 'var(--accent-primary)', marginBottom: '1rem' }}>$5</div>
+                                    <button
+                                        onClick={() => {
+                                            alert('Thank you! Token top-up request initiated. In production, this links to your Stripe/payment checkout or grants immediate credits.');
+                                        }}
+                                        className="btn btn-secondary"
+                                        style={{ width: '100%', fontSize: '0.85rem', fontWeight: 700, padding: '0.6rem' }}
+                                    >
+                                        Select $5 Pack
+                                    </button>
+                                </div>
+
+                                {/* Pack 2 (Popular) */}
+                                <div style={{
+                                    background: 'var(--bg-secondary)',
+                                    border: '2px solid var(--accent-primary)',
+                                    borderRadius: '1rem',
+                                    padding: '1.25rem',
+                                    textAlign: 'center',
+                                    position: 'relative',
+                                    display: 'flex',
+                                    flexDirection: 'column',
+                                    justifyContent: 'space-between',
+                                    boxShadow: '0 8px 20px rgba(99, 102, 241, 0.2)'
+                                }}>
+                                    <div style={{
+                                        position: 'absolute',
+                                        top: '-12px',
+                                        left: '50%',
+                                        transform: 'translateX(-50%)',
+                                        background: 'linear-gradient(135deg, #6366f1, #8b5cf6)',
+                                        color: 'white',
+                                        fontSize: '0.675rem',
+                                        fontWeight: 800,
+                                        padding: '0.2rem 0.65rem',
+                                        borderRadius: '1rem',
+                                        letterSpacing: '0.05em'
+                                    }}>
+                                        MOST POPULAR
+                                    </div>
+                                    <div>
+                                        <div style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--accent-primary)', textTransform: 'uppercase', marginTop: '0.25rem' }}>Pro Educator</div>
+                                        <div style={{ fontSize: '1.75rem', fontWeight: 900, color: 'var(--text-primary)', margin: '0.4rem 0' }}>250 Tokens</div>
+                                        <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', margin: '0 0 1rem 0' }}>
+                                            250 AI Questions<br /><strong>Save 25%</strong> ($0.076/q)
+                                        </p>
+                                    </div>
+                                    <div style={{ fontSize: '1.35rem', fontWeight: 800, color: 'var(--accent-primary)', marginBottom: '1rem' }}>$19</div>
+                                    <button
+                                        onClick={() => {
+                                            alert('Thank you! Token top-up request initiated. In production, this links to your Stripe/payment checkout or grants immediate credits.');
+                                        }}
+                                        className="btn btn-primary"
+                                        style={{ width: '100%', fontSize: '0.85rem', fontWeight: 700, padding: '0.6rem' }}
+                                    >
+                                        Select $19 Pack
+                                    </button>
+                                </div>
+
+                                {/* Pack 3 */}
+                                <div style={{
+                                    background: 'var(--bg-secondary)',
+                                    border: '1px solid var(--border-color)',
+                                    borderRadius: '1rem',
+                                    padding: '1.25rem',
+                                    textAlign: 'center',
+                                    display: 'flex',
+                                    flexDirection: 'column',
+                                    justifyContent: 'space-between'
+                                }}>
+                                    <div>
+                                        <div style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--text-secondary)', textTransform: 'uppercase' }}>Power Host</div>
+                                        <div style={{ fontSize: '1.75rem', fontWeight: 900, color: 'var(--text-primary)', margin: '0.4rem 0' }}>1,000 Tokens</div>
+                                        <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', margin: '0 0 1rem 0' }}>
+                                            1,000 AI Questions<br /><strong>Save 50%</strong> ($0.049/q)
+                                        </p>
+                                    </div>
+                                    <div style={{ fontSize: '1.35rem', fontWeight: 800, color: 'var(--accent-primary)', marginBottom: '1rem' }}>$49</div>
+                                    <button
+                                        onClick={() => {
+                                            alert('Thank you! Token top-up request initiated. In production, this links to your Stripe/payment checkout or grants immediate credits.');
+                                        }}
+                                        className="btn btn-secondary"
+                                        style={{ width: '100%', fontSize: '0.85rem', fontWeight: 700, padding: '0.6rem' }}
+                                    >
+                                        Select $49 Pack
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Info Footnote */}
+                        <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', textAlign: 'center', margin: 0, lineHeight: 1.5 }}>
+                            Tokens never expire and apply to all AI models and quiz generator tools on your account.
+                        </p>
                     </div>
                 </div>
             )}

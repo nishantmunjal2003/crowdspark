@@ -31,6 +31,18 @@ const userSchema = new mongoose.Schema({
         type: Boolean,
         default: true
     },
+    aiTokens: {
+        type: Number,
+        default: 50 // 1 token = 1 AI question generation
+    },
+    aiTokensUsed: {
+        type: Number,
+        default: 0
+    },
+    aiTokensTotal: {
+        type: Number,
+        default: 50
+    },
     lastLogin: {
         type: Date
     },

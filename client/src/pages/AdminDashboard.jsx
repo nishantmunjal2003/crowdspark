@@ -20,7 +20,10 @@ import {
     Clock,
     X,
     Mail,
-    KeyRound
+    KeyRound,
+    Zap,
+    Sparkles,
+    Coins
 } from 'lucide-react';
 import ThemeToggle from '../components/ThemeToggle';
 
@@ -35,6 +38,16 @@ export default function AdminDashboard() {
     const [isLoading, setIsLoading] = useState(true);
     const [selectedUser, setSelectedUser] = useState(null);
     const [selectedLog, setSelectedLog] = useState(null);
+
+    // AI Token Configuration & Grant States
+    const [systemSettings, setSystemSettings] = useState({ defaultAiTokens: 50 });
+    const [defaultTokensInput, setDefaultTokensInput] = useState(50);
+    const [isSavingSettings, setIsSavingSettings] = useState(false);
+    const [settingsSaveMsg, setSettingsSaveMsg] = useState('');
+    const [tokenModalUser, setTokenModalUser] = useState(null);
+    const [tokenAmountInput, setTokenAmountInput] = useState(50);
+    const [tokenActionType, setTokenActionType] = useState('add'); // 'add' or 'set'
+    const [isGrantingTokens, setIsGrantingTokens] = useState(false);
 
     // Filter & Sort States for Users
     const [userSearch, setUserSearch] = useState('');
@@ -81,6 +94,14 @@ export default function AdminDashboard() {
             const statsData = await statsRes.json();
             if (statsData.success) {
                 setStats(statsData.stats);
+            }
+
+            // Fetch settings
+            const settingsRes = await fetch(`/api/admin/settings?userId=${userId}`);
+            const settingsData = await settingsRes.json();
+            if (settingsData.success && settingsData.settings) {
+                setSystemSettings(settingsData.settings);
+                setDefaultTokensInput(settingsData.settings.defaultAiTokens !== undefined ? settingsData.settings.defaultAiTokens : 50);
             }
 
             // Fetch users
@@ -177,6 +198,71 @@ export default function AdminDashboard() {
             }
         } catch (err) {
             console.error('Error fetching user details:', err);
+        }
+    };
+
+    const handleSaveSettings = async () => {
+        setIsSavingSettings(true);
+        setSettingsSaveMsg('');
+        try {
+            const res = await fetch(`/api/admin/settings?userId=${user._id}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    userId: user._id,
+                    key: 'defaultAiTokens',
+                    value: parseInt(defaultTokensInput) || 50,
+                    description: 'Default number of AI tokens allocated to newly registered users'
+                })
+            });
+            const data = await res.json();
+            if (data.success) {
+                setSystemSettings(prev => ({ ...prev, defaultAiTokens: parseInt(defaultTokensInput) || 50 }));
+                setSettingsSaveMsg('✓ Default AI tokens setting saved successfully!');
+                setTimeout(() => setSettingsSaveMsg(''), 4000);
+            } else {
+                alert(data.error || 'Failed to save settings');
+            }
+        } catch (err) {
+            console.error('Error saving settings:', err);
+            alert('Failed to save settings');
+        } finally {
+            setIsSavingSettings(false);
+        }
+    };
+
+    const handleGrantTokens = async () => {
+        if (!tokenModalUser) return;
+        setIsGrantingTokens(true);
+        try {
+            const res = await fetch(`/api/admin/users/${tokenModalUser._id}/tokens?userId=${user._id}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    userId: user._id,
+                    amount: parseInt(tokenAmountInput) || 0,
+                    action: tokenActionType
+                })
+            });
+            const data = await res.json();
+            if (data.success) {
+                // Update local users array
+                setUsers(prev => prev.map(u => u._id === tokenModalUser._id ? {
+                    ...u,
+                    aiTokens: data.user.aiTokens,
+                    aiTokensUsed: data.user.aiTokensUsed,
+                    aiTokensTotal: data.user.aiTokensTotal
+                } : u));
+                alert(`✓ Tokens updated: ${data.user.name} now has ${data.user.aiTokens} AI tokens.`);
+                setTokenModalUser(null);
+            } else {
+                alert(data.error || 'Failed to update user tokens');
+            }
+        } catch (err) {
+            console.error('Error updating tokens:', err);
+            alert('Failed to update tokens');
+        } finally {
+            setIsGrantingTokens(false);
         }
     };
 
@@ -514,6 +600,7 @@ export default function AdminDashboard() {
                                             <th style={{ padding: '0.85rem 1rem' }}>User</th>
                                             <th style={{ padding: '0.85rem 1rem' }}>Email</th>
                                             <th style={{ padding: '0.85rem 1rem' }}>Login Method</th>
+                                            <th style={{ padding: '0.85rem 1rem' }}>AI Tokens</th>
                                             <th style={{ padding: '0.85rem 1rem' }}>Role</th>
                                             <th style={{ padding: '0.85rem 1rem' }}>Status</th>
                                             <th style={{ padding: '0.85rem 1rem' }}>Joined / Last Login</th>
@@ -581,6 +668,28 @@ export default function AdminDashboard() {
                                                         )}
                                                     </td>
                                                     <td style={{ padding: '1rem' }}>
+                                                        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+                                                            <span style={{
+                                                                display: 'inline-flex',
+                                                                alignItems: 'center',
+                                                                gap: '0.35rem',
+                                                                padding: '0.25rem 0.65rem',
+                                                                borderRadius: '0.5rem',
+                                                                fontSize: '0.8rem',
+                                                                fontWeight: 700,
+                                                                background: (u.aiTokens !== undefined ? u.aiTokens : 50) > 10 ? 'rgba(99, 102, 241, 0.12)' : 'rgba(239, 68, 68, 0.12)',
+                                                                color: (u.aiTokens !== undefined ? u.aiTokens : 50) > 10 ? 'var(--accent-primary)' : 'var(--error)',
+                                                                border: `1px solid ${(u.aiTokens !== undefined ? u.aiTokens : 50) > 10 ? 'rgba(99, 102, 241, 0.25)' : 'rgba(239, 68, 68, 0.25)'}`,
+                                                                width: 'fit-content'
+                                                            }}>
+                                                                <Zap size={13} fill="currentColor" /> {u.aiTokens !== undefined ? u.aiTokens : 50}
+                                                            </span>
+                                                            <span style={{ fontSize: '0.725rem', color: 'var(--text-muted)' }}>
+                                                                {u.aiTokensUsed || 0} questions used
+                                                            </span>
+                                                        </div>
+                                                    </td>
+                                                    <td style={{ padding: '1rem' }}>
                                                         <span style={{
                                                             padding: '0.25rem 0.75rem',
                                                             borderRadius: '1rem',
@@ -614,7 +723,25 @@ export default function AdminDashboard() {
                                                         </div>
                                                     </td>
                                                     <td style={{ padding: '1rem', textAlign: 'right' }}>
-                                                        <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'flex-end' }}>
+                                                        <div style={{ display: 'flex', gap: '0.4rem', justifyContent: 'flex-end' }}>
+                                                            <button
+                                                                onClick={() => {
+                                                                    setTokenModalUser(u);
+                                                                    setTokenAmountInput(50);
+                                                                    setTokenActionType('add');
+                                                                }}
+                                                                className="btn"
+                                                                style={{
+                                                                    padding: '0.45rem 0.65rem',
+                                                                    fontSize: '0.8rem',
+                                                                    background: 'rgba(99, 102, 241, 0.12)',
+                                                                    color: 'var(--accent-primary)',
+                                                                    border: '1px solid rgba(99, 102, 241, 0.3)'
+                                                                }}
+                                                                title="Manage AI Tokens"
+                                                            >
+                                                                <Zap size={15} />
+                                                            </button>
                                                             <button
                                                                 onClick={() => viewUserDetails(u._id)}
                                                                 className="btn btn-secondary"
@@ -1002,6 +1129,136 @@ export default function AdminDashboard() {
                 {/* TAB 4: OVERVIEW */}
                 {activeTab === 'overview' && stats && (
                     <div style={{ display: 'grid', gap: '1.5rem' }}>
+                        {/* AI Token System Configuration Card */}
+                        <div className="card" style={{ padding: '1.75rem', border: '1.5px solid rgba(99, 102, 241, 0.3)' }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem', flexWrap: 'wrap', gap: '1rem' }}>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+                                    <div style={{ padding: '0.5rem', background: 'rgba(99, 102, 241, 0.12)', borderRadius: '0.6rem' }}>
+                                        <Zap size={22} color="var(--accent-primary)" />
+                                    </div>
+                                    <div>
+                                        <h2 style={{ fontSize: '1.25rem', fontWeight: 800, margin: 0, color: 'var(--text-primary)' }}>
+                                            AI Quiz Generation & Token Configuration
+                                        </h2>
+                                        <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', margin: 0 }}>
+                                            Configure global default AI questions quota for new users & view platform token consumption
+                                        </p>
+                                    </div>
+                                </div>
+                                <span style={{
+                                    padding: '0.3rem 0.75rem',
+                                    borderRadius: '1rem',
+                                    fontSize: '0.75rem',
+                                    fontWeight: 700,
+                                    background: 'rgba(99, 102, 241, 0.15)',
+                                    color: 'var(--accent-primary)',
+                                    border: '1px solid rgba(99, 102, 241, 0.3)'
+                                }}>
+                                    1 TOKEN = 1 AI QUESTION
+                                </span>
+                            </div>
+
+                            {/* Token Quota Metrics */}
+                            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem', marginBottom: '1.5rem' }}>
+                                <div style={{ padding: '1rem', background: 'var(--bg-secondary)', borderRadius: '0.75rem', border: '1px solid var(--border-color)' }}>
+                                    <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', marginBottom: '0.35rem' }}>Default New User Quota</div>
+                                    <div style={{ fontSize: '1.75rem', fontWeight: 800, color: 'var(--accent-primary)' }}>
+                                        {systemSettings.defaultAiTokens || 50} <span style={{ fontSize: '0.9rem', fontWeight: 600, color: 'var(--text-muted)' }}>tokens</span>
+                                    </div>
+                                    <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '0.2rem' }}>Given upon signup</div>
+                                </div>
+
+                                <div style={{ padding: '1rem', background: 'var(--bg-secondary)', borderRadius: '0.75rem', border: '1px solid var(--border-color)' }}>
+                                    <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', marginBottom: '0.35rem' }}>Total Tokens Available</div>
+                                    <div style={{ fontSize: '1.75rem', fontWeight: 800, color: 'var(--success)' }}>
+                                        {users.reduce((sum, u) => sum + (u.aiTokens !== undefined ? u.aiTokens : 50), 0)}
+                                    </div>
+                                    <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '0.2rem' }}>Across all {users.length} users</div>
+                                </div>
+
+                                <div style={{ padding: '1rem', background: 'var(--bg-secondary)', borderRadius: '0.75rem', border: '1px solid var(--border-color)' }}>
+                                    <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', marginBottom: '0.35rem' }}>AI Questions Generated</div>
+                                    <div style={{ fontSize: '1.75rem', fontWeight: 800, color: '#ec4899' }}>
+                                        {users.reduce((sum, u) => sum + (u.aiTokensUsed || 0), 0)}
+                                    </div>
+                                    <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '0.2rem' }}>Total AI questions produced</div>
+                                </div>
+                            </div>
+
+                            {/* Configuration Form */}
+                            <div style={{
+                                background: 'var(--bg-secondary)',
+                                padding: '1.25rem',
+                                borderRadius: '1rem',
+                                border: '1px solid var(--border-color)',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'space-between',
+                                flexWrap: 'wrap',
+                                gap: '1rem'
+                            }}>
+                                <div style={{ flex: '1 1 300px' }}>
+                                    <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 700, color: 'var(--text-primary)', marginBottom: '0.25rem' }}>
+                                        Default AI Tokens for New Signups
+                                    </label>
+                                    <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', margin: 0 }}>
+                                        Every new user automatically receives this number of AI tokens (e.g., 50 tokens = 50 AI questions). After depleting, users will need to buy tokens.
+                                    </p>
+                                </div>
+
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
+                                    <div style={{ position: 'relative', width: '130px' }}>
+                                        <input
+                                            type="number"
+                                            min="0"
+                                            max="10000"
+                                            value={defaultTokensInput}
+                                            onChange={e => setDefaultTokensInput(e.target.value)}
+                                            className="admin-filter-control"
+                                            style={{
+                                                padding: '0.6rem 0.85rem',
+                                                fontSize: '1.05rem',
+                                                fontWeight: 800,
+                                                textAlign: 'center'
+                                            }}
+                                        />
+                                    </div>
+                                    <button
+                                        onClick={handleSaveSettings}
+                                        disabled={isSavingSettings}
+                                        className="btn btn-primary"
+                                        style={{
+                                            padding: '0.65rem 1.25rem',
+                                            fontSize: '0.9rem',
+                                            fontWeight: 700,
+                                            display: 'inline-flex',
+                                            alignItems: 'center',
+                                            gap: '0.4rem'
+                                        }}
+                                    >
+                                        <Zap size={16} />
+                                        {isSavingSettings ? 'Saving...' : 'Save Default Quota'}
+                                    </button>
+                                </div>
+                            </div>
+
+                            {settingsSaveMsg && (
+                                <div style={{
+                                    marginTop: '0.85rem',
+                                    padding: '0.6rem 1rem',
+                                    background: 'rgba(16, 185, 129, 0.12)',
+                                    color: 'var(--success)',
+                                    borderRadius: '0.5rem',
+                                    fontSize: '0.85rem',
+                                    fontWeight: 600,
+                                    border: '1px solid rgba(16, 185, 129, 0.25)'
+                                }}>
+                                    {settingsSaveMsg}
+                                </div>
+                            )}
+                        </div>
+
+                        {/* User Breakdown Card */}
                         <div className="card" style={{ padding: '1.75rem' }}>
                             <h2 style={{ fontSize: '1.35rem', fontWeight: 800, marginBottom: '1.25rem', display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--text-primary)' }}>
                                 <TrendingUp size={22} color="var(--accent-primary)" />
@@ -1090,11 +1347,17 @@ export default function AdminDashboard() {
                         </div>
 
                         <div style={{ display: 'grid', gap: '1.25rem' }}>
-                            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: '1rem', background: 'var(--bg-secondary)', padding: '1rem', borderRadius: '0.75rem' }}>
+                            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: '1rem', background: 'var(--bg-secondary)', padding: '1rem', borderRadius: '0.75rem' }}>
                                 <div>
                                     <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', textTransform: 'uppercase' }}>Login Method</div>
                                     <div style={{ fontSize: '0.95rem', fontWeight: 700, marginTop: '0.2rem', color: (selectedUser.user?.authMethod === 'google' || !!selectedUser.user?.googleId) ? '#ea4335' : 'var(--accent-primary)' }}>
                                         {(selectedUser.user?.authMethod === 'google' || !!selectedUser.user?.googleId) ? 'Google Sign-In' : 'Email & Password'}
+                                    </div>
+                                </div>
+                                <div>
+                                    <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', textTransform: 'uppercase' }}>AI Tokens</div>
+                                    <div style={{ fontSize: '0.95rem', fontWeight: 700, marginTop: '0.2rem', color: 'var(--accent-primary)' }}>
+                                        ⚡ {selectedUser.user?.aiTokens !== undefined ? selectedUser.user?.aiTokens : 50} remaining
                                     </div>
                                 </div>
                                 <div>
@@ -1109,6 +1372,27 @@ export default function AdminDashboard() {
                                         {selectedUser.user?.isActive ? 'Active' : 'Inactive'}
                                     </div>
                                 </div>
+                            </div>
+
+                            <div style={{ display: 'flex', gap: '0.75rem' }}>
+                                <button
+                                    onClick={() => {
+                                        const target = users.find(u => u._id === selectedUser.user?._id) || selectedUser.user;
+                                        setTokenModalUser(target);
+                                        setTokenAmountInput(50);
+                                        setTokenActionType('add');
+                                    }}
+                                    className="btn btn-primary"
+                                    style={{
+                                        display: 'inline-flex',
+                                        alignItems: 'center',
+                                        gap: '0.4rem',
+                                        fontSize: '0.85rem',
+                                        padding: '0.5rem 1rem'
+                                    }}
+                                >
+                                    <Zap size={15} /> Manage AI Tokens
+                                </button>
                             </div>
 
                             <div>
@@ -1128,6 +1412,202 @@ export default function AdminDashboard() {
                                     <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', margin: 0 }}>No quizzes created yet.</p>
                                 )}
                             </div>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Manage / Grant AI Tokens Modal */}
+            {tokenModalUser && (
+                <div
+                    style={{
+                        position: 'fixed',
+                        top: 0,
+                        left: 0,
+                        right: 0,
+                        bottom: 0,
+                        background: 'rgba(0,0,0,0.7)',
+                        backdropFilter: 'blur(8px)',
+                        WebkitBackdropFilter: 'blur(8px)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        zIndex: 1100,
+                        padding: '1.5rem'
+                    }}
+                    onClick={() => setTokenModalUser(null)}
+                >
+                    <div
+                        onClick={e => e.stopPropagation()}
+                        className="card animate-fade-in"
+                        style={{
+                            width: '100%',
+                            maxWidth: '500px',
+                            padding: '2rem',
+                            border: '1.5px solid var(--accent-primary)',
+                            boxShadow: '0 20px 40px rgba(0,0,0,0.3)'
+                        }}
+                    >
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+                                <div style={{ padding: '0.5rem', background: 'rgba(99, 102, 241, 0.12)', borderRadius: '0.6rem' }}>
+                                    <Zap size={22} color="var(--accent-primary)" />
+                                </div>
+                                <div>
+                                    <h3 style={{ fontSize: '1.2rem', fontWeight: 800, margin: 0, color: 'var(--text-primary)' }}>
+                                        Manage AI Tokens
+                                    </h3>
+                                    <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', margin: 0 }}>
+                                        for {tokenModalUser.name} ({tokenModalUser.email})
+                                    </p>
+                                </div>
+                            </div>
+                            <button onClick={() => setTokenModalUser(null)} className="btn btn-secondary" style={{ padding: '0.4rem 0.6rem' }}>
+                                <X size={18} />
+                            </button>
+                        </div>
+
+                        {/* Current Balance */}
+                        <div style={{
+                            background: 'var(--bg-secondary)',
+                            padding: '1rem',
+                            borderRadius: '0.75rem',
+                            border: '1px solid var(--border-color)',
+                            marginBottom: '1.25rem',
+                            display: 'flex',
+                            justifyContent: 'space-between',
+                            alignItems: 'center'
+                        }}>
+                            <div>
+                                <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>Current Balance</div>
+                                <div style={{ fontSize: '1.4rem', fontWeight: 800, color: 'var(--accent-primary)' }}>
+                                    ⚡ {tokenModalUser.aiTokens !== undefined ? tokenModalUser.aiTokens : 50} tokens
+                                </div>
+                            </div>
+                            <div style={{ textAlign: 'right' }}>
+                                <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>Used So Far</div>
+                                <div style={{ fontSize: '1.1rem', fontWeight: 700, color: 'var(--text-muted)' }}>
+                                    {tokenModalUser.aiTokensUsed || 0} questions
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Action Selector */}
+                        <div style={{ marginBottom: '1.25rem' }}>
+                            <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 700, color: 'var(--text-primary)', marginBottom: '0.5rem' }}>
+                                Choose Action
+                            </label>
+                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.5rem' }}>
+                                <button
+                                    type="button"
+                                    onClick={() => setTokenActionType('add')}
+                                    className="btn"
+                                    style={{
+                                        padding: '0.6rem',
+                                        fontSize: '0.85rem',
+                                        fontWeight: 700,
+                                        borderRadius: '0.6rem',
+                                        background: tokenActionType === 'add' ? 'var(--accent-primary)' : 'var(--bg-secondary)',
+                                        color: tokenActionType === 'add' ? 'white' : 'var(--text-secondary)',
+                                        border: `1.5px solid ${tokenActionType === 'add' ? 'var(--accent-primary)' : 'var(--border-color)'}`
+                                    }}
+                                >
+                                    + Add Tokens
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={() => setTokenActionType('set')}
+                                    className="btn"
+                                    style={{
+                                        padding: '0.6rem',
+                                        fontSize: '0.85rem',
+                                        fontWeight: 700,
+                                        borderRadius: '0.6rem',
+                                        background: tokenActionType === 'set' ? 'var(--accent-primary)' : 'var(--bg-secondary)',
+                                        color: tokenActionType === 'set' ? 'white' : 'var(--text-secondary)',
+                                        border: `1.5px solid ${tokenActionType === 'set' ? 'var(--accent-primary)' : 'var(--border-color)'}`
+                                    }}
+                                >
+                                    = Set Exact Balance
+                                </button>
+                            </div>
+                        </div>
+
+                        {/* Preset Quick Buttons (if add mode) */}
+                        {tokenActionType === 'add' && (
+                            <div style={{ marginBottom: '1.25rem' }}>
+                                <label style={{ display: 'block', fontSize: '0.8rem', color: 'var(--text-secondary)', marginBottom: '0.4rem' }}>
+                                    Quick Presets
+                                </label>
+                                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '0.4rem' }}>
+                                    {[25, 50, 100, 250].map(amt => (
+                                        <button
+                                            key={amt}
+                                            type="button"
+                                            onClick={() => setTokenAmountInput(amt)}
+                                            className="btn btn-secondary"
+                                            style={{
+                                                padding: '0.45rem',
+                                                fontSize: '0.8rem',
+                                                fontWeight: 700,
+                                                background: tokenAmountInput === amt ? 'rgba(99, 102, 241, 0.15)' : undefined,
+                                                color: tokenAmountInput === amt ? 'var(--accent-primary)' : undefined,
+                                                borderColor: tokenAmountInput === amt ? 'var(--accent-primary)' : undefined
+                                            }}
+                                        >
+                                            +{amt}
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+
+                        {/* Amount Input */}
+                        <div style={{ marginBottom: '1.5rem' }}>
+                            <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 700, color: 'var(--text-primary)', marginBottom: '0.4rem' }}>
+                                {tokenActionType === 'add' ? 'Tokens to Add' : 'New Exact Token Balance'}
+                            </label>
+                            <input
+                                type="number"
+                                min="0"
+                                max="10000"
+                                value={tokenAmountInput}
+                                onChange={e => setTokenAmountInput(e.target.value)}
+                                className="admin-filter-control"
+                                style={{
+                                    width: '100%',
+                                    padding: '0.75rem',
+                                    fontSize: '1.1rem',
+                                    fontWeight: 700
+                                }}
+                            />
+                        </div>
+
+                        <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'flex-end' }}>
+                            <button
+                                type="button"
+                                onClick={() => setTokenModalUser(null)}
+                                className="btn btn-secondary"
+                                style={{ padding: '0.65rem 1.25rem' }}
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                type="button"
+                                onClick={handleGrantTokens}
+                                disabled={isGrantingTokens}
+                                className="btn btn-primary"
+                                style={{
+                                    padding: '0.65rem 1.5rem',
+                                    display: 'inline-flex',
+                                    alignItems: 'center',
+                                    gap: '0.4rem',
+                                    fontWeight: 700
+                                }}
+                            >
+                                <Zap size={16} />
+                                {isGrantingTokens ? 'Updating...' : (tokenActionType === 'add' ? 'Add Tokens' : 'Set Balance')}
+                            </button>
                         </div>
                     </div>
                 </div>

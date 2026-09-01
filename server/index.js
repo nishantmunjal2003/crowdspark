@@ -14,6 +14,7 @@ const QuizSession = require('./models/QuizSession');
 const Otp = require('./models/Otp');
 const User = require('./models/User');
 const ActivityLog = require('./models/ActivityLog');
+const SystemSetting = require('./models/SystemSetting');
 const { sendOtpEmail, sendWelcomeEmail } = require('./services/mailService');
 const { OAuth2Client } = require('google-auth-library');
 const { logActivity } = require('./middleware/activityLogger');
@@ -23,6 +24,19 @@ const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 const bcrypt = require('bcrypt');
 
 const app = express();
+
+// Helper to get default AI tokens from settings
+async function getDefaultAiTokens() {
+  try {
+    const setting = await SystemSetting.findOne({ key: 'defaultAiTokens' });
+    if (setting && typeof setting.value === 'number') {
+      return setting.value;
+    }
+  } catch (e) {
+    console.error('Error reading defaultAiTokens setting:', e);
+  }
+  return 50;
+}
 
 // Middleware - MUST be before routes
 app.use(cors());
@@ -98,11 +112,16 @@ app.post('/api/auth/verify-signup-otp', async (req, res) => {
     // Hash password
     const hashedPassword = await bcrypt.hash(password, 10);
 
+    const defaultTokens = await getDefaultAiTokens();
+
     // Create user
     const user = await User.create({
       name: name.trim(),
       email: normalizedEmail,
-      password: hashedPassword
+      password: hashedPassword,
+      aiTokens: defaultTokens,
+      aiTokensUsed: 0,
+      aiTokensTotal: defaultTokens
     });
 
     // Delete used OTP
@@ -123,6 +142,9 @@ app.post('/api/auth/verify-signup-otp', async (req, res) => {
       email: user.email,
       picture: user.picture,
       role: user.role,
+      aiTokens: user.aiTokens,
+      aiTokensUsed: user.aiTokensUsed,
+      aiTokensTotal: user.aiTokensTotal,
       createdAt: user.createdAt
     };
 
@@ -151,12 +173,16 @@ app.post('/api/auth/signup', async (req, res) => {
 
     // Hash password
     const hashedPassword = await bcrypt.hash(password, 10);
+    const defaultTokens = await getDefaultAiTokens();
 
     // Create user
     const user = await User.create({
       name: name.trim(),
       email: normalizedEmail,
-      password: hashedPassword
+      password: hashedPassword,
+      aiTokens: defaultTokens,
+      aiTokensUsed: 0,
+      aiTokensTotal: defaultTokens
     });
 
     // Send Welcome Email asynchronously
@@ -171,6 +197,9 @@ app.post('/api/auth/signup', async (req, res) => {
       email: user.email,
       picture: user.picture,
       role: user.role,
+      aiTokens: user.aiTokens,
+      aiTokensUsed: user.aiTokensUsed,
+      aiTokensTotal: user.aiTokensTotal,
       createdAt: user.createdAt
     };
 
@@ -225,6 +254,9 @@ app.post('/api/auth/login', async (req, res) => {
       email: user.email,
       picture: user.picture,
       role: user.role,
+      aiTokens: user.aiTokens !== undefined ? user.aiTokens : 50,
+      aiTokensUsed: user.aiTokensUsed || 0,
+      aiTokensTotal: user.aiTokensTotal || 50,
       createdAt: user.createdAt
     };
 
@@ -265,11 +297,15 @@ app.post('/api/auth/google', async (req, res) => {
         await user.save();
       }
     } else {
+      const defaultTokens = await getDefaultAiTokens();
       user = await User.create({
         email,
         name,
         picture,
-        googleId
+        googleId,
+        aiTokens: defaultTokens,
+        aiTokensUsed: 0,
+        aiTokensTotal: defaultTokens
       });
       isNewUser = true;
 
@@ -293,6 +329,9 @@ app.post('/api/auth/google', async (req, res) => {
       email: user.email,
       picture: user.picture,
       role: user.role,
+      aiTokens: user.aiTokens !== undefined ? user.aiTokens : 50,
+      aiTokensUsed: user.aiTokensUsed || 0,
+      aiTokensTotal: user.aiTokensTotal || 50,
       createdAt: user.createdAt
     };
 
@@ -423,20 +462,77 @@ app.get('/api/config', (req, res) => {
   });
 });
 
-// AI Quiz Generation endpoint
+// Get user AI token balance
+app.get('/api/users/:id/tokens', async (req, res) => {
+  try {
+    const user = await User.findById(req.params.id).select('aiTokens aiTokensUsed aiTokensTotal email name');
+    if (!user) return res.status(404).json({ error: 'User not found' });
+    res.json({
+      success: true,
+      aiTokens: user.aiTokens !== undefined ? user.aiTokens : 50,
+      aiTokensUsed: user.aiTokensUsed || 0,
+      aiTokensTotal: user.aiTokensTotal || 50
+    });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// AI Quiz Generation endpoint with token quota enforcement
 app.post('/api/ai/generate-quiz', async (req, res) => {
   try {
-    const { topic, numQuestions, difficulty } = req.body;
+    const { topic, numQuestions, difficulty, userId } = req.body;
     if (!topic || typeof topic !== 'string' || !topic.trim()) {
       return res.status(400).json({ error: 'Topic prompt is required' });
     }
 
+    const requestedQuestions = parseInt(numQuestions) || 5;
+
+    // Verify AI Token quota if userId is provided
+    let userDoc = null;
+    if (userId && mongoose.Types.ObjectId.isValid(userId)) {
+      userDoc = await User.findById(userId);
+      if (userDoc) {
+        const currentTokens = userDoc.aiTokens !== undefined ? userDoc.aiTokens : 50;
+        if (currentTokens < requestedQuestions) {
+          return res.status(403).json({
+            error: `Insufficient AI tokens. You requested ${requestedQuestions} questions, but only have ${currentTokens} token${currentTokens === 1 ? '' : 's'} remaining.`,
+            insufficientTokens: true,
+            tokensRemaining: currentTokens,
+            tokensNeeded: requestedQuestions
+          });
+        }
+      }
+    }
+
     const quizData = await generateQuizFromAI(
       topic,
-      parseInt(numQuestions) || 5,
+      requestedQuestions,
       difficulty || 'Medium'
     );
-    res.json(quizData);
+
+    // Deduct tokens on successful AI generation
+    let tokensRemaining = null;
+    if (userDoc) {
+      const actualQuestionsCount = quizData.questions?.length || requestedQuestions;
+      userDoc.aiTokens = Math.max(0, (userDoc.aiTokens !== undefined ? userDoc.aiTokens : 50) - actualQuestionsCount);
+      userDoc.aiTokensUsed = (userDoc.aiTokensUsed || 0) + actualQuestionsCount;
+      await userDoc.save();
+      tokensRemaining = userDoc.aiTokens;
+
+      await logActivity(userDoc._id, userDoc.email, userDoc.name, 'ai_quiz_generated', {
+        topic,
+        questionsCount: actualQuestionsCount,
+        tokensDeducted: actualQuestionsCount,
+        tokensRemaining: userDoc.aiTokens
+      }, req);
+    }
+
+    res.json({
+      ...quizData,
+      tokensRemaining,
+      tokensDeducted: quizData.questions?.length || requestedQuestions
+    });
   } catch (err) {
     console.error('AI Generation Error:', err);
     res.status(500).json({ error: err.message || 'Failed to generate quiz with AI' });

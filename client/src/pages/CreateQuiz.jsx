@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { Plus, Trash2, Save, ArrowLeft, Check, Upload, Download, Image, Video, X, Music, Palette, Clock, Sparkles } from 'lucide-react';
+import { Plus, Trash2, Save, ArrowLeft, Check, Upload, Download, Image, Video, X, Music, Palette, Clock, Sparkles, Zap } from 'lucide-react';
 
 export default function CreateQuiz() {
     const navigate = useNavigate();
@@ -8,6 +8,8 @@ export default function CreateQuiz() {
     const editingQuiz = location.state?.quiz;
     const quizType = location.state?.type || editingQuiz?.type || 'quiz';
 
+    const [currentUser, setCurrentUser] = useState(null);
+    const [userTokens, setUserTokens] = useState({ aiTokens: 50, aiTokensUsed: 0 });
     const [quizTitle, setQuizTitle] = useState(editingQuiz?.title || '');
     const [questions, setQuestions] = useState(editingQuiz?.questions || []);
     const [backgroundImage, setBackgroundImage] = useState(editingQuiz?.backgroundImage || '');
@@ -25,15 +27,36 @@ export default function CreateQuiz() {
 
     useEffect(() => {
         // Check if user is logged in
-        const currentUser = localStorage.getItem('current_user');
-        if (!currentUser) {
+        const userStr = localStorage.getItem('current_user');
+        if (!userStr) {
             navigate('/login');
+            return;
         }
+        const userData = JSON.parse(userStr);
+        setCurrentUser(userData);
+
+        // Fetch fresh user token balance
+        fetch(`/api/users/${userData._id}/tokens`)
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    setUserTokens({
+                        aiTokens: data.aiTokens !== undefined ? data.aiTokens : 50,
+                        aiTokensUsed: data.aiTokensUsed || 0
+                    });
+                }
+            })
+            .catch(err => console.error('Error loading user tokens:', err));
     }, [navigate]);
 
     const handleAIGenerate = async () => {
         if (!aiTopic.trim()) {
             setAiError('Please enter a topic or prompt');
+            return;
+        }
+
+        if ((userTokens.aiTokens !== undefined ? userTokens.aiTokens : 50) < aiNumQuestions) {
+            setAiError(`Insufficient tokens. You need ${aiNumQuestions} tokens, but only have ${userTokens.aiTokens || 0} tokens remaining.`);
             return;
         }
 
@@ -49,7 +72,8 @@ export default function CreateQuiz() {
                 body: JSON.stringify({
                     topic: aiTopic,
                     numQuestions: aiNumQuestions,
-                    difficulty: aiDifficulty
+                    difficulty: aiDifficulty,
+                    userId: currentUser?._id
                 })
             });
 
@@ -63,6 +87,14 @@ export default function CreateQuiz() {
             if (data.title) setQuizTitle(data.title);
             if (data.questions && data.questions.length > 0) {
                 setQuestions(data.questions);
+            }
+
+            if (data.tokensRemaining !== undefined && data.tokensRemaining !== null) {
+                setUserTokens(prev => ({
+                    ...prev,
+                    aiTokens: data.tokensRemaining,
+                    aiTokensUsed: (prev.aiTokensUsed || 0) + (data.tokensDeducted || aiNumQuestions)
+                }));
             }
             
             setShowAIModal(false);
@@ -701,11 +733,28 @@ export default function CreateQuiz() {
                             padding: '2rem',
                             boxShadow: 'var(--shadow-xl)'
                         }}>
-                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                <h2 style={{ fontSize: '1.25rem', fontWeight: 'bold', margin: 0, display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--text-primary)' }}>
-                                    <Sparkles size={20} color="var(--accent-secondary)" />
-                                    Generate Quiz with AI
-                                </h2>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                                <div>
+                                    <h2 style={{ fontSize: '1.25rem', fontWeight: 'bold', margin: 0, display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--text-primary)' }}>
+                                        <Sparkles size={20} color="var(--accent-secondary)" />
+                                        Generate Quiz with AI
+                                    </h2>
+                                    <div style={{
+                                        display: 'inline-flex',
+                                        alignItems: 'center',
+                                        gap: '0.35rem',
+                                        marginTop: '0.35rem',
+                                        padding: '0.2rem 0.6rem',
+                                        borderRadius: '0.5rem',
+                                        fontSize: '0.75rem',
+                                        fontWeight: 700,
+                                        background: (userTokens.aiTokens !== undefined ? userTokens.aiTokens : 50) >= aiNumQuestions ? 'rgba(99, 102, 241, 0.12)' : 'rgba(239, 68, 68, 0.12)',
+                                        color: (userTokens.aiTokens !== undefined ? userTokens.aiTokens : 50) >= aiNumQuestions ? 'var(--accent-primary)' : 'var(--error)',
+                                        border: `1px solid ${(userTokens.aiTokens !== undefined ? userTokens.aiTokens : 50) >= aiNumQuestions ? 'rgba(99, 102, 241, 0.25)' : 'rgba(239, 68, 68, 0.25)'}`
+                                    }}>
+                                        <Zap size={13} fill="currentColor" /> {userTokens.aiTokens !== undefined ? userTokens.aiTokens : 50} AI Tokens Available
+                                    </div>
+                                </div>
                                 <button onClick={() => { if (!aiLoading) setShowAIModal(false); }} style={{ background: 'none', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer' }}>
                                     <X size={20} />
                                 </button>
@@ -761,6 +810,44 @@ export default function CreateQuiz() {
                                 </div>
                             </div>
 
+                            {/* Token Cost Breakdown */}
+                            <div style={{
+                                padding: '0.65rem 0.85rem',
+                                background: 'var(--bg-primary)',
+                                borderRadius: '0.6rem',
+                                border: '1px solid var(--border-color)',
+                                fontSize: '0.8rem',
+                                display: 'flex',
+                                justifyContent: 'space-between',
+                                alignItems: 'center'
+                            }}>
+                                <span style={{ color: 'var(--text-secondary)' }}>
+                                    ⚡ Generation Cost: <strong>{aiNumQuestions} Tokens</strong>
+                                </span>
+                                <span style={{
+                                    fontWeight: 700,
+                                    color: (userTokens.aiTokens !== undefined ? userTokens.aiTokens : 50) >= aiNumQuestions ? 'var(--success)' : 'var(--error)'
+                                }}>
+                                    {(userTokens.aiTokens !== undefined ? userTokens.aiTokens : 50) >= aiNumQuestions
+                                        ? `${(userTokens.aiTokens !== undefined ? userTokens.aiTokens : 50) - aiNumQuestions} remaining after`
+                                        : `⚠️ Out of tokens (${userTokens.aiTokens || 0} left)`}
+                                </span>
+                            </div>
+
+                            {(userTokens.aiTokens !== undefined ? userTokens.aiTokens : 50) < aiNumQuestions && (
+                                <div style={{
+                                    padding: '0.75rem 1rem',
+                                    background: 'rgba(239, 68, 68, 0.1)',
+                                    border: '1px solid rgba(239, 68, 68, 0.3)',
+                                    borderRadius: '0.6rem',
+                                    color: '#ef4444',
+                                    fontSize: '0.825rem',
+                                    lineHeight: 1.4
+                                }}>
+                                    <strong>Insufficient AI Tokens!</strong> You need {aiNumQuestions} tokens to generate this quiz, but only have {userTokens.aiTokens || 0} left. Select fewer questions or visit your <a href="/dashboard" style={{ color: '#6366f1', textDecoration: 'underline', fontWeight: 700 }}>Dashboard</a> to top up.
+                                </div>
+                            )}
+
                             {aiError && (
                                 <div style={{
                                     padding: '0.75rem',
@@ -785,7 +872,7 @@ export default function CreateQuiz() {
                                 </button>
                                 <button
                                     onClick={handleAIGenerate}
-                                    disabled={aiLoading}
+                                    disabled={aiLoading || ((userTokens.aiTokens !== undefined ? userTokens.aiTokens : 50) < aiNumQuestions)}
                                     className="btn btn-primary"
                                     style={{ padding: '0.5rem 1.25rem', fontSize: '0.95rem', borderRadius: '0.75rem', minWidth: '120px' }}
                                 >
