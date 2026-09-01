@@ -165,7 +165,108 @@ async function sendOtpEmail(toEmail, toName, otp) {
     });
 }
 
+/**
+ * Send Welcome Email to newly registered users
+ */
+async function sendWelcomeEmail(toEmail, toName) {
+    const firstName = (toName || 'there').split(' ')[0];
+    const subject = `Welcome to CrowdSpark, ${firstName}! 🎉 Spark live engagement`;
+    const appUrl = process.env.CLIENT_URL || 'https://crowdspark.nishantmunjal.com';
+
+    const html = `
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <title>Welcome to CrowdSpark</title>
+    </head>
+    <body style="margin: 0; padding: 24px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background-color: #f8fafc; color: #0f172a;">
+      <div style="max-width: 560px; margin: 0 auto; background-color: #ffffff; border-radius: 16px; border: 1px solid #e2e8f0; padding: 40px 32px; box-shadow: 0 4px 16px rgba(0, 0, 0, 0.04);">
+        
+        <!-- Logo Badge -->
+        <div style="text-align: center; margin-bottom: 28px;">
+          <div style="display: inline-block; background: linear-gradient(135deg, #6366f1, #8b5cf6); color: #ffffff; font-weight: 800; font-size: 22px; padding: 10px 24px; border-radius: 12px; letter-spacing: -0.02em; box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);">
+            ⚡ CrowdSpark
+          </div>
+        </div>
+
+        <!-- Heading -->
+        <h1 style="font-size: 24px; font-weight: 800; color: #0f172a; text-align: center; margin: 0 0 12px 0; letter-spacing: -0.02em;">
+          Welcome aboard, ${firstName}! 🎉
+        </h1>
+        <p style="font-size: 15px; color: #475569; line-height: 1.6; text-align: center; margin: 0 0 28px 0;">
+          Your CrowdSpark account is active and ready. You now have everything you need to create, host, and analyze interactive quizzes and live polls.
+        </p>
+
+        <!-- Feature Highlights Card -->
+        <div style="background-color: #f8fafc; border-radius: 12px; border: 1px solid #e2e8f0; padding: 20px; margin-bottom: 28px;">
+          <div style="font-size: 14px; font-weight: 700; color: #1e293b; margin-bottom: 14px; text-transform: uppercase; letter-spacing: 0.05em;">
+            🚀 What you can do with CrowdSpark:
+          </div>
+
+          <div style="display: flex; margin-bottom: 12px;">
+            <div style="font-size: 18px; margin-right: 12px; line-height: 1.4;">🎯</div>
+            <div style="font-size: 14px; color: #334155; line-height: 1.5;">
+              <strong>Create or AI-Generate Quizzes:</strong> Build custom quizzes in seconds or let our AI generate questions on any topic.
+            </div>
+          </div>
+
+          <div style="display: flex; margin-bottom: 12px;">
+            <div style="font-size: 18px; margin-right: 12px; line-height: 1.4;">👥</div>
+            <div style="font-size: 14px; color: #334155; line-height: 1.5;">
+              <strong>Host Live Interactive Sessions:</strong> Share your 6-character game PIN with participants on any phone or laptop (no login required for players).
+            </div>
+          </div>
+
+          <div style="display: flex; margin-bottom: 12px;">
+            <div style="font-size: 18px; margin-right: 12px; line-height: 1.4;">📊</div>
+            <div style="font-size: 14px; color: #334155; line-height: 1.5;">
+              <strong>Track & Download Full Reports:</strong> Inspect participant names, timestamps, scores, and export detailed CSV reports with one click.
+            </div>
+          </div>
+
+          <div style="display: flex;">
+            <div style="font-size: 18px; margin-right: 12px; line-height: 1.4;">👑</div>
+            <div style="font-size: 14px; color: #334155; line-height: 1.5;">
+              <strong>1 Year Free Pro Access:</strong> You get complete access to all pro features 100% free during our launch!
+            </div>
+          </div>
+        </div>
+
+        <!-- CTA Button -->
+        <div style="text-align: center; margin: 32px 0;">
+          <a href="${appUrl}/dashboard" style="display: inline-block; background: linear-gradient(135deg, #6366f1, #8b5cf6); color: #ffffff; text-decoration: none; font-weight: 700; font-size: 16px; padding: 14px 32px; border-radius: 10px; box-shadow: 0 4px 14px rgba(99, 102, 241, 0.4);">
+            Go to Your Dashboard &rarr;
+          </a>
+        </div>
+
+        <p style="font-size: 13px; color: #64748b; line-height: 1.6; text-align: center; margin: 0 0 24px 0;">
+          Need help getting started or have questions? Just reply to this email or reach out to our team at any time.
+        </p>
+
+        <hr style="border: none; border-top: 1px solid #e2e8f0; margin: 24px 0;" />
+
+        <!-- Footer -->
+        <p style="font-size: 12px; color: #94a3b8; line-height: 1.5; text-align: center; margin: 0;">
+          You received this email because you created an account on <a href="${appUrl}" style="color: #6366f1; text-decoration: none;">CrowdSpark</a>.<br />
+          &copy; ${new Date().getFullYear()} CrowdSpark. All rights reserved.
+        </p>
+      </div>
+    </body>
+    </html>
+    `;
+
+    return sendMail({
+        to: toEmail,
+        toName,
+        subject,
+        html
+    });
+}
+
 module.exports = {
     sendMail,
-    sendOtpEmail
+    sendOtpEmail,
+    sendWelcomeEmail
 };

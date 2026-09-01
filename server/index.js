@@ -14,7 +14,7 @@ const QuizSession = require('./models/QuizSession');
 const Otp = require('./models/Otp');
 const User = require('./models/User');
 const ActivityLog = require('./models/ActivityLog');
-const { sendOtpEmail } = require('./services/mailService');
+const { sendOtpEmail, sendWelcomeEmail } = require('./services/mailService');
 const { OAuth2Client } = require('google-auth-library');
 const { logActivity } = require('./middleware/activityLogger');
 const { generateQuizFromAI } = require('./services/aiService');
@@ -108,6 +108,11 @@ app.post('/api/auth/verify-signup-otp', async (req, res) => {
     // Delete used OTP
     await Otp.deleteMany({ email: normalizedEmail });
 
+    // Send Welcome Email asynchronously
+    sendWelcomeEmail(user.email, user.name).catch(err => {
+      console.error('[Welcome Email Error]:', err);
+    });
+
     // Log activity
     await logActivity(user._id, user.email, user.name, 'signup', { method: 'email_otp' }, req);
 
@@ -152,6 +157,11 @@ app.post('/api/auth/signup', async (req, res) => {
       name: name.trim(),
       email: normalizedEmail,
       password: hashedPassword
+    });
+
+    // Send Welcome Email asynchronously
+    sendWelcomeEmail(user.email, user.name).catch(err => {
+      console.error('[Welcome Email Error]:', err);
     });
 
     // Return user without password
@@ -241,6 +251,8 @@ app.post('/api/auth/google', async (req, res) => {
 
     // Find or Create User
     let user = await User.findOne({ email });
+    let isNewUser = false;
+
     if (user) {
       // Check if user is active
       if (!user.isActive) {
@@ -259,6 +271,12 @@ app.post('/api/auth/google', async (req, res) => {
         picture,
         googleId
       });
+      isNewUser = true;
+
+      // Send Welcome Email asynchronously for new Google signups
+      sendWelcomeEmail(user.email, user.name).catch(err => {
+        console.error('[Welcome Email Error]:', err);
+      });
     }
 
     // Update last login
@@ -266,7 +284,7 @@ app.post('/api/auth/google', async (req, res) => {
     await user.save();
 
     // Log activity
-    await logActivity(user._id, user.email, user.name, 'google_login', { email }, req);
+    await logActivity(user._id, user.email, user.name, isNewUser ? 'google_signup' : 'google_login', { email }, req);
 
     // Return user without password
     const userResponse = {
