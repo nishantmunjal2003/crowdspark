@@ -386,8 +386,8 @@ export default function Dashboard() {
             <div className="dashboard-header">
                 <div className="dashboard-header-content">
                     <div className="dashboard-user-info">
-                        <div className="dashboard-logo-icon">
-                            <Sparkles size={24} color="#818cf8" />
+                        <div className="dashboard-logo-icon" onClick={() => navigate('/')} title="CrowdSpark Home">
+                            <Zap size={24} color="white" fill="white" />
                         </div>
                         <div className="dashboard-title-text">
                             <h1>CrowdSpark</h1>
