@@ -281,79 +281,72 @@ export default function Pricing() {
                         <div
                             className="card animate-fade-in"
                             style={{
-                                padding: '2.75rem 2rem',
+                                padding: '2.5rem 2rem',
                                 display: 'flex',
                                 flexDirection: 'column',
                                 justifyContent: 'space-between',
                                 background: 'var(--bg-card)',
                                 border: '2px solid var(--accent-primary)',
                                 borderRadius: '1.5rem',
-                                position: 'relative',
                                 boxShadow: '0 20px 40px -15px rgba(99, 102, 241, 0.25)',
-                                transform: 'scale(1.02)',
                                 transition: 'all 0.3s ease'
                             }}
                             onMouseEnter={e => {
-                                e.currentTarget.style.transform = 'scale(1.04) translateY(-6px)';
+                                e.currentTarget.style.transform = 'translateY(-6px)';
+                                e.currentTarget.style.boxShadow = '0 25px 50px -12px rgba(99, 102, 241, 0.35)';
                             }}
                             onMouseLeave={e => {
-                                e.currentTarget.style.transform = 'scale(1.02) translateY(0)';
+                                e.currentTarget.style.transform = 'translateY(0)';
+                                e.currentTarget.style.boxShadow = '0 20px 40px -15px rgba(99, 102, 241, 0.25)';
                             }}
                         >
-                            {/* Featured Badge - Positioned with proper z-index and spacing */}
-                            <div style={{
-                                position: 'absolute',
-                                top: '-15px',
-                                left: '50%',
-                                transform: 'translateX(-50%)',
-                                background: 'linear-gradient(135deg, #6366f1, #8b5cf6)',
-                                color: 'white',
-                                padding: '0.4rem 1.25rem',
-                                borderRadius: '2rem',
-                                fontSize: '0.75rem',
-                                fontWeight: 800,
-                                letterSpacing: '0.05em',
-                                display: 'flex',
-                                alignItems: 'center',
-                                gap: '0.4rem',
-                                boxShadow: '0 4px 14px rgba(99, 102, 241, 0.45)',
-                                whiteSpace: 'nowrap',
-                                zIndex: 10
-                            }}>
-                                <Crown size={15} /> 1 YEAR 100% FREE
-                            </div>
-
                             <div>
-                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem', gap: '0.5rem', flexWrap: 'wrap' }}>
                                     <h3 style={{ fontSize: '1.4rem', fontWeight: 800, margin: 0, color: 'var(--text-primary)' }}>Pro Educator</h3>
                                     <span style={{
-                                        padding: '0.25rem 0.65rem',
-                                        borderRadius: '1rem',
+                                        padding: '0.35rem 0.85rem',
+                                        borderRadius: '2rem',
                                         fontSize: '0.75rem',
-                                        fontWeight: 700,
-                                        background: 'rgba(16, 185, 129, 0.15)',
-                                        color: 'var(--success)'
+                                        fontWeight: 800,
+                                        background: 'linear-gradient(135deg, #6366f1, #8b5cf6)',
+                                        color: 'white',
+                                        display: 'inline-flex',
+                                        alignItems: 'center',
+                                        gap: '0.35rem',
+                                        boxShadow: '0 4px 10px rgba(99, 102, 241, 0.3)'
                                     }}>
-                                        FREE FOR 1 YEAR
+                                        <Crown size={14} /> 1 YEAR 100% FREE
                                     </span>
                                 </div>
 
-                                <p style={{ fontSize: '0.9rem', color: 'var(--text-secondary)', marginBottom: '1.5rem', lineHeight: 1.5 }}>
+                                <p style={{ fontSize: '0.9rem', color: 'var(--text-secondary)', marginBottom: '1.75rem', lineHeight: 1.5 }}>
                                     All premium features unlocked for schools, instructors, team leads, and live hosts during our launch.
                                 </p>
 
                                 <div style={{ marginBottom: '1.75rem' }}>
-                                    <div style={{ display: 'flex', alignItems: 'baseline', gap: '0.5rem', flexWrap: 'wrap' }}>
+                                    <div style={{ display: 'flex', alignItems: 'baseline', gap: '0.6rem', flexWrap: 'wrap' }}>
                                         <span style={{ fontSize: '3.25rem', fontWeight: 900, color: 'var(--text-primary)', lineHeight: 1 }}>$0</span>
-                                        <span style={{ fontSize: '1.1rem', color: 'var(--success)', fontWeight: 700 }}>
+                                        <span style={{ fontSize: '1.15rem', color: 'var(--success)', fontWeight: 700 }}>
                                             Free for 1 Year
                                         </span>
                                         <span style={{ fontSize: '0.95rem', color: 'var(--text-muted)', textDecoration: 'line-through' }}>
                                             $144/yr
                                         </span>
                                     </div>
-                                    <div style={{ fontSize: '0.8rem', color: 'var(--accent-primary)', marginTop: '0.4rem', fontWeight: '600' }}>
-                                        ✨ Special Launch Access • No credit card required
+                                    <div style={{
+                                        display: 'inline-flex',
+                                        alignItems: 'center',
+                                        gap: '0.45rem',
+                                        fontSize: '0.825rem',
+                                        color: 'var(--accent-primary)',
+                                        background: 'rgba(99, 102, 241, 0.1)',
+                                        border: '1px solid rgba(99, 102, 241, 0.2)',
+                                        padding: '0.4rem 0.85rem',
+                                        borderRadius: '0.6rem',
+                                        marginTop: '0.85rem',
+                                        fontWeight: '600'
+                                    }}>
+                                        <Sparkles size={14} /> Special Launch Access • No credit card required
                                     </div>
                                 </div>
 
