@@ -257,6 +257,8 @@
 
 /* --- Search & Groups Styling --- */
 .dashboard-toolbar {
+    position: relative;
+    z-index: 50;
     display: flex;
     flex-direction: column;
     gap: 1.25rem;

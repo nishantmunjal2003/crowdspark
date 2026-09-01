@@ -953,7 +953,7 @@ export default function Dashboard() {
                                 <div style={{ width: '1px', height: '22px', background: 'var(--border-color)', margin: '0 0.25rem' }} />
 
                                 {/* Groups Dropdown Menu */}
-                                <div style={{ position: 'relative' }} ref={groupDropdownRef}>
+                                <div style={{ position: 'relative', zIndex: 60 }} ref={groupDropdownRef}>
                                     <button
                                         type="button"
                                         onClick={() => setShowGroupDropdown(prev => !prev)}
