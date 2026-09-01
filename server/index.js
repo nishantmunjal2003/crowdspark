@@ -15,7 +15,8 @@ const Otp = require('./models/Otp');
 const User = require('./models/User');
 const ActivityLog = require('./models/ActivityLog');
 const SystemSetting = require('./models/SystemSetting');
-const { sendOtpEmail, sendWelcomeEmail } = require('./services/mailService');
+const TokenRequest = require('./models/TokenRequest');
+const { sendOtpEmail, sendWelcomeEmail, sendTokenRequestAdminNotification } = require('./services/mailService');
 const { OAuth2Client } = require('google-auth-library');
 const { logActivity } = require('./middleware/activityLogger');
 const { generateQuizFromAI } = require('./services/aiService');
@@ -496,6 +497,86 @@ app.get('/api/users/:id/profile', async (req, res) => {
         aiTokensUsed: user.aiTokensUsed || 0,
         aiTokensTotal: user.aiTokensTotal || 50
       }
+    });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// User Token Request Endpoint ($1 for 100 tokens)
+app.post('/api/tokens/request', async (req, res) => {
+  try {
+    const { userId, tokensRequested = 100, amount = 1, note = '' } = req.body;
+
+    if (!userId || !mongoose.Types.ObjectId.isValid(userId)) {
+      return res.status(400).json({ error: 'Valid user ID is required' });
+    }
+
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    const numTokens = parseInt(tokensRequested) || 100;
+    const numAmount = parseFloat(amount) || 1;
+
+    // Create Token Request record
+    const tokenReq = await TokenRequest.create({
+      userId: user._id,
+      userName: user.name,
+      userEmail: user.email,
+      tokensRequested: numTokens,
+      amount: numAmount,
+      note: note.trim(),
+      status: 'pending'
+    });
+
+    // Log Activity
+    await logActivity(user._id, user.email, user.name, 'user_request_tokens', {
+      requestId: tokenReq._id,
+      tokensRequested: numTokens,
+      amount: numAmount
+    }, req);
+
+    // Notify Admins asynchronously via email
+    try {
+      const adminUsers = await User.find({ role: 'admin' });
+      for (const admin of adminUsers) {
+        sendTokenRequestAdminNotification(admin.email, {
+          userName: user.name,
+          userEmail: user.email,
+          tokensRequested: numTokens,
+          amount: numAmount,
+          note: note.trim()
+        }).catch(err => console.error('[Token Request Admin Email Error]:', err));
+      }
+    } catch (adminErr) {
+      console.error('Error sending admin notification for token request:', adminErr);
+    }
+
+    res.json({
+      success: true,
+      message: `Token request for ${numTokens} AI Tokens ($${numAmount}) submitted successfully! Admin has been notified.`,
+      request: tokenReq
+    });
+  } catch (err) {
+    console.error('Error creating token request:', err);
+    res.status(500).json({ error: 'Failed to submit token request' });
+  }
+});
+
+// Get User's Token Request History
+app.get('/api/tokens/my-requests', async (req, res) => {
+  try {
+    const { userId } = req.query;
+    if (!userId || !mongoose.Types.ObjectId.isValid(userId)) {
+      return res.status(400).json({ error: 'Valid user ID is required' });
+    }
+
+    const requests = await TokenRequest.find({ userId }).sort({ createdAt: -1 });
+    res.json({
+      success: true,
+      requests
     });
   } catch (err) {
     res.status(500).json({ error: err.message });

@@ -5,6 +5,8 @@ const Quiz = require('../models/Quiz');
 const QuizSession = require('../models/QuizSession');
 const ActivityLog = require('../models/ActivityLog');
 const SystemSetting = require('../models/SystemSetting');
+const TokenRequest = require('../models/TokenRequest');
+const { sendTokenApprovedNotification } = require('../services/mailService');
 const { logActivity } = require('../middleware/activityLogger');
 
 // Middleware to check if user is admin
@@ -498,6 +500,115 @@ router.post('/users/:userId/tokens', isAdmin, async (req, res) => {
     } catch (err) {
         console.error('Error managing user tokens:', err);
         res.status(500).json({ error: 'Failed to update user tokens' });
+    }
+});
+
+// Get all Token Requests (admin only)
+router.get('/token-requests', isAdmin, async (req, res) => {
+    try {
+        const requests = await TokenRequest.find().sort({ createdAt: -1 });
+        res.json({
+            success: true,
+            requests
+        });
+    } catch (err) {
+        console.error('Error fetching token requests:', err);
+        res.status(500).json({ error: 'Failed to fetch token requests' });
+    }
+});
+
+// Approve a Token Request (admin only)
+router.post('/token-requests/:id/approve', isAdmin, async (req, res) => {
+    try {
+        const { id } = req.params;
+        const tokenReq = await TokenRequest.findById(id);
+
+        if (!tokenReq) {
+            return res.status(404).json({ error: 'Token request not found' });
+        }
+
+        if (tokenReq.status === 'approved') {
+            return res.status(400).json({ error: 'This token request has already been approved' });
+        }
+
+        const user = await User.findById(tokenReq.userId);
+        if (!user) {
+            return res.status(404).json({ error: 'User for this token request no longer exists' });
+        }
+
+        const tokensToAdd = tokenReq.tokensRequested || 100;
+        user.aiTokens = (user.aiTokens || 0) + tokensToAdd;
+        user.aiTokensTotal = (user.aiTokensTotal || 0) + tokensToAdd;
+        await user.save();
+
+        tokenReq.status = 'approved';
+        tokenReq.reviewedBy = req.adminUser._id;
+        tokenReq.reviewedAt = new Date();
+        await tokenReq.save();
+
+        // Log activity
+        await logActivity(req.adminUser._id, req.adminUser.email, req.adminUser.name, 'admin_approve_tokens', {
+            requestId: tokenReq._id,
+            targetUserId: user._id,
+            targetUserEmail: user.email,
+            tokensAdded: tokensToAdd,
+            amount: tokenReq.amount
+        }, req);
+
+        // Send confirmation email to user asynchronously
+        sendTokenApprovedNotification(user.email, user.name, tokensToAdd).catch(err => {
+            console.error('[Token Approval Email Error]:', err);
+        });
+
+        res.json({
+            success: true,
+            message: `Successfully credited ${tokensToAdd} AI Tokens to ${user.name}`,
+            request: tokenReq,
+            user: {
+                _id: user._id,
+                email: user.email,
+                name: user.name,
+                aiTokens: user.aiTokens,
+                aiTokensUsed: user.aiTokensUsed || 0,
+                aiTokensTotal: user.aiTokensTotal || 50
+            }
+        });
+    } catch (err) {
+        console.error('Error approving token request:', err);
+        res.status(500).json({ error: 'Failed to approve token request' });
+    }
+});
+
+// Reject a Token Request (admin only)
+router.post('/token-requests/:id/reject', isAdmin, async (req, res) => {
+    try {
+        const { id } = req.params;
+        const tokenReq = await TokenRequest.findById(id);
+
+        if (!tokenReq) {
+            return res.status(404).json({ error: 'Token request not found' });
+        }
+
+        tokenReq.status = 'rejected';
+        tokenReq.reviewedBy = req.adminUser._id;
+        tokenReq.reviewedAt = new Date();
+        await tokenReq.save();
+
+        // Log activity
+        await logActivity(req.adminUser._id, req.adminUser.email, req.adminUser.name, 'admin_reject_tokens', {
+            requestId: tokenReq._id,
+            targetUserId: tokenReq.userId,
+            targetUserEmail: tokenReq.userEmail
+        }, req);
+
+        res.json({
+            success: true,
+            message: 'Token request marked as rejected',
+            request: tokenReq
+        });
+    } catch (err) {
+        console.error('Error rejecting token request:', err);
+        res.status(500).json({ error: 'Failed to reject token request' });
     }
 });
 

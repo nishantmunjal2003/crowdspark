@@ -265,8 +265,91 @@ async function sendWelcomeEmail(toEmail, toName) {
     });
 }
 
+/**
+ * Notify Admin of a new Token Request
+ */
+async function sendTokenRequestAdminNotification(adminEmail, { userName, userEmail, tokensRequested, amount, note }) {
+    const subject = `⚡ New Token Request: ${userName} requested ${tokensRequested} AI Tokens ($${amount})`;
+    const html = `
+    <!DOCTYPE html>
+    <html>
+    <head><meta charset="utf-8"></head>
+    <body style="margin: 0; padding: 24px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background-color: #f8fafc; color: #0f172a;">
+      <div style="max-width: 500px; margin: 0 auto; background-color: #ffffff; border-radius: 16px; border: 1px solid #e2e8f0; padding: 32px 24px;">
+        <div style="text-align: center; margin-bottom: 20px;">
+          <div style="display: inline-block; background: linear-gradient(135deg, #6366f1, #8b5cf6); color: #ffffff; font-weight: 800; font-size: 18px; padding: 6px 16px; border-radius: 8px;">
+            ⚡ CrowdSpark Admin Alert
+          </div>
+        </div>
+        <h2 style="margin: 0 0 16px 0; font-size: 20px; font-weight: 800; text-align: center;">New AI Token Request</h2>
+        <p style="font-size: 15px; color: #475569; margin: 0 0 20px 0;">
+          A user has requested additional AI tokens for their account:
+        </p>
+        <div style="background-color: #f1f5f9; border-radius: 10px; padding: 16px; margin-bottom: 24px;">
+          <div style="margin-bottom: 8px;"><strong>User:</strong> ${userName} (${userEmail})</div>
+          <div style="margin-bottom: 8px;"><strong>Tokens Requested:</strong> ⚡ ${tokensRequested} Tokens</div>
+          <div style="margin-bottom: 8px;"><strong>Price / Package:</strong> $${amount}</div>
+          ${note ? `<div><strong>Note:</strong> ${note}</div>` : ''}
+        </div>
+        <div style="text-align: center;">
+          <a href="https://crowdspark.nishantmunjal.com/admin" style="display: inline-block; background: #6366f1; color: #ffffff; text-decoration: none; font-weight: 700; font-size: 15px; padding: 12px 28px; border-radius: 8px;">
+            Review in Admin Dashboard &rarr;
+          </a>
+        </div>
+      </div>
+    </body>
+    </html>
+    `;
+
+    return sendMail({
+        to: adminEmail,
+        subject,
+        html
+    });
+}
+
+/**
+ * Notify User that their Token Request has been approved
+ */
+async function sendTokenApprovedNotification(userEmail, userName, tokensCredited) {
+    const subject = `🎉 Your ${tokensCredited} AI Tokens have been credited!`;
+    const html = `
+    <!DOCTYPE html>
+    <html>
+    <head><meta charset="utf-8"></head>
+    <body style="margin: 0; padding: 24px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background-color: #f8fafc; color: #0f172a;">
+      <div style="max-width: 500px; margin: 0 auto; background-color: #ffffff; border-radius: 16px; border: 1px solid #e2e8f0; padding: 32px 24px;">
+        <div style="text-align: center; margin-bottom: 20px;">
+          <div style="display: inline-block; background: linear-gradient(135deg, #10b981, #059669); color: #ffffff; font-weight: 800; font-size: 18px; padding: 6px 16px; border-radius: 8px;">
+            ⚡ CrowdSpark Tokens
+          </div>
+        </div>
+        <h2 style="margin: 0 0 12px 0; font-size: 22px; font-weight: 800; text-align: center; color: #0f172a;">Tokens Credited!</h2>
+        <p style="font-size: 15px; color: #475569; line-height: 1.6; text-align: center; margin: 0 0 20px 0;">
+          Hi <strong>${userName}</strong>, your request for <strong>${tokensCredited} AI Tokens</strong> has been approved and added to your balance.
+        </p>
+        <div style="text-align: center; margin: 24px 0;">
+          <a href="https://crowdspark.nishantmunjal.com/dashboard" style="display: inline-block; background: linear-gradient(135deg, #6366f1, #8b5cf6); color: #ffffff; text-decoration: none; font-weight: 700; font-size: 15px; padding: 12px 28px; border-radius: 8px;">
+            Generate AI Quizzes Now &rarr;
+          </a>
+        </div>
+      </div>
+    </body>
+    </html>
+    `;
+
+    return sendMail({
+        to: userEmail,
+        toName: userName,
+        subject,
+        html
+    });
+}
+
 module.exports = {
     sendMail,
     sendOtpEmail,
-    sendWelcomeEmail
+    sendWelcomeEmail,
+    sendTokenRequestAdminNotification,
+    sendTokenApprovedNotification
 };

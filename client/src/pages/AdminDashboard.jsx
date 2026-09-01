@@ -50,6 +50,8 @@ export default function AdminDashboard() {
     const [tokenAmountInput, setTokenAmountInput] = useState(50);
     const [tokenActionType, setTokenActionType] = useState('add'); // 'add' or 'set'
     const [isGrantingTokens, setIsGrantingTokens] = useState(false);
+    const [tokenRequests, setTokenRequests] = useState([]);
+    const [isProcessingTokenReq, setIsProcessingTokenReq] = useState(null);
 
     // Filter & Sort States for Users
     const [userSearch, setUserSearch] = useState('');
@@ -115,12 +117,13 @@ export default function AdminDashboard() {
 
     const loadAdminData = async (userId) => {
         try {
-            const [statsRes, settingsRes, usersRes, quizzesRes, logsRes] = await Promise.allSettled([
+            const [statsRes, settingsRes, usersRes, quizzesRes, logsRes, tokenReqsRes] = await Promise.allSettled([
                 fetch(`/api/admin/stats?userId=${userId}`).then(r => r.json()),
                 fetch(`/api/admin/settings?userId=${userId}`).then(r => r.json()),
                 fetch(`/api/admin/users?userId=${userId}`).then(r => r.json()),
                 fetch(`/api/admin/quizzes?userId=${userId}`).then(r => r.json()),
-                fetch(`/api/admin/logs?userId=${userId}&limit=250`).then(r => r.json())
+                fetch(`/api/admin/logs?userId=${userId}&limit=250`).then(r => r.json()),
+                fetch(`/api/admin/token-requests?userId=${userId}`).then(r => r.json())
             ]);
 
             let fetchedStats = null;
@@ -150,6 +153,10 @@ export default function AdminDashboard() {
                 setLogs(logsRes.value.logs || []);
             } else if (statsRes.status === 'fulfilled' && statsRes.value?.recentActivities) {
                 setLogs(statsRes.value.recentActivities || []);
+            }
+
+            if (tokenReqsRes.status === 'fulfilled' && tokenReqsRes.value?.success) {
+                setTokenRequests(tokenReqsRes.value.requests || []);
             }
 
             // Fallback stats if stats endpoint had an issue
@@ -311,6 +318,60 @@ export default function AdminDashboard() {
         }
     };
 
+    const handleApproveTokenRequest = async (requestId) => {
+        setIsProcessingTokenReq(requestId);
+        try {
+            const res = await fetch(`/api/admin/token-requests/${requestId}/approve?userId=${user._id}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ userId: user._id })
+            });
+            const data = await res.json();
+            if (data.success) {
+                alert(`✓ Request approved! Credited tokens to ${data.user?.name || 'user'}.`);
+                setTokenRequests(prev => prev.map(r => r._id === requestId ? { ...r, status: 'approved', reviewedAt: new Date() } : r));
+                if (data.user) {
+                    setUsers(prev => prev.map(u => u._id === data.user._id ? {
+                        ...u,
+                        aiTokens: data.user.aiTokens,
+                        aiTokensUsed: data.user.aiTokensUsed,
+                        aiTokensTotal: data.user.aiTokensTotal
+                    } : u));
+                }
+            } else {
+                alert(data.error || 'Failed to approve token request');
+            }
+        } catch (err) {
+            console.error('Error approving token request:', err);
+            alert('Network error approving token request');
+        } finally {
+            setIsProcessingTokenReq(null);
+        }
+    };
+
+    const handleRejectTokenRequest = async (requestId) => {
+        if (!confirm('Are you sure you want to reject this token request?')) return;
+        setIsProcessingTokenReq(requestId);
+        try {
+            const res = await fetch(`/api/admin/token-requests/${requestId}/reject?userId=${user._id}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ userId: user._id })
+            });
+            const data = await res.json();
+            if (data.success) {
+                setTokenRequests(prev => prev.map(r => r._id === requestId ? { ...r, status: 'rejected', reviewedAt: new Date() } : r));
+            } else {
+                alert(data.error || 'Failed to reject token request');
+            }
+        } catch (err) {
+            console.error('Error rejecting token request:', err);
+            alert('Network error rejecting token request');
+        } finally {
+            setIsProcessingTokenReq(null);
+        }
+    };
+
     // Filtered & Sorted Users
     const filteredUsers = useMemo(() => {
         return users.filter(u => {
@@ -441,6 +502,10 @@ export default function AdminDashboard() {
     const hasLogFilters = logSearch || logActionFilter !== 'all' || logTimeFilter !== 'all' || logSort !== 'newest';
     const hasTokenFilters = tokenUserSearch || tokenRoleFilter !== 'all' || tokenBalanceFilter !== 'all' || tokenSort !== 'tokens_desc';
 
+    const pendingTokenRequests = useMemo(() => {
+        return tokenRequests.filter(r => r.status === 'pending');
+    }, [tokenRequests]);
+
     return (
         <div className="admin-page-wrapper">
             <div className="admin-container">
@@ -535,7 +600,7 @@ export default function AdminDashboard() {
                         { id: 'users', label: `Users (${users.length})`, icon: Users },
                         { id: 'quizzes', label: `Quizzes (${quizzes.length})`, icon: BookOpen },
                         { id: 'logs', label: `Logs (${logs.length})`, icon: Activity },
-                        { id: 'tokens', label: 'AI Tokens', icon: Zap }
+                        { id: 'tokens', label: pendingTokenRequests.length > 0 ? `AI Tokens (${pendingTokenRequests.length} New)` : 'AI Tokens', icon: Zap }
                     ].map(tab => {
                         const Icon = tab.icon;
                         const isActive = activeTab === tab.id;
@@ -1362,6 +1427,169 @@ export default function AdminDashboard() {
                                     border: '1px solid rgba(16, 185, 129, 0.25)'
                                 }}>
                                     {settingsSaveMsg}
+                                </div>
+                            )}
+                        </div>
+
+                        {/* AI Token Upgrade Requests Card */}
+                        <div className="card" style={{ padding: '1.75rem', border: pendingTokenRequests.length > 0 ? '1.5px solid #f59e0b' : '1px solid var(--border-color)' }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem', flexWrap: 'wrap', gap: '1rem' }}>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
+                                    <div style={{ padding: '0.5rem', background: pendingTokenRequests.length > 0 ? 'rgba(245, 158, 11, 0.15)' : 'rgba(99, 102, 241, 0.12)', borderRadius: '0.6rem' }}>
+                                        <Sparkles size={20} color={pendingTokenRequests.length > 0 ? '#f59e0b' : 'var(--accent-primary)'} />
+                                    </div>
+                                    <div>
+                                        <h3 style={{ fontSize: '1.2rem', fontWeight: 800, margin: 0, color: 'var(--text-primary)' }}>
+                                            AI Token Upgrade Requests
+                                        </h3>
+                                        <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', margin: '0.15rem 0 0 0' }}>
+                                            User requests to purchase AI Tokens ($1 for 100 Tokens)
+                                        </p>
+                                    </div>
+                                </div>
+                                <div>
+                                    {pendingTokenRequests.length > 0 ? (
+                                        <span style={{
+                                            padding: '0.35rem 0.85rem',
+                                            borderRadius: '1rem',
+                                            fontSize: '0.8rem',
+                                            fontWeight: 800,
+                                            background: 'rgba(245, 158, 11, 0.15)',
+                                            color: '#f59e0b',
+                                            border: '1px solid rgba(245, 158, 11, 0.35)',
+                                            display: 'inline-flex',
+                                            alignItems: 'center',
+                                            gap: '0.4rem'
+                                        }}>
+                                            <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#f59e0b', display: 'inline-block' }} />
+                                            {pendingTokenRequests.length} Pending Approval
+                                        </span>
+                                    ) : (
+                                        <span style={{
+                                            padding: '0.35rem 0.75rem',
+                                            borderRadius: '1rem',
+                                            fontSize: '0.775rem',
+                                            fontWeight: 600,
+                                            background: 'var(--bg-secondary)',
+                                            color: 'var(--text-muted)'
+                                        }}>
+                                            All Caught Up
+                                        </span>
+                                    )}
+                                </div>
+                            </div>
+
+                            {tokenRequests.length === 0 ? (
+                                <div style={{ padding: '2rem', textAlign: 'center', background: 'var(--bg-secondary)', borderRadius: '0.75rem' }}>
+                                    <Zap size={32} style={{ margin: '0 auto 0.75rem auto', opacity: 0.3, color: 'var(--accent-primary)' }} />
+                                    <p style={{ fontSize: '0.95rem', fontWeight: 700, margin: '0 0 0.25rem 0', color: 'var(--text-primary)' }}>No Token Requests Yet</p>
+                                    <p style={{ fontSize: '0.825rem', color: 'var(--text-secondary)', margin: 0 }}>When users click 'Request Tokens' in their dashboard, their requests will appear here for one-click approval.</p>
+                                </div>
+                            ) : (
+                                <div>
+                                    <div className="admin-table-hint">👈 Swipe table horizontally to view full details 👉</div>
+                                    <div className="admin-table-container">
+                                        <table className="admin-table">
+                                            <thead>
+                                                <tr style={{ borderBottom: '1.5px solid var(--border-color)', color: 'var(--text-secondary)', fontSize: '0.825rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                                                    <th style={{ padding: '0.85rem 1rem' }}>User</th>
+                                                    <th style={{ padding: '0.85rem 1rem' }}>Tokens Requested</th>
+                                                    <th style={{ padding: '0.85rem 1rem' }}>Amount</th>
+                                                    <th style={{ padding: '0.85rem 1rem' }}>Date & Note</th>
+                                                    <th style={{ padding: '0.85rem 1rem' }}>Status</th>
+                                                    <th style={{ padding: '0.85rem 1rem', textAlign: 'right' }}>Actions</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {tokenRequests.map(req => {
+                                                    const isPending = req.status === 'pending';
+                                                    const isApproved = req.status === 'approved';
+                                                    const isProcessing = isProcessingTokenReq === req._id;
+                                                    return (
+                                                        <tr key={req._id} style={{ borderBottom: '1px solid var(--border-color)', background: isPending ? 'rgba(245, 158, 11, 0.03)' : 'transparent' }}>
+                                                            <td style={{ padding: '0.85rem 1rem' }}>
+                                                                <div style={{ fontWeight: 700, color: 'var(--text-primary)' }}>{req.userName}</div>
+                                                                <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{req.userEmail}</div>
+                                                            </td>
+                                                            <td style={{ padding: '0.85rem 1rem' }}>
+                                                                <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.3rem', fontWeight: 800, color: 'var(--accent-primary)', fontSize: '0.95rem' }}>
+                                                                    <Zap size={14} fill="currentColor" />
+                                                                    {req.tokensRequested || 100} Tokens
+                                                                </span>
+                                                            </td>
+                                                            <td style={{ padding: '0.85rem 1rem', fontWeight: 700, color: 'var(--text-primary)' }}>
+                                                                ${req.amount || 1}
+                                                            </td>
+                                                            <td style={{ padding: '0.85rem 1rem' }}>
+                                                                <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
+                                                                    {new Date(req.createdAt).toLocaleDateString()} {new Date(req.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                                                </div>
+                                                                {req.note && (
+                                                                    <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontStyle: 'italic', marginTop: '0.2rem' }}>
+                                                                        "{req.note}"
+                                                                    </div>
+                                                                )}
+                                                            </td>
+                                                            <td style={{ padding: '0.85rem 1rem' }}>
+                                                                {isPending && (
+                                                                    <span style={{ padding: '0.25rem 0.6rem', borderRadius: '0.5rem', fontSize: '0.75rem', fontWeight: 700, background: 'rgba(245, 158, 11, 0.15)', color: '#f59e0b' }}>
+                                                                        Pending
+                                                                    </span>
+                                                                )}
+                                                                {isApproved && (
+                                                                    <span style={{ padding: '0.25rem 0.6rem', borderRadius: '0.5rem', fontSize: '0.75rem', fontWeight: 700, background: 'rgba(16, 185, 129, 0.15)', color: 'var(--success)' }}>
+                                                                        Approved ✓
+                                                                    </span>
+                                                                )}
+                                                                {req.status === 'rejected' && (
+                                                                    <span style={{ padding: '0.25rem 0.6rem', borderRadius: '0.5rem', fontSize: '0.75rem', fontWeight: 700, background: 'var(--bg-secondary)', color: 'var(--text-muted)' }}>
+                                                                        Rejected
+                                                                    </span>
+                                                                )}
+                                                            </td>
+                                                            <td style={{ padding: '0.85rem 1rem', textAlign: 'right' }}>
+                                                                {isPending ? (
+                                                                    <div style={{ display: 'inline-flex', gap: '0.5rem' }}>
+                                                                        <button
+                                                                            onClick={() => handleApproveTokenRequest(req._id)}
+                                                                            disabled={isProcessing}
+                                                                            className="btn btn-primary"
+                                                                            style={{
+                                                                                padding: '0.4rem 0.8rem',
+                                                                                fontSize: '0.8rem',
+                                                                                fontWeight: 700,
+                                                                                background: 'linear-gradient(135deg, #10b981, #059669)',
+                                                                                borderColor: '#10b981',
+                                                                                display: 'inline-flex',
+                                                                                alignItems: 'center',
+                                                                                gap: '0.35rem'
+                                                                            }}
+                                                                        >
+                                                                            <Zap size={14} fill="currentColor" />
+                                                                            {isProcessing ? 'Processing...' : `Approve & Credit (+${req.tokensRequested || 100})`}
+                                                                        </button>
+                                                                        <button
+                                                                            onClick={() => handleRejectTokenRequest(req._id)}
+                                                                            disabled={isProcessing}
+                                                                            className="btn btn-secondary"
+                                                                            style={{ padding: '0.4rem 0.65rem', fontSize: '0.8rem' }}
+                                                                            title="Reject Request"
+                                                                        >
+                                                                            <X size={14} />
+                                                                        </button>
+                                                                    </div>
+                                                                ) : (
+                                                                    <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                                                                        {isApproved ? `Credited on ${new Date(req.reviewedAt || req.updatedAt).toLocaleDateString()}` : 'Closed'}
+                                                                    </span>
+                                                                )}
+                                                            </td>
+                                                        </tr>
+                                                    );
+                                                })}
+                                            </tbody>
+                                        </table>
+                                    </div>
                                 </div>
                             )}
                         </div>

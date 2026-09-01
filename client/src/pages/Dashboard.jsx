@@ -37,6 +37,10 @@ export default function Dashboard() {
         aiTokensTotal: 50
     });
     const [showBuyTokensModal, setShowBuyTokensModal] = useState(false);
+    const [selectedTokenPack, setSelectedTokenPack] = useState({ tokens: 100, price: 1 });
+    const [isSubmittingTokenReq, setIsSubmittingTokenReq] = useState(false);
+    const [tokenReqSuccessMsg, setTokenReqSuccessMsg] = useState('');
+    const [tokenReqNote, setTokenReqNote] = useState('');
     const [isDarkMode, setIsDarkMode] = useState(() => {
         const saved = localStorage.getItem('host_theme');
         return saved ? saved === 'dark' : true;
@@ -155,6 +159,36 @@ export default function Dashboard() {
                 setQuizzes([newQuiz, ...quizzes]);
             })
             .catch(err => console.error('Error duplicating quiz:', err));
+    };
+
+    const handleRequestTokens = async () => {
+        if (!user?._id) return;
+        setIsSubmittingTokenReq(true);
+        setTokenReqSuccessMsg('');
+        try {
+            const res = await fetch('/api/tokens/request', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    userId: user._id,
+                    tokensRequested: selectedTokenPack.tokens,
+                    amount: selectedTokenPack.price,
+                    note: tokenReqNote
+                })
+            });
+            const data = await res.json();
+            if (data.success) {
+                setTokenReqSuccessMsg(`🎉 Your request for ${selectedTokenPack.tokens} AI Tokens ($${selectedTokenPack.price}) has been sent! Our administrator has received the request and will raise your token balance shortly.`);
+                setTokenReqNote('');
+            } else {
+                alert(data.error || 'Failed to submit token request');
+            }
+        } catch (err) {
+            console.error('Error submitting token request:', err);
+            alert('Network error submitting request. Please try again.');
+        } finally {
+            setIsSubmittingTokenReq(false);
+        }
     };
 
     if (!user) return null;
@@ -765,125 +799,184 @@ export default function Dashboard() {
                             </div>
                         </div>
 
-                        {/* Token Package Options */}
-                        <div style={{ marginBottom: '1.75rem' }}>
-                            <h4 style={{ fontSize: '1rem', fontWeight: 800, color: 'var(--text-primary)', marginBottom: '1rem' }}>
-                                Choose a Token Package:
-                            </h4>
-
-                            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '1rem' }}>
-                                {/* Pack 1 */}
+                        {/* Success Banner */}
+                        {tokenReqSuccessMsg ? (
+                            <div style={{
+                                background: 'rgba(16, 185, 129, 0.1)',
+                                border: '1.5px solid rgba(16, 185, 129, 0.3)',
+                                borderRadius: '1rem',
+                                padding: '1.75rem',
+                                textAlign: 'center',
+                                marginBottom: '1.5rem'
+                            }}>
                                 <div style={{
-                                    background: 'var(--bg-secondary)',
-                                    border: '1px solid var(--border-color)',
-                                    borderRadius: '1rem',
-                                    padding: '1.25rem',
-                                    textAlign: 'center',
+                                    width: '54px',
+                                    height: '54px',
+                                    borderRadius: '50%',
+                                    background: 'rgba(16, 185, 129, 0.2)',
+                                    color: 'var(--success)',
                                     display: 'flex',
-                                    flexDirection: 'column',
-                                    justifyContent: 'space-between'
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    margin: '0 auto 1rem auto'
                                 }}>
-                                    <div>
-                                        <div style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--text-secondary)', textTransform: 'uppercase' }}>Starter</div>
-                                        <div style={{ fontSize: '1.75rem', fontWeight: 900, color: 'var(--text-primary)', margin: '0.4rem 0' }}>50 Tokens</div>
-                                        <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', margin: '0 0 1rem 0' }}>
-                                            50 AI Questions<br />($0.10 / question)
-                                        </p>
-                                    </div>
-                                    <div style={{ fontSize: '1.35rem', fontWeight: 800, color: 'var(--accent-primary)', marginBottom: '1rem' }}>$5</div>
-                                    <button
-                                        onClick={() => {
-                                            alert('Thank you! Token top-up request initiated. In production, this links to your Stripe/payment checkout or grants immediate credits.');
-                                        }}
-                                        className="btn btn-secondary"
-                                        style={{ width: '100%', fontSize: '0.85rem', fontWeight: 700, padding: '0.6rem' }}
-                                    >
-                                        Select $5 Pack
-                                    </button>
+                                    <Sparkles size={28} />
                                 </div>
-
-                                {/* Pack 2 (Popular) */}
-                                <div style={{
-                                    background: 'var(--bg-secondary)',
-                                    border: '2px solid var(--accent-primary)',
-                                    borderRadius: '1rem',
-                                    padding: '1.25rem',
-                                    textAlign: 'center',
-                                    position: 'relative',
-                                    display: 'flex',
-                                    flexDirection: 'column',
-                                    justifyContent: 'space-between',
-                                    boxShadow: '0 8px 20px rgba(99, 102, 241, 0.2)'
-                                }}>
-                                    <div style={{
-                                        position: 'absolute',
-                                        top: '-12px',
-                                        left: '50%',
-                                        transform: 'translateX(-50%)',
-                                        background: 'linear-gradient(135deg, #6366f1, #8b5cf6)',
-                                        color: 'white',
-                                        fontSize: '0.675rem',
-                                        fontWeight: 800,
-                                        padding: '0.2rem 0.65rem',
-                                        borderRadius: '1rem',
-                                        letterSpacing: '0.05em'
-                                    }}>
-                                        MOST POPULAR
-                                    </div>
-                                    <div>
-                                        <div style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--accent-primary)', textTransform: 'uppercase', marginTop: '0.25rem' }}>Pro Educator</div>
-                                        <div style={{ fontSize: '1.75rem', fontWeight: 900, color: 'var(--text-primary)', margin: '0.4rem 0' }}>250 Tokens</div>
-                                        <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', margin: '0 0 1rem 0' }}>
-                                            250 AI Questions<br /><strong>Save 25%</strong> ($0.076/q)
-                                        </p>
-                                    </div>
-                                    <div style={{ fontSize: '1.35rem', fontWeight: 800, color: 'var(--accent-primary)', marginBottom: '1rem' }}>$19</div>
+                                <h4 style={{ fontSize: '1.2rem', fontWeight: 800, color: 'var(--text-primary)', margin: '0 0 0.5rem 0' }}>
+                                    Token Request Received!
+                                </h4>
+                                <p style={{ fontSize: '0.9rem', color: 'var(--text-secondary)', lineHeight: 1.6, margin: '0 0 1.25rem 0' }}>
+                                    {tokenReqSuccessMsg}
+                                </p>
+                                <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'center' }}>
                                     <button
-                                        onClick={() => {
-                                            alert('Thank you! Token top-up request initiated. In production, this links to your Stripe/payment checkout or grants immediate credits.');
-                                        }}
+                                        onClick={() => setShowBuyTokensModal(false)}
                                         className="btn btn-primary"
-                                        style={{ width: '100%', fontSize: '0.85rem', fontWeight: 700, padding: '0.6rem' }}
+                                        style={{ padding: '0.65rem 1.5rem', fontWeight: 700 }}
                                     >
-                                        Select $19 Pack
+                                        Back to Dashboard
                                     </button>
-                                </div>
-
-                                {/* Pack 3 */}
-                                <div style={{
-                                    background: 'var(--bg-secondary)',
-                                    border: '1px solid var(--border-color)',
-                                    borderRadius: '1rem',
-                                    padding: '1.25rem',
-                                    textAlign: 'center',
-                                    display: 'flex',
-                                    flexDirection: 'column',
-                                    justifyContent: 'space-between'
-                                }}>
-                                    <div>
-                                        <div style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--text-secondary)', textTransform: 'uppercase' }}>Power Host</div>
-                                        <div style={{ fontSize: '1.75rem', fontWeight: 900, color: 'var(--text-primary)', margin: '0.4rem 0' }}>1,000 Tokens</div>
-                                        <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', margin: '0 0 1rem 0' }}>
-                                            1,000 AI Questions<br /><strong>Save 50%</strong> ($0.049/q)
-                                        </p>
-                                    </div>
-                                    <div style={{ fontSize: '1.35rem', fontWeight: 800, color: 'var(--accent-primary)', marginBottom: '1rem' }}>$49</div>
                                     <button
-                                        onClick={() => {
-                                            alert('Thank you! Token top-up request initiated. In production, this links to your Stripe/payment checkout or grants immediate credits.');
-                                        }}
+                                        onClick={() => setTokenReqSuccessMsg('')}
                                         className="btn btn-secondary"
-                                        style={{ width: '100%', fontSize: '0.85rem', fontWeight: 700, padding: '0.6rem' }}
+                                        style={{ padding: '0.65rem 1.25rem' }}
                                     >
-                                        Select $49 Pack
+                                        Submit Another Request
                                     </button>
                                 </div>
                             </div>
-                        </div>
+                        ) : (
+                            <>
+                                {/* Pricing Value Proposition Banner */}
+                                <div style={{
+                                    background: 'linear-gradient(135deg, rgba(99, 102, 241, 0.1), rgba(168, 85, 247, 0.08))',
+                                    border: '1.5px solid rgba(99, 102, 241, 0.35)',
+                                    borderRadius: '1rem',
+                                    padding: '1.25rem 1.5rem',
+                                    marginBottom: '1.5rem',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'space-between',
+                                    flexWrap: 'wrap',
+                                    gap: '1rem'
+                                }}>
+                                    <div>
+                                        <div style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--accent-primary)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                                            ⚡ Special Rate
+                                        </div>
+                                        <div style={{ fontSize: '1.5rem', fontWeight: 900, color: 'var(--text-primary)', marginTop: '0.15rem' }}>
+                                            $1.00 for 100 AI Tokens
+                                        </div>
+                                        <div style={{ fontSize: '0.825rem', color: 'var(--text-secondary)', marginTop: '0.2rem' }}>
+                                            Only $0.01 per AI-generated question • No expiry
+                                        </div>
+                                    </div>
+                                    <div style={{
+                                        padding: '0.5rem 1rem',
+                                        background: 'var(--accent-primary)',
+                                        color: 'white',
+                                        fontWeight: 800,
+                                        fontSize: '0.9rem',
+                                        borderRadius: '0.75rem',
+                                        boxShadow: '0 4px 12px rgba(99, 102, 241, 0.3)'
+                                    }}>
+                                        100 Qs = $1
+                                    </div>
+                                </div>
+
+                                {/* Token Quantity Selector */}
+                                <div style={{ marginBottom: '1.5rem' }}>
+                                    <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 700, color: 'var(--text-primary)', marginBottom: '0.75rem' }}>
+                                        Select Amount to Request:
+                                    </label>
+                                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(110px, 1fr))', gap: '0.75rem' }}>
+                                        {[
+                                            { tokens: 100, price: 1, label: '100 Tokens', tag: 'Standard' },
+                                            { tokens: 200, price: 2, label: '200 Tokens', tag: 'Popular' },
+                                            { tokens: 500, price: 5, label: '500 Tokens', tag: 'Educator' },
+                                            { tokens: 1000, price: 10, label: '1,000 Tokens', tag: 'Pro Host' }
+                                        ].map(pkg => {
+                                            const isSelected = selectedTokenPack.tokens === pkg.tokens;
+                                            return (
+                                                <div
+                                                    key={pkg.tokens}
+                                                    onClick={() => setSelectedTokenPack({ tokens: pkg.tokens, price: pkg.price })}
+                                                    style={{
+                                                        padding: '0.85rem 0.65rem',
+                                                        borderRadius: '0.85rem',
+                                                        background: isSelected ? 'rgba(99, 102, 241, 0.12)' : 'var(--bg-secondary)',
+                                                        border: `2px solid ${isSelected ? 'var(--accent-primary)' : 'var(--border-color)'}`,
+                                                        textAlign: 'center',
+                                                        cursor: 'pointer',
+                                                        transition: 'all 0.15s ease',
+                                                        boxShadow: isSelected ? '0 4px 12px rgba(99, 102, 241, 0.2)' : 'none'
+                                                    }}
+                                                >
+                                                    <div style={{ fontSize: '0.7rem', fontWeight: 700, color: isSelected ? 'var(--accent-primary)' : 'var(--text-muted)', textTransform: 'uppercase' }}>
+                                                        {pkg.tag}
+                                                    </div>
+                                                    <div style={{ fontSize: '1.25rem', fontWeight: 900, color: 'var(--text-primary)', margin: '0.2rem 0' }}>
+                                                        {pkg.tokens}
+                                                    </div>
+                                                    <div style={{ fontSize: '0.95rem', fontWeight: 800, color: 'var(--accent-primary)' }}>
+                                                        ${pkg.price}
+                                                    </div>
+                                                </div>
+                                            );
+                                        })}
+                                    </div>
+                                </div>
+
+                                {/* Optional Note Input */}
+                                <div style={{ marginBottom: '1.5rem' }}>
+                                    <label style={{ display: 'block', fontSize: '0.825rem', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '0.4rem' }}>
+                                        Optional Note / Message for Admin:
+                                    </label>
+                                    <input
+                                        type="text"
+                                        placeholder="e.g., Need tokens for upcoming exam session..."
+                                        value={tokenReqNote}
+                                        onChange={e => setTokenReqNote(e.target.value)}
+                                        className="admin-filter-control"
+                                        style={{ width: '100%', padding: '0.65rem 0.85rem', fontSize: '0.875rem' }}
+                                    />
+                                </div>
+
+                                {/* Submit Request Button */}
+                                <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'flex-end', alignItems: 'center' }}>
+                                    <button
+                                        type="button"
+                                        onClick={() => setShowBuyTokensModal(false)}
+                                        className="btn btn-secondary"
+                                        style={{ padding: '0.65rem 1.25rem' }}
+                                    >
+                                        Cancel
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={handleRequestTokens}
+                                        disabled={isSubmittingTokenReq}
+                                        className="btn btn-primary"
+                                        style={{
+                                            padding: '0.7rem 1.75rem',
+                                            fontWeight: 800,
+                                            fontSize: '0.95rem',
+                                            display: 'inline-flex',
+                                            alignItems: 'center',
+                                            gap: '0.5rem',
+                                            boxShadow: '0 4px 14px rgba(99, 102, 241, 0.4)'
+                                        }}
+                                    >
+                                        <Zap size={18} fill="currentColor" />
+                                        {isSubmittingTokenReq ? 'Submitting Request...' : `Request ${selectedTokenPack.tokens} Tokens ($${selectedTokenPack.price})`}
+                                    </button>
+                                </div>
+                            </>
+                        )}
 
                         {/* Info Footnote */}
-                        <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', textAlign: 'center', margin: 0, lineHeight: 1.5 }}>
-                            Tokens never expire and apply to all AI models and quiz generator tools on your account.
+                        <p style={{ fontSize: '0.775rem', color: 'var(--text-muted)', textAlign: 'center', marginTop: '1.25rem', marginBottom: 0, lineHeight: 1.5 }}>
+                            Upon submitting, your administrator will receive an alert to approve and credit tokens to your account.
                         </p>
                     </div>
                 </div>
