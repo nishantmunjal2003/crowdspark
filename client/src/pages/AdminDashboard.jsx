@@ -70,6 +70,12 @@ export default function AdminDashboard() {
     const [logTimeFilter, setLogTimeFilter] = useState('all'); // all, 24h, 7d, 30d
     const [logSort, setLogSort] = useState('newest'); // newest, oldest, action_asc, user_asc
 
+    // Filter & Sort States for AI Tokens Tab
+    const [tokenUserSearch, setTokenUserSearch] = useState('');
+    const [tokenRoleFilter, setTokenRoleFilter] = useState('all'); // all, admin, user
+    const [tokenBalanceFilter, setTokenBalanceFilter] = useState('all'); // all, zero, low, standard, high
+    const [tokenSort, setTokenSort] = useState('tokens_desc'); // tokens_desc, tokens_asc, used_desc, used_asc, name_asc, name_desc, newest
+
     useEffect(() => {
         const initAdmin = async () => {
             const currentUser = localStorage.getItem('current_user');
@@ -393,12 +399,47 @@ export default function AdminDashboard() {
         });
     }, [logs, logSearch, logActionFilter, logTimeFilter, logSort]);
 
+    // Filter & Sort Token Users
+    const filteredTokenUsers = useMemo(() => {
+        return users.filter(u => {
+            const matchesSearch = !tokenUserSearch ||
+                (u.name && u.name.toLowerCase().includes(tokenUserSearch.toLowerCase())) ||
+                (u.email && u.email.toLowerCase().includes(tokenUserSearch.toLowerCase()));
+
+            const matchesRole = tokenRoleFilter === 'all' || u.role === tokenRoleFilter;
+
+            const tokens = u.aiTokens !== undefined ? u.aiTokens : 50;
+            let matchesBalance = true;
+            if (tokenBalanceFilter === 'zero') matchesBalance = tokens === 0;
+            else if (tokenBalanceFilter === 'low') matchesBalance = tokens > 0 && tokens <= 25;
+            else if (tokenBalanceFilter === 'standard') matchesBalance = tokens > 25 && tokens <= 50;
+            else if (tokenBalanceFilter === 'high') matchesBalance = tokens > 50;
+
+            return matchesSearch && matchesRole && matchesBalance;
+        }).sort((a, b) => {
+            const aTokens = a.aiTokens !== undefined ? a.aiTokens : 50;
+            const bTokens = b.aiTokens !== undefined ? b.aiTokens : 50;
+            const aUsed = a.aiTokensUsed || 0;
+            const bUsed = b.aiTokensUsed || 0;
+
+            if (tokenSort === 'tokens_desc') return bTokens - aTokens;
+            if (tokenSort === 'tokens_asc') return aTokens - bTokens;
+            if (tokenSort === 'used_desc') return bUsed - aUsed;
+            if (tokenSort === 'used_asc') return aUsed - bUsed;
+            if (tokenSort === 'name_asc') return (a.name || '').localeCompare(b.name || '');
+            if (tokenSort === 'name_desc') return (b.name || '').localeCompare(a.name || '');
+            if (tokenSort === 'newest') return new Date(b.createdAt || 0) - new Date(a.createdAt || 0);
+            return 0;
+        });
+    }, [users, tokenUserSearch, tokenRoleFilter, tokenBalanceFilter, tokenSort]);
+
     if (!user || user.role !== 'admin') return null;
     if (isLoading) return <div style={{ padding: '3rem', textAlign: 'center', color: 'var(--text-secondary)' }}>Loading admin dashboard...</div>;
 
     const hasUserFilters = userSearch || userRoleFilter !== 'all' || userStatusFilter !== 'all' || userAuthFilter !== 'all' || userSort !== 'newest';
     const hasQuizFilters = quizSearch || quizTypeFilter !== 'all' || quizLengthFilter !== 'all' || quizSort !== 'newest';
     const hasLogFilters = logSearch || logActionFilter !== 'all' || logTimeFilter !== 'all' || logSort !== 'newest';
+    const hasTokenFilters = tokenUserSearch || tokenRoleFilter !== 'all' || tokenBalanceFilter !== 'all' || tokenSort !== 'tokens_desc';
 
     return (
         <div className="admin-page-wrapper">
@@ -1333,85 +1374,183 @@ export default function AdminDashboard() {
                                         User AI Token Balances
                                     </h3>
                                     <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', margin: '0.2rem 0 0 0' }}>
-                                        View and adjust AI token allocations for individual users
+                                        Showing {filteredTokenUsers.length} of {users.length} user token balances
                                     </p>
+                                </div>
+                                {hasTokenFilters && (
+                                    <button
+                                        onClick={() => {
+                                            setTokenUserSearch('');
+                                            setTokenRoleFilter('all');
+                                            setTokenBalanceFilter('all');
+                                            setTokenSort('tokens_desc');
+                                        }}
+                                        className="btn btn-secondary"
+                                        style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', padding: '0.45rem 0.85rem', fontSize: '0.85rem' }}
+                                    >
+                                        <RotateCcw size={14} /> Reset Filters
+                                    </button>
+                                )}
+                            </div>
+
+                            {/* Filter & Sort Bar */}
+                            <div className="admin-filter-bar">
+                                {/* Search */}
+                                <div style={{ position: 'relative' }}>
+                                    <Search size={18} style={{ position: 'absolute', left: '0.85rem', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
+                                    <input
+                                        type="text"
+                                        className="admin-filter-control"
+                                        placeholder="Search by name or email..."
+                                        value={tokenUserSearch}
+                                        onChange={e => setTokenUserSearch(e.target.value)}
+                                        style={{ paddingLeft: '2.5rem', paddingRight: tokenUserSearch ? '2rem' : '0.85rem' }}
+                                    />
+                                    {tokenUserSearch && (
+                                        <button
+                                            onClick={() => setTokenUserSearch('')}
+                                            style={{ position: 'absolute', right: '0.65rem', top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer' }}
+                                        >
+                                            <X size={16} />
+                                        </button>
+                                    )}
+                                </div>
+
+                                {/* Role Filter */}
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                    <Shield size={16} color="var(--text-secondary)" />
+                                    <select
+                                        className="admin-filter-control"
+                                        value={tokenRoleFilter}
+                                        onChange={e => setTokenRoleFilter(e.target.value)}
+                                    >
+                                        <option value="all">All Roles</option>
+                                        <option value="admin">Admins Only</option>
+                                        <option value="user">Regular Users</option>
+                                    </select>
+                                </div>
+
+                                {/* Balance Filter */}
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                    <Filter size={16} color="var(--text-secondary)" />
+                                    <select
+                                        className="admin-filter-control"
+                                        value={tokenBalanceFilter}
+                                        onChange={e => setTokenBalanceFilter(e.target.value)}
+                                    >
+                                        <option value="all">All Balances</option>
+                                        <option value="zero">0 Tokens (Depleted)</option>
+                                        <option value="low">Low (1 - 25 Tokens)</option>
+                                        <option value="standard">Standard (26 - 50 Tokens)</option>
+                                        <option value="high">High (51+ Tokens)</option>
+                                    </select>
+                                </div>
+
+                                {/* Sort By */}
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                    <ArrowUpDown size={16} color="var(--text-secondary)" />
+                                    <select
+                                        className="admin-filter-control"
+                                        value={tokenSort}
+                                        onChange={e => setTokenSort(e.target.value)}
+                                    >
+                                        <option value="tokens_desc">Sort: Most Tokens Left</option>
+                                        <option value="tokens_asc">Sort: Fewest Tokens Left</option>
+                                        <option value="used_desc">Sort: Most Questions Produced</option>
+                                        <option value="used_asc">Sort: Fewest Questions Produced</option>
+                                        <option value="name_asc">Sort: Name (A - Z)</option>
+                                        <option value="name_desc">Sort: Name (Z - A)</option>
+                                        <option value="newest">Sort: Newest Users</option>
+                                    </select>
                                 </div>
                             </div>
 
-                            <div className="admin-table-container">
-                                <table className="admin-table">
-                                    <thead>
-                                        <tr style={{ borderBottom: '1.5px solid var(--border-color)', color: 'var(--text-secondary)', fontSize: '0.825rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                                            <th style={{ padding: '0.85rem 1rem' }}>User</th>
-                                            <th style={{ padding: '0.85rem 1rem' }}>Role</th>
-                                            <th style={{ padding: '0.85rem 1rem' }}>Available Tokens</th>
-                                            <th style={{ padding: '0.85rem 1rem' }}>Questions Produced</th>
-                                            <th style={{ padding: '0.85rem 1rem', textAlign: 'right' }}>Actions</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        {users.map(u => (
-                                            <tr key={u._id} style={{ borderBottom: '1px solid var(--border-color)' }}>
-                                                <td style={{ padding: '0.85rem 1rem', fontWeight: 600, color: 'var(--text-primary)' }}>
-                                                    <div>{u.name}</div>
-                                                    <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{u.email}</div>
-                                                </td>
-                                                <td style={{ padding: '0.85rem 1rem' }}>
-                                                    <span style={{
-                                                        padding: '0.2rem 0.55rem',
-                                                        borderRadius: '0.5rem',
-                                                        fontSize: '0.75rem',
-                                                        fontWeight: 700,
-                                                        background: u.role === 'admin' ? 'rgba(236, 72, 153, 0.15)' : 'rgba(99, 102, 241, 0.15)',
-                                                        color: u.role === 'admin' ? 'var(--accent-tertiary)' : 'var(--accent-primary)',
-                                                        textTransform: 'capitalize'
-                                                    }}>
-                                                        {u.role || 'user'}
-                                                    </span>
-                                                </td>
-                                                <td style={{ padding: '0.85rem 1rem' }}>
-                                                    <span style={{
-                                                        display: 'inline-flex',
-                                                        alignItems: 'center',
-                                                        gap: '0.3rem',
-                                                        fontWeight: 800,
-                                                        color: 'var(--accent-primary)',
-                                                        fontSize: '0.95rem'
-                                                    }}>
-                                                        <Zap size={14} fill="currentColor" />
-                                                        {u.aiTokens !== undefined ? u.aiTokens : 50}
-                                                    </span>
-                                                </td>
-                                                <td style={{ padding: '0.85rem 1rem', color: 'var(--text-secondary)', fontWeight: 600 }}>
-                                                    {u.aiTokensUsed || 0} questions
-                                                </td>
-                                                <td style={{ padding: '0.85rem 1rem', textAlign: 'right' }}>
-                                                    <button
-                                                        onClick={() => {
-                                                            setTokenModalUser(u);
-                                                            setTokenAmountInput(50);
-                                                            setTokenActionType('add');
-                                                        }}
-                                                        className="btn btn-secondary"
-                                                        style={{
-                                                            padding: '0.4rem 0.75rem',
-                                                            fontSize: '0.8rem',
-                                                            fontWeight: 700,
-                                                            display: 'inline-flex',
-                                                            alignItems: 'center',
-                                                            gap: '0.35rem',
-                                                            color: 'var(--accent-primary)',
-                                                            borderColor: 'rgba(99, 102, 241, 0.3)'
-                                                        }}
-                                                    >
-                                                        <Zap size={13} /> Manage Tokens
-                                                    </button>
-                                                </td>
-                                            </tr>
-                                        ))}
-                                    </tbody>
-                                </table>
-                            </div>
+                            {/* Table / Empty State */}
+                            {filteredTokenUsers.length === 0 ? (
+                                <div style={{ padding: '3rem', textAlign: 'center', color: 'var(--text-secondary)' }}>
+                                    <Zap size={40} style={{ margin: '0 auto 1rem auto', opacity: 0.4 }} />
+                                    <p style={{ fontSize: '1.1rem', fontWeight: 600, margin: '0 0 0.5rem 0', color: 'var(--text-primary)' }}>No users match your token filter criteria</p>
+                                    <p style={{ fontSize: '0.875rem', margin: 0 }}>Try clearing your search query or changing filters.</p>
+                                </div>
+                            ) : (
+                                <div>
+                                    <div className="admin-table-hint">👈 Swipe table horizontally to view full details 👉</div>
+                                    <div className="admin-table-container">
+                                        <table className="admin-table">
+                                            <thead>
+                                                <tr style={{ borderBottom: '1.5px solid var(--border-color)', color: 'var(--text-secondary)', fontSize: '0.825rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                                                    <th style={{ padding: '0.85rem 1rem' }}>User</th>
+                                                    <th style={{ padding: '0.85rem 1rem' }}>Role</th>
+                                                    <th style={{ padding: '0.85rem 1rem' }}>Available Tokens</th>
+                                                    <th style={{ padding: '0.85rem 1rem' }}>Questions Produced</th>
+                                                    <th style={{ padding: '0.85rem 1rem', textAlign: 'right' }}>Actions</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {filteredTokenUsers.map(u => (
+                                                    <tr key={u._id} style={{ borderBottom: '1px solid var(--border-color)' }}>
+                                                        <td style={{ padding: '0.85rem 1rem', fontWeight: 600, color: 'var(--text-primary)' }}>
+                                                            <div>{u.name}</div>
+                                                            <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{u.email}</div>
+                                                        </td>
+                                                        <td style={{ padding: '0.85rem 1rem' }}>
+                                                            <span style={{
+                                                                padding: '0.2rem 0.55rem',
+                                                                borderRadius: '0.5rem',
+                                                                fontSize: '0.75rem',
+                                                                fontWeight: 700,
+                                                                background: u.role === 'admin' ? 'rgba(236, 72, 153, 0.15)' : 'rgba(99, 102, 241, 0.15)',
+                                                                color: u.role === 'admin' ? 'var(--accent-tertiary)' : 'var(--accent-primary)',
+                                                                textTransform: 'capitalize'
+                                                            }}>
+                                                                {u.role || 'user'}
+                                                            </span>
+                                                        </td>
+                                                        <td style={{ padding: '0.85rem 1rem' }}>
+                                                            <span style={{
+                                                                display: 'inline-flex',
+                                                                alignItems: 'center',
+                                                                gap: '0.3rem',
+                                                                fontWeight: 800,
+                                                                color: (u.aiTokens !== undefined ? u.aiTokens : 50) === 0 ? 'var(--error)' : 'var(--accent-primary)',
+                                                                fontSize: '0.95rem'
+                                                            }}>
+                                                                <Zap size={14} fill="currentColor" />
+                                                                {u.aiTokens !== undefined ? u.aiTokens : 50}
+                                                            </span>
+                                                        </td>
+                                                        <td style={{ padding: '0.85rem 1rem', color: 'var(--text-secondary)', fontWeight: 600 }}>
+                                                            {u.aiTokensUsed || 0} questions
+                                                        </td>
+                                                        <td style={{ padding: '0.85rem 1rem', textAlign: 'right' }}>
+                                                            <button
+                                                                onClick={() => {
+                                                                    setTokenModalUser(u);
+                                                                    setTokenAmountInput(50);
+                                                                    setTokenActionType('add');
+                                                                }}
+                                                                className="btn btn-secondary"
+                                                                style={{
+                                                                    padding: '0.4rem 0.75rem',
+                                                                    fontSize: '0.8rem',
+                                                                    fontWeight: 700,
+                                                                    display: 'inline-flex',
+                                                                    alignItems: 'center',
+                                                                    gap: '0.35rem',
+                                                                    color: 'var(--accent-primary)',
+                                                                    borderColor: 'rgba(99, 102, 241, 0.3)'
+                                                                }}
+                                                            >
+                                                                <Zap size={13} /> Manage Tokens
+                                                            </button>
+                                                        </td>
+                                                    </tr>
+                                                ))}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            )}
                         </div>
                     </div>
                 )}
