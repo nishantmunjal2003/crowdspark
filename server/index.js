@@ -13,23 +13,13 @@ const Response = require('./models/Response');
 const Otp = require('./models/Otp');
 const User = require('./models/User');
 const ActivityLog = require('./models/ActivityLog');
-const nodemailer = require('nodemailer');
+const { sendOtpEmail } = require('./services/mailService');
 const { OAuth2Client } = require('google-auth-library');
 const { logActivity } = require('./middleware/activityLogger');
 const { generateQuizFromAI } = require('./services/aiService');
 
 const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 const bcrypt = require('bcrypt');
-
-// Nodemailer Transporter
-// ... (keep existing transporter config)
-const transporter = nodemailer.createTransport({
-  service: 'gmail',
-  auth: {
-    user: process.env.EMAIL_USER,
-    pass: process.env.EMAIL_PASS
-  }
-});
 
 const app = express();
 
@@ -41,7 +31,103 @@ app.use('/uploads', express.static(path.join(__dirname, 'uploads'))); // Serve u
 
 // --- Auth Endpoints ---
 
-// Signup
+// Send Signup OTP
+app.post('/api/auth/send-signup-otp', async (req, res) => {
+  try {
+    const { name, email, password } = req.body;
+    if (!name || !email || !password) {
+      return res.status(400).json({ error: 'Name, email, and password are required' });
+    }
+
+    if (password.length < 6) {
+      return res.status(400).json({ error: 'Password must be at least 6 characters' });
+    }
+
+    const normalizedEmail = email.toLowerCase().trim();
+
+    // Check if user already exists
+    const existingUser = await User.findOne({ email: normalizedEmail });
+    if (existingUser) {
+      return res.status(400).json({ error: 'An account already exists with this email' });
+    }
+
+    // Generate 6-digit OTP
+    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+
+    // Store OTP in database (overwrites any previous OTP for this email)
+    await Otp.deleteMany({ email: normalizedEmail });
+    await Otp.create({ email: normalizedEmail, otp });
+
+    // Send verification email via ZeptoMail / SMTP
+    const mailResult = await sendOtpEmail(normalizedEmail, name.trim(), otp);
+    console.log(`[Signup OTP] Email dispatch result for ${normalizedEmail}:`, mailResult);
+
+    res.json({
+      success: true,
+      message: 'Verification code sent to your email'
+    });
+  } catch (err) {
+    console.error('Error sending signup OTP:', err);
+    res.status(500).json({ error: 'Failed to send verification code' });
+  }
+});
+
+// Verify Signup OTP and Create Account
+app.post('/api/auth/verify-signup-otp', async (req, res) => {
+  try {
+    const { name, email, password, otp } = req.body;
+    if (!name || !email || !password || !otp) {
+      return res.status(400).json({ error: 'All fields including verification code are required' });
+    }
+
+    const normalizedEmail = email.toLowerCase().trim();
+
+    // Verify OTP
+    const otpRecord = await Otp.findOne({ email: normalizedEmail, otp: otp.trim() });
+    if (!otpRecord) {
+      return res.status(400).json({ error: 'Invalid or expired verification code' });
+    }
+
+    // Check if user already exists
+    const existingUser = await User.findOne({ email: normalizedEmail });
+    if (existingUser) {
+      return res.status(400).json({ error: 'An account already exists with this email' });
+    }
+
+    // Hash password
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    // Create user
+    const user = await User.create({
+      name: name.trim(),
+      email: normalizedEmail,
+      password: hashedPassword
+    });
+
+    // Delete used OTP
+    await Otp.deleteMany({ email: normalizedEmail });
+
+    // Log activity
+    await logActivity(user._id, user.email, user.name, 'signup', { method: 'email_otp' }, req);
+
+    // Return user session object
+    const userResponse = {
+      _id: user._id,
+      name: user.name,
+      email: user.email,
+      picture: user.picture,
+      role: user.role,
+      createdAt: user.createdAt
+    };
+
+    res.json({ success: true, message: 'Account verified and created successfully', user: userResponse });
+  } catch (err) {
+    console.error('Error verifying signup OTP:', err);
+    res.status(500).json({ error: 'Failed to verify code and create account' });
+  }
+});
+
+// Direct Signup (legacy / fallback)
 app.post('/api/auth/signup', async (req, res) => {
   try {
     const { name, email, password } = req.body;
@@ -49,8 +135,10 @@ app.post('/api/auth/signup', async (req, res) => {
       return res.status(400).json({ error: 'All fields are required' });
     }
 
+    const normalizedEmail = email.toLowerCase().trim();
+
     // Check if user already exists
-    const existingUser = await User.findOne({ email });
+    const existingUser = await User.findOne({ email: normalizedEmail });
     if (existingUser) {
       return res.status(400).json({ error: 'User already exists with this email' });
     }
@@ -60,8 +148,8 @@ app.post('/api/auth/signup', async (req, res) => {
 
     // Create user
     const user = await User.create({
-      name,
-      email,
+      name: name.trim(),
+      email: normalizedEmail,
       password: hashedPassword
     });
 
@@ -697,8 +785,7 @@ io.on('connection', (socket) => {
 
 function getLeaderboard(session) {
   return Object.values(session.participants)
-    .sort((a, b) => b.score - a.score)
-    .slice(0, 5); // Top 5
+    .sort((a, b) => (b.score || 0) - (a.score || 0));
 }
 
 // --- Analytics API Endpoints (Updated to use MongoDB) ---

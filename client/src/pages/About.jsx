@@ -21,7 +21,7 @@ export default function About() {
                 top: 0,
                 zIndex: 100,
                 borderBottom: '1px solid var(--border-color)',
-                background: 'rgba(15, 23, 42, 0.8)'
+                background: 'var(--bg-card)'
             }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer' }} onClick={() => navigate('/')}>
                     <Zap size={24} color="#fbbf24" fill="#fbbf24" />
@@ -60,7 +60,7 @@ export default function About() {
                     top: '60px',
                     left: 0,
                     right: 0,
-                    background: 'rgba(15, 23, 42, 0.98)',
+                    background: 'var(--bg-card)',
                     backdropFilter: 'blur(10px)',
                     borderBottom: '1px solid var(--border-color)',
                     padding: '1.5rem',

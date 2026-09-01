@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Users, BookOpen, Activity, Shield, UserX, UserCheck, ArrowLeft, Eye, TrendingUp } from 'lucide-react';
+import ThemeToggle from '../components/ThemeToggle';
 
 export default function AdminDashboard() {
     const navigate = useNavigate();
@@ -168,17 +169,20 @@ export default function AdminDashboard() {
         <div style={{ minHeight: '100vh', background: 'var(--bg-primary)', padding: '2rem' }}>
             <div className="container" style={{ maxWidth: '1400px' }}>
                 {/* Header */}
-                <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '2rem' }}>
-                    <button onClick={() => navigate('/dashboard')} className="btn btn-secondary" style={{ padding: '0.75rem' }}>
-                        <ArrowLeft size={20} />
-                    </button>
-                    <div>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                            <Shield size={32} color="var(--accent-primary)" />
-                            <h1 className="title" style={{ fontSize: '2rem', marginBottom: '0' }}>Admin Dashboard</h1>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '2rem' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                        <button onClick={() => navigate('/dashboard')} className="btn btn-secondary" style={{ padding: '0.75rem' }} title="Back to Dashboard">
+                            <ArrowLeft size={20} />
+                        </button>
+                        <div>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                                <Shield size={32} color="var(--accent-primary)" />
+                                <h1 className="title" style={{ fontSize: '2rem', marginBottom: '0' }}>Admin Dashboard</h1>
+                            </div>
+                            <p className="subtitle" style={{ marginBottom: '0', fontSize: '0.95rem' }}>Manage users, quizzes, and monitor activity</p>
                         </div>
-                        <p className="subtitle" style={{ marginBottom: '0', fontSize: '0.95rem' }}>Manage users, quizzes, and monitor activity</p>
                     </div>
+                    <ThemeToggle />
                 </div>
 
                 {/* Stats Cards */}

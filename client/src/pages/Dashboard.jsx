@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Plus, Play, Edit, Trash2, LogOut, BookOpen, Users, BarChart3, Download, Sparkles, Shield } from 'lucide-react';
+import { Plus, Play, Edit, Trash2, LogOut, BookOpen, Users, BarChart3, Download, Sparkles, Shield, Sun, Moon } from 'lucide-react';
 import '../dashboard.css';
 
 export default function Dashboard() {
@@ -9,6 +9,17 @@ export default function Dashboard() {
     const [quizzes, setQuizzes] = useState([]);
     const [activeTab, setActiveTab] = useState('all'); // all, quiz, poll
     const [isLoading, setIsLoading] = useState(true);
+    const [isDarkMode, setIsDarkMode] = useState(() => {
+        const saved = localStorage.getItem('host_theme');
+        return saved ? saved === 'dark' : true;
+    });
+
+    useEffect(() => {
+        document.documentElement.setAttribute('data-theme', isDarkMode ? 'dark' : 'light');
+        localStorage.setItem('host_theme', isDarkMode ? 'dark' : 'light');
+    }, [isDarkMode]);
+
+    const toggleTheme = () => setIsDarkMode(prev => !prev);
 
     useEffect(() => {
         // Check if user is logged in
@@ -111,7 +122,7 @@ export default function Dashboard() {
     const totalQuestions = quizzes.reduce((sum, q) => sum + (q.questions?.length || 0), 0);
 
     return (
-        <div style={{ minHeight: '100vh', background: 'radial-gradient(circle at top center, #1e293b 0%, #0f172a 100%)' }}>
+        <div style={{ minHeight: '100vh', background: 'var(--bg-primary)' }}>
             {/* Animated Background - Softer */}
             <div style={{
                 position: 'fixed',
@@ -153,6 +164,15 @@ export default function Dashboard() {
                                 Admin
                             </button>
                         )}
+                        <button
+                            onClick={toggleTheme}
+                            className="btn btn-secondary"
+                            title={isDarkMode ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
+                            style={{ gap: '0.5rem' }}
+                        >
+                            {isDarkMode ? <Sun size={16} /> : <Moon size={16} />}
+                            {isDarkMode ? 'Light' : 'Dark'}
+                        </button>
                         <button onClick={handleLogout} className="btn btn-secondary">
                             <LogOut size={16} />
                             Logout
@@ -166,8 +186,8 @@ export default function Dashboard() {
                 {/* Stats Cards - Softer Glass */}
                 <div className="dashboard-stats-grid">
                     <div className="card animate-fade-in" style={{
-                        background: 'linear-gradient(145deg, rgba(30, 41, 59, 0.4), rgba(15, 23, 42, 0.4))',
-                        border: '1px solid rgba(255, 255, 255, 0.05)',
+                        background: 'var(--bg-card)',
+                        border: '1px solid var(--border-color)',
                     }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '1.25rem' }}>
                             <div style={{
@@ -183,10 +203,10 @@ export default function Dashboard() {
                                 <BookOpen size={26} color="#818cf8" />
                             </div>
                             <div>
-                                <div style={{ fontSize: '2rem', fontWeight: '700', color: '#f1f5f9', lineHeight: 1 }}>
+                                <div style={{ fontSize: '2rem', fontWeight: '700', color: 'var(--text-primary)', lineHeight: 1 }}>
                                     {totalQuizzes}
                                 </div>
-                                <div style={{ color: '#94a3b8', fontSize: '0.875rem', marginTop: '0.25rem' }}>
+                                <div style={{ color: 'var(--text-secondary)', fontSize: '0.875rem', marginTop: '0.25rem' }}>
                                     Total Quizzes
                                 </div>
                             </div>
@@ -194,8 +214,8 @@ export default function Dashboard() {
                     </div>
 
                     <div className="card animate-fade-in" style={{
-                        background: 'linear-gradient(145deg, rgba(30, 41, 59, 0.4), rgba(15, 23, 42, 0.4))',
-                        border: '1px solid rgba(255, 255, 255, 0.05)',
+                        background: 'var(--bg-card)',
+                        border: '1px solid var(--border-color)',
                         animationDelay: '0.1s'
                     }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '1.25rem' }}>
@@ -212,10 +232,10 @@ export default function Dashboard() {
                                 <BarChart3 size={26} color="#34d399" />
                             </div>
                             <div>
-                                <div style={{ fontSize: '2rem', fontWeight: '700', color: '#f1f5f9', lineHeight: 1 }}>
+                                <div style={{ fontSize: '2rem', fontWeight: '700', color: 'var(--text-primary)', lineHeight: 1 }}>
                                     {totalPolls}
                                 </div>
-                                <div style={{ color: '#94a3b8', fontSize: '0.875rem', marginTop: '0.25rem' }}>
+                                <div style={{ color: 'var(--text-secondary)', fontSize: '0.875rem', marginTop: '0.25rem' }}>
                                     Total Polls
                                 </div>
                             </div>
@@ -223,8 +243,8 @@ export default function Dashboard() {
                     </div>
 
                     <div className="card animate-fade-in" style={{
-                        background: 'linear-gradient(145deg, rgba(30, 41, 59, 0.4), rgba(15, 23, 42, 0.4))',
-                        border: '1px solid rgba(255, 255, 255, 0.05)',
+                        background: 'var(--bg-card)',
+                        border: '1px solid var(--border-color)',
                         animationDelay: '0.2s'
                     }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '1.25rem' }}>
@@ -241,10 +261,10 @@ export default function Dashboard() {
                                 <Users size={26} color="#f472b6" />
                             </div>
                             <div>
-                                <div style={{ fontSize: '2rem', fontWeight: '700', color: '#f1f5f9', lineHeight: 1 }}>
+                                <div style={{ fontSize: '2rem', fontWeight: '700', color: 'var(--text-primary)', lineHeight: 1 }}>
                                     {totalQuestions}
                                 </div>
-                                <div style={{ color: '#94a3b8', fontSize: '0.875rem', marginTop: '0.25rem' }}>
+                                <div style={{ color: 'var(--text-secondary)', fontSize: '0.875rem', marginTop: '0.25rem' }}>
                                     Total Questions
                                 </div>
                             </div>
@@ -260,7 +280,7 @@ export default function Dashboard() {
                         style={{
                             background: 'linear-gradient(135deg, rgba(129, 140, 248, 0.1), rgba(99, 102, 241, 0.05))',
                             border: '1px solid rgba(129, 140, 248, 0.2)',
-                            color: '#e2e8f0',
+                            color: 'var(--text-primary)',
                             animationDelay: '0.3s'
                         }}
                         onMouseEnter={e => {
@@ -284,7 +304,7 @@ export default function Dashboard() {
                         </div>
                         <div style={{ textAlign: 'center' }}>
                             <div style={{ fontWeight: '700', fontSize: '1.25rem', marginBottom: '0.25rem' }}>Create Quiz</div>
-                            <div style={{ fontSize: '0.875rem', color: '#94a3b8' }}>Questions with correct answers</div>
+                            <div style={{ fontSize: '0.875rem', color: 'var(--text-secondary)' }}>Questions with correct answers</div>
                         </div>
                     </button>
 
@@ -294,7 +314,7 @@ export default function Dashboard() {
                         style={{
                             background: 'linear-gradient(135deg, rgba(52, 211, 153, 0.1), rgba(16, 185, 129, 0.05))',
                             border: '1px solid rgba(52, 211, 153, 0.2)',
-                            color: '#e2e8f0',
+                            color: 'var(--text-primary)',
                             animationDelay: '0.4s'
                         }}
                         onMouseEnter={e => {
@@ -318,7 +338,7 @@ export default function Dashboard() {
                         </div>
                         <div style={{ textAlign: 'center' }}>
                             <div style={{ fontWeight: '700', fontSize: '1.25rem', marginBottom: '0.25rem' }}>Create Poll</div>
-                            <div style={{ fontSize: '0.875rem', color: '#94a3b8' }}>Collect opinions, no scoring</div>
+                            <div style={{ fontSize: '0.875rem', color: 'var(--text-secondary)' }}>Collect opinions, no scoring</div>
                         </div>
                     </button>
                 </div>
@@ -334,8 +354,8 @@ export default function Dashboard() {
                                 padding: '0.6rem 1.25rem',
                                 borderRadius: '2rem',
                                 border: activeTab === tab ? '1px solid rgba(129, 140, 248, 0.4)' : '1px solid rgba(255,255,255,0.05)',
-                                background: activeTab === tab ? 'rgba(129, 140, 248, 0.15)' : 'rgba(30, 41, 59, 0.4)',
-                                color: activeTab === tab ? '#818cf8' : '#94a3b8',
+                                background: activeTab === tab ? 'rgba(129, 140, 248, 0.15)' : 'var(--bg-secondary)',
+                                color: activeTab === tab ? '#818cf8' : 'var(--text-secondary)',
                                 fontWeight: activeTab === tab ? '600' : '500',
                                 fontSize: '0.875rem',
                                 cursor: 'pointer',
@@ -352,7 +372,7 @@ export default function Dashboard() {
                 {isLoading ? (
                     <div style={{ textAlign: 'center', padding: '4rem', color: '#94a3b8' }}>Loading...</div>
                 ) : filteredQuizzes.length === 0 ? (
-                    <div className="card animate-fade-in" style={{ textAlign: 'center', padding: '4rem 2rem', animationDelay: '0.8s', background: 'rgba(30, 41, 59, 0.2)' }}>
+                    <div className="card animate-fade-in" style={{ textAlign: 'center', padding: '4rem 2rem', animationDelay: '0.8s', background: 'var(--bg-card)' }}>
                         <div style={{
                             width: '80px',
                             height: '80px',
@@ -365,8 +385,8 @@ export default function Dashboard() {
                         }}>
                             <BookOpen size={40} color="#818cf8" />
                         </div>
-                        <h2 style={{ fontSize: '1.5rem', marginBottom: '0.5rem', color: '#e2e8f0' }}>No {activeTab === 'all' ? 'Content' : activeTab === 'quiz' ? 'Quizzes' : 'Polls'} Yet</h2>
-                        <p style={{ color: '#94a3b8' }}>Create your first {activeTab === 'all' ? 'quiz or poll' : activeTab} to get started!</p>
+                        <h2 style={{ fontSize: '1.5rem', marginBottom: '0.5rem', color: 'var(--text-primary)' }}>No {activeTab === 'all' ? 'Content' : activeTab === 'quiz' ? 'Quizzes' : 'Polls'} Yet</h2>
+                        <p style={{ color: 'var(--text-secondary)' }}>Create your first {activeTab === 'all' ? 'quiz or poll' : activeTab} to get started!</p>
                     </div>
                 ) : (
                     <div className="dashboard-quiz-list">
@@ -375,13 +395,13 @@ export default function Dashboard() {
                                 style={{ animationDelay: `${0.8 + index * 0.1}s` }}
                                 onMouseEnter={e => {
                                     e.currentTarget.style.transform = 'translateX(6px)';
-                                    e.currentTarget.style.background = 'rgba(30, 41, 59, 0.6)';
+                                    e.currentTarget.style.background = 'var(--bg-secondary)';
                                     e.currentTarget.style.borderColor = quiz.type === 'poll' ? 'rgba(52, 211, 153, 0.3)' : 'rgba(129, 140, 248, 0.3)';
                                 }}
                                 onMouseLeave={e => {
                                     e.currentTarget.style.transform = 'translateX(0)';
-                                    e.currentTarget.style.background = 'rgba(30, 41, 59, 0.4)';
-                                    e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.03)';
+                                    e.currentTarget.style.background = 'var(--bg-card)';
+                                    e.currentTarget.style.borderColor = 'var(--border-color)';
                                 }}>
                                 <div className="quiz-info">
                                     <div className="quiz-header">
@@ -427,20 +447,20 @@ export default function Dashboard() {
                                     <button
                                         onClick={() => handleEditQuiz(quiz)}
                                         className="btn"
-                                        style={{ padding: '0.5rem', background: 'rgba(255,255,255,0.05)', color: '#94a3b8', borderRadius: '0.75rem' }}
+                                        style={{ padding: '0.5rem', background: 'var(--bg-secondary)', color: 'var(--text-secondary)', borderRadius: '0.75rem' }}
                                         title="Edit"
-                                        onMouseEnter={e => e.currentTarget.style.color = '#f1f5f9'}
-                                        onMouseLeave={e => e.currentTarget.style.color = '#94a3b8'}
+                                        onMouseEnter={e => e.currentTarget.style.color = 'var(--text-primary)'}
+                                        onMouseLeave={e => e.currentTarget.style.color = 'var(--text-secondary)'}
                                     >
                                         <Edit size={16} />
                                     </button>
                                     <button
                                         onClick={() => handleDuplicateQuiz(quiz)}
                                         className="btn"
-                                        style={{ padding: '0.5rem', background: 'rgba(255,255,255,0.05)', color: '#94a3b8', borderRadius: '0.75rem' }}
+                                        style={{ padding: '0.5rem', background: 'var(--bg-secondary)', color: 'var(--text-secondary)', borderRadius: '0.75rem' }}
                                         title="Duplicate"
-                                        onMouseEnter={e => e.currentTarget.style.color = '#f1f5f9'}
-                                        onMouseLeave={e => e.currentTarget.style.color = '#94a3b8'}
+                                        onMouseEnter={e => e.currentTarget.style.color = 'var(--text-primary)'}
+                                        onMouseLeave={e => e.currentTarget.style.color = 'var(--text-secondary)'}
                                     >
                                         <Download size={16} style={{ transform: 'rotate(180deg)' }} />
                                     </button>
@@ -478,7 +498,7 @@ export default function Dashboard() {
                     animation: 'fadeIn 0.2s ease-out'
                 }}>
                     <div style={{
-                        background: '#1e293b',
+                        background: 'var(--bg-card)',
                         padding: '2rem',
                         borderRadius: '1rem',
                         maxWidth: '400px',
@@ -501,8 +521,9 @@ export default function Dashboard() {
                         }}>
                             <Trash2 size={24} />
                         </div>
-                        <h3 style={{ fontSize: '1.25rem', fontWeight: '600', color: '#f1f5f9', marginBottom: '0.5rem' }}>Delete Quiz?</h3>
-                        <p style={{ color: '#94a3b8', marginBottom: '1.5rem', lineHeight: 1.5 }}>
+                        <h3 style={{ fontSize: '1.25rem', fontWeight: '600', color: 'var(--text-primary)', marginBottom: '0.5rem' }}>Delete Quiz?</h3>
+                        <p style={{ color: 'var(--text-secondary)', marginBottom: '1.5rem', lineHeight: 1.5 }}>
+
                             Are you sure you want to delete this quiz? This action cannot be undone.
                         </p>
                         <div style={{ display: 'flex', gap: '1rem', justifyContent: 'flex-end' }}>
@@ -512,8 +533,8 @@ export default function Dashboard() {
                                     padding: '0.75rem 1.5rem',
                                     borderRadius: '0.5rem',
                                     background: 'transparent',
-                                    border: '1px solid rgba(255, 255, 255, 0.1)',
-                                    color: '#e2e8f0',
+                                    border: '1px solid var(--border-color)',
+                                    color: 'var(--text-primary)',
                                     cursor: 'pointer',
                                     fontWeight: '500',
                                     transition: 'all 0.2s'

@@ -3,10 +3,10 @@
 .dashboard-header {
     position: relative;
     z-index: 1;
-    background: rgba(15, 23, 42, 0.6);
+    background: var(--bg-card);
     backdrop-filter: blur(20px);
     -webkit-backdrop-filter: blur(20px);
-    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    border-bottom: 1px solid var(--border-color);
     padding: 1.5rem 2rem;
 }
 
@@ -38,14 +38,14 @@
 .dashboard-title-text h1 {
     font-size: 1.75rem;
     font-weight: 700;
-    color: #f1f5f9;
+    color: var(--text-primary);
     margin-bottom: 0.1rem;
     letter-spacing: -0.02em;
     line-height: 1.2;
 }
 
 .dashboard-title-text p {
-    color: #94a3b8;
+    color: var(--text-secondary);
     margin: 0;
     font-size: 0.875rem;
 }
@@ -109,8 +109,8 @@
     padding: 1.25rem 1.5rem;
     transition: all 0.3s ease;
     cursor: pointer;
-    background: rgba(30, 41, 59, 0.4);
-    border: 1px solid rgba(255, 255, 255, 0.03);
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
     border-radius: 1rem;
 }
 
@@ -132,7 +132,7 @@
     font-size: 1.125rem;
     font-weight: 600;
     margin: 0;
-    color: #f1f5f9;
+    color: var(--text-primary);
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -142,7 +142,7 @@
 .quiz-meta {
     display: flex;
     gap: 1.5rem;
-    color: #94a3b8;
+    color: var(--text-secondary);
     font-size: 0.8rem;
 }
 
@@ -223,7 +223,7 @@
     .quiz-actions {
         width: 100%;
         justify-content: space-between;
-        border-top: 1px solid rgba(255, 255, 255, 0.05);
+        border-top: 1px solid var(--border-color);
         padding-top: 1rem;
     }
 

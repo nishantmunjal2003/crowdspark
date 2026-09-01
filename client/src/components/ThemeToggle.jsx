@@ -2,10 +2,13 @@ import React, { useEffect, useState } from 'react';
 import { Sun, Moon } from 'lucide-react';
 
 export default function ThemeToggle({ style }) {
-    const [theme, setTheme] = useState(localStorage.getItem('theme') || 'dark');
+    const [theme, setTheme] = useState(() => {
+        return localStorage.getItem('host_theme') || localStorage.getItem('theme') || 'dark';
+    });
 
     useEffect(() => {
         document.documentElement.setAttribute('data-theme', theme);
+        localStorage.setItem('host_theme', theme);
         localStorage.setItem('theme', theme);
     }, [theme]);
 
@@ -17,6 +20,7 @@ export default function ThemeToggle({ style }) {
         <button
             onClick={toggleTheme}
             className="btn-secondary"
+            title={theme === 'dark' ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
             style={{
                 padding: '0.5rem',
                 borderRadius: '50%',
@@ -25,6 +29,7 @@ export default function ThemeToggle({ style }) {
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
+                cursor: 'pointer',
                 ...style
             }}
             aria-label="Toggle theme"

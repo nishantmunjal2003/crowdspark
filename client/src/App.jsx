@@ -17,6 +17,9 @@ function App() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    const savedTheme = localStorage.getItem('host_theme') || 'dark';
+    document.documentElement.setAttribute('data-theme', savedTheme);
+
     fetch('/api/config')
       .then(res => {
         if (!res.ok) throw new Error('Failed to fetch config');

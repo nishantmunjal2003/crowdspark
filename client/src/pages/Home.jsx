@@ -67,7 +67,7 @@ export default function Home() {
                     </div>
                 </div>
 
-                <div className="card" style={{ padding: '2.5rem 2rem', background: 'rgba(31, 41, 55, 0.6)', border: '2px solid var(--border-color)' }}>
+                <div className="card" style={{ padding: '2.5rem 2rem', border: '2px solid var(--border-color)' }}>
                     <form onSubmit={handleJoin} style={{ display: 'flex', flexDirection: 'column', gap: '1.75rem' }}>
                         <div>
                             <label style={{
@@ -90,9 +90,8 @@ export default function Home() {
                                 maxLength={6}
                                 autoFocus
                                 style={{
-                                    background: 'rgba(10, 14, 26, 0.8)',
                                     border: '2px solid var(--border-color)',
-                                    boxShadow: 'inset 0 2px 8px rgba(0, 0, 0, 0.2)'
+                                    boxShadow: 'var(--shadow-sm)'
                                 }}
                             />
                         </div>
