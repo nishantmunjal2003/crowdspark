@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const User = require('../models/User');
 const Quiz = require('../models/Quiz');
+const QuizSession = require('../models/QuizSession');
 const ActivityLog = require('../models/ActivityLog');
 const SystemSetting = require('../models/SystemSetting');
 const { logActivity } = require('../middleware/activityLogger');
@@ -98,6 +99,24 @@ router.get('/stats', isAdmin, async (req, res) => {
         const totalQuizzes = await Quiz.countDocuments();
         const totalActivities = await ActivityLog.countDocuments();
 
+        // Calculate total participants taken across all quizzes and sessions
+        const allQuizzes = await Quiz.find().select('totalParticipants');
+        const quizParticipantsSum = allQuizzes.reduce((sum, q) => sum + (q.totalParticipants || 0), 0);
+
+        const allSessions = await QuizSession.find().select('participants');
+        let sessionParticipantsSum = 0;
+        const uniquePlayerNames = new Set();
+
+        allSessions.forEach(s => {
+            (s.participants || []).forEach(p => {
+                sessionParticipantsSum++;
+                if (p.name) uniquePlayerNames.add(p.name.toLowerCase().trim());
+            });
+        });
+
+        const totalParticipants = Math.max(quizParticipantsSum, sessionParticipantsSum);
+        const uniqueParticipants = uniquePlayerNames.size;
+
         // Get recent activities
         const recentActivities = await ActivityLog.find()
             .sort({ timestamp: -1 })
@@ -126,7 +145,9 @@ router.get('/stats', isAdmin, async (req, res) => {
                     admins: adminUsers
                 },
                 quizzes: {
-                    total: totalQuizzes
+                    total: totalQuizzes,
+                    totalParticipants,
+                    uniqueParticipants
                 },
                 activities: {
                     total: totalActivities

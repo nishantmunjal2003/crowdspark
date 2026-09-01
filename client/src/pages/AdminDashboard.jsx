@@ -23,7 +23,8 @@ import {
     KeyRound,
     Zap,
     Sparkles,
-    Coins
+    Coins,
+    Trophy
 } from 'lucide-react';
 import ThemeToggle from '../components/ThemeToggle';
 
@@ -383,7 +384,7 @@ export default function AdminDashboard() {
 
                 {/* Stats Cards */}
                 {stats && (
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '1.25rem', marginBottom: '2rem' }}>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '1.25rem', marginBottom: '2rem' }}>
                         <div className="card" style={{ padding: '1.25rem' }}>
                             <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
                                 <div style={{ padding: '0.9rem', background: 'rgba(99, 102, 241, 0.1)', borderRadius: '1rem' }}>
@@ -409,6 +410,23 @@ export default function AdminDashboard() {
                                     <div style={{ fontSize: '0.875rem', color: 'var(--text-secondary)' }}>Total Quizzes</div>
                                     <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '0.2rem' }}>
                                         Interactive & Live
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="card" style={{ padding: '1.25rem' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                                <div style={{ padding: '0.9rem', background: 'rgba(244, 114, 182, 0.12)', borderRadius: '1rem' }}>
+                                    <Trophy size={26} color="#f472b6" />
+                                </div>
+                                <div>
+                                    <div style={{ fontSize: '1.85rem', fontWeight: '800', color: 'var(--text-primary)', lineHeight: 1.1 }}>
+                                        {stats.quizzes?.totalParticipants || 0}
+                                    </div>
+                                    <div style={{ fontSize: '0.875rem', color: 'var(--text-secondary)' }}>Users Taken Quiz</div>
+                                    <div style={{ fontSize: '0.75rem', color: '#f472b6', marginTop: '0.2rem', fontWeight: '600' }}>
+                                        {stats.quizzes?.uniqueParticipants || 0} unique players • All time
                                     </div>
                                 </div>
                             </div>
@@ -1280,6 +1298,14 @@ export default function AdminDashboard() {
                                 <div style={{ padding: '1.25rem', background: 'var(--bg-secondary)', borderRadius: '1rem', border: '1px solid var(--border-color)' }}>
                                     <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom: '0.5rem' }}>Email / Password Users</div>
                                     <div style={{ fontSize: '2rem', fontWeight: '800', color: 'var(--accent-primary)' }}>{userAuthStats.emailCount}</div>
+                                </div>
+                                <div style={{ padding: '1.25rem', background: 'var(--bg-secondary)', borderRadius: '1rem', border: '1px solid var(--border-color)' }}>
+                                    <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom: '0.5rem' }}>Total Quiz Plays / Takers</div>
+                                    <div style={{ fontSize: '2rem', fontWeight: '800', color: '#f472b6' }}>{stats.quizzes?.totalParticipants || 0}</div>
+                                </div>
+                                <div style={{ padding: '1.25rem', background: 'var(--bg-secondary)', borderRadius: '1rem', border: '1px solid var(--border-color)' }}>
+                                    <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom: '0.5rem' }}>Unique Quiz Players</div>
+                                    <div style={{ fontSize: '2rem', fontWeight: '800', color: '#ec4899' }}>{stats.quizzes?.uniqueParticipants || 0}</div>
                                 </div>
                             </div>
                         </div>
