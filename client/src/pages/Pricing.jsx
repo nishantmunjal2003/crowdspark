@@ -201,14 +201,15 @@ export default function Pricing() {
                         </p>
                     </div>
 
-                    {/* Pricing Cards Grid with Top Clearance */}
+                    {/* Pricing Cards Grid (2-Column Balanced) */}
                     <div style={{
                         display: 'grid',
-                        gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
-                        gap: '2.5rem 2rem',
+                        gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))',
+                        gap: '2.5rem',
                         alignItems: 'stretch',
-                        paddingTop: '1.5rem',
-                        marginBottom: '5rem'
+                        maxWidth: '880px',
+                        margin: '0 auto 5rem auto',
+                        paddingTop: '1.5rem'
                     }}>
                         {/* 1. Community Plan */}
                         <div
@@ -380,82 +381,6 @@ export default function Pricing() {
                                     <FeatureItem text="Full Per-Question Player Breakdown" highlighted />
                                     <FeatureItem text="Detailed Excel & CSV Audit Export" highlighted />
                                     <FeatureItem text="Priority Email & Chat Support" />
-                                </div>
-                            </div>
-                        </div>
-
-                        {/* 3. Enterprise Plan */}
-                        <div
-                            className="card animate-fade-in"
-                            style={{
-                                padding: '2.5rem 2rem',
-                                display: 'flex',
-                                flexDirection: 'column',
-                                justifyContent: 'space-between',
-                                background: 'var(--bg-card)',
-                                border: '1.5px solid var(--border-color)',
-                                borderRadius: '1.5rem',
-                                position: 'relative',
-                                transition: 'all 0.3s ease'
-                            }}
-                            onMouseEnter={e => {
-                                e.currentTarget.style.transform = 'translateY(-6px)';
-                                e.currentTarget.style.borderColor = 'rgba(236, 72, 153, 0.4)';
-                            }}
-                            onMouseLeave={e => {
-                                e.currentTarget.style.transform = 'translateY(0)';
-                                e.currentTarget.style.borderColor = 'var(--border-color)';
-                            }}
-                        >
-                            <div>
-                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-                                    <h3 style={{ fontSize: '1.4rem', fontWeight: 800, margin: 0, color: 'var(--text-primary)' }}>Enterprise</h3>
-                                    <span style={{
-                                        padding: '0.25rem 0.65rem',
-                                        borderRadius: '1rem',
-                                        fontSize: '0.75rem',
-                                        fontWeight: 700,
-                                        background: 'rgba(236, 72, 153, 0.12)',
-                                        color: 'var(--accent-tertiary)'
-                                    }}>
-                                        CUSTOM
-                                    </span>
-                                </div>
-
-                                <p style={{ fontSize: '0.9rem', color: 'var(--text-secondary)', marginBottom: '1.75rem', lineHeight: 1.5 }}>
-                                    For universities, enterprises, and large conferences requiring dedicated capacity and security.
-                                </p>
-
-                                <div style={{ marginBottom: '2rem' }}>
-                                    <span style={{ fontSize: '3rem', fontWeight: 900, color: 'var(--text-primary)', lineHeight: 1 }}>Custom</span>
-                                    <span style={{ fontSize: '1rem', color: 'var(--text-secondary)', marginLeft: '0.5rem', fontWeight: 500 }}>pricing</span>
-                                </div>
-
-                                <a
-                                    href="mailto:nishant@gkv.ac.in?subject=CrowdSpark%20Enterprise%20Inquiry"
-                                    className="btn btn-secondary"
-                                    style={{
-                                        display: 'block',
-                                        textAlign: 'center',
-                                        width: '100%',
-                                        padding: '0.85rem',
-                                        fontSize: '1rem',
-                                        fontWeight: 700,
-                                        borderRadius: '0.85rem',
-                                        marginBottom: '2rem',
-                                        textDecoration: 'none'
-                                    }}
-                                >
-                                    Contact Sales
-                                </a>
-
-                                <div style={{ borderTop: '1px solid var(--border-color)', paddingTop: '1.75rem', display: 'grid', gap: '0.85rem' }}>
-                                    <FeatureItem text="Unlimited Concurrent Players" />
-                                    <FeatureItem text="Dedicated High-Speed Node" />
-                                    <FeatureItem text="Single Sign-On (SSO / SAML)" />
-                                    <FeatureItem text="Custom Subdomain & White-label" />
-                                    <FeatureItem text="99.9% Uptime SLA Guarantee" />
-                                    <FeatureItem text="Dedicated Account Representative" />
                                 </div>
                             </div>
                         </div>
