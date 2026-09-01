@@ -338,55 +338,6 @@ export default function Dashboard() {
                             </div>
                         </div>
                     </div>
-
-                    {/* AI Tokens Card */}
-                    <div
-                        className="card animate-fade-in"
-                        onClick={() => setShowBuyTokensModal(true)}
-                        style={{
-                            background: 'var(--bg-card)',
-                            border: '1px solid var(--accent-primary)',
-                            animationDelay: '0.25s',
-                            cursor: 'pointer',
-                            boxShadow: '0 8px 24px rgba(99, 102, 241, 0.12)'
-                        }}
-                    >
-                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '1.25rem' }}>
-                                <div style={{
-                                    width: '56px',
-                                    height: '56px',
-                                    background: 'rgba(99, 102, 241, 0.12)',
-                                    borderRadius: '14px',
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    justifyContent: 'center',
-                                    border: '1px solid rgba(99, 102, 241, 0.3)'
-                                }}>
-                                    <Zap size={26} color="var(--accent-primary)" fill="var(--accent-primary)" />
-                                </div>
-                                <div>
-                                    <div style={{ fontSize: '2rem', fontWeight: '700', color: 'var(--text-primary)', lineHeight: 1 }}>
-                                        {userTokens.aiTokens !== undefined ? userTokens.aiTokens : 50}
-                                    </div>
-                                    <div style={{ color: 'var(--text-secondary)', fontSize: '0.875rem', marginTop: '0.25rem' }}>
-                                        AI Tokens Left
-                                    </div>
-                                </div>
-                            </div>
-                            <span style={{
-                                fontSize: '0.75rem',
-                                padding: '0.35rem 0.65rem',
-                                fontWeight: 700,
-                                background: 'rgba(99, 102, 241, 0.15)',
-                                color: 'var(--accent-primary)',
-                                borderRadius: '0.5rem',
-                                border: '1px solid rgba(99, 102, 241, 0.3)'
-                            }}>
-                                + Buy More
-                            </span>
-                        </div>
-                    </div>
                 </div>
 
                 {/* Create New Buttons */}
