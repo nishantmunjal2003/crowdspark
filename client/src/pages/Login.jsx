@@ -217,8 +217,17 @@ export default function Login() {
 
     return (
         <div style={{ minHeight: '100vh', background: 'var(--bg-primary)', position: 'relative', display: 'flex', flexDirection: 'column' }}>
+            <style>{`
+                .login-nav { flex-wrap: wrap; gap: 0.75rem; }
+                .login-card { padding: 2rem 1.75rem; }
+                @media (max-width: 480px) {
+                    .login-nav { padding: 1rem 1rem !important; }
+                    .login-nav-home-btn { display: none !important; }
+                    .login-card { padding: 1.5rem 1.1rem !important; }
+                }
+            `}</style>
             {/* Top Navigation Bar */}
-            <nav style={{
+            <nav className="login-nav" style={{
                 padding: '1.25rem 2rem',
                 display: 'flex',
                 justifyContent: 'space-between',
@@ -254,7 +263,7 @@ export default function Login() {
                 <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
                     <button
                         onClick={() => navigate('/')}
-                        className="btn btn-secondary"
+                        className="btn btn-secondary login-nav-home-btn"
                         style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', padding: '0.5rem 1rem', fontSize: '0.9rem' }}
                     >
                         <ArrowLeft size={16} /> Home
@@ -274,7 +283,7 @@ export default function Login() {
                 width: '100%',
                 boxSizing: 'border-box'
             }}>
-                <div className="card animate-fade-in" style={{ maxWidth: '440px', width: '100%', padding: '2rem 1.75rem', borderRadius: '1.25rem' }}>
+                <div className="card animate-fade-in login-card" style={{ maxWidth: '440px', width: '100%', borderRadius: '1.25rem' }}>
                     
                     {/* VIEW 1: OTP VERIFICATION VIEW */}
                     {isSignup && signupStep === 'otp' ? (
@@ -455,14 +464,23 @@ export default function Login() {
                             </div>
 
                             {/* Google Login Button */}
-                            <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '1.5rem' }}>
-                                <GoogleLogin
-                                    onSuccess={handleGoogleSuccess}
-                                    onError={() => setError('Google Login Failed')}
-                                    theme="filled_black"
-                                    shape="pill"
-                                    width="300"
-                                />
+                            <div style={{
+                                display: 'flex',
+                                justifyContent: 'center',
+                                marginBottom: '1.5rem',
+                                width: '100%',
+                                overflow: 'hidden'
+                            }}>
+                                <div style={{ width: '100%', maxWidth: '300px' }}>
+                                    <GoogleLogin
+                                        onSuccess={handleGoogleSuccess}
+                                        onError={() => setError('Google Login Failed')}
+                                        theme="filled_black"
+                                        shape="pill"
+                                        width="300"
+                                        useOneTap={false}
+                                    />
+                                </div>
                             </div>
 
                             <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1.5rem' }}>
