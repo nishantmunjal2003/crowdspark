@@ -154,7 +154,7 @@ export default function PrivacyPolicy() {
                             Contact & Data Requests
                         </h2>
                         <p style={{ color: 'var(--text-secondary)', lineHeight: 1.7, fontSize: '0.95rem' }}>
-                            If you have questions about this Privacy Policy or wish to request data deletion, please contact us at <a href="mailto:support@crowdspark.com" style={{ color: '#818cf8', textDecoration: 'none', fontWeight: 600 }}>support@crowdspark.com</a> or visit <a href="https://www.nishantmunjal.com" target="_blank" rel="noopener noreferrer" style={{ color: '#818cf8', textDecoration: 'none', fontWeight: 600 }}>nishantmunjal.com</a>.
+                            If you have questions about this Privacy Policy or wish to request data deletion, please contact us at <a href="mailto:nishant.eth2@gmail.com" style={{ color: '#818cf8', textDecoration: 'none', fontWeight: 600 }}>nishant.eth2@gmail.com</a> or visit <a href="https://www.nishantmunjal.com" target="_blank" rel="noopener noreferrer" style={{ color: '#818cf8', textDecoration: 'none', fontWeight: 600 }}>nishantmunjal.com</a>.
                         </p>
                     </section>
                 </div>
