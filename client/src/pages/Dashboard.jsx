@@ -768,58 +768,6 @@ export default function Dashboard() {
                     </div>
                 </div>
 
-                {/* Onboarding Cards if user has 0 quizzes */}
-                {quizzes.length === 0 && (
-                    <div className="dashboard-create-grid">
-                        <button
-                            onClick={() => navigate('/create-quiz', { state: { type: 'quiz' } })}
-                            className="btn animate-fade-in create-card-btn"
-                            style={{
-                                background: 'linear-gradient(135deg, rgba(129, 140, 248, 0.1), rgba(99, 102, 241, 0.05))',
-                                border: '1px solid rgba(129, 140, 248, 0.2)',
-                                color: 'var(--text-primary)',
-                                animationDelay: '0.3s'
-                            }}
-                        >
-                            <div style={{
-                                background: 'linear-gradient(135deg, #818cf8, #6366f1)',
-                                padding: '1rem',
-                                borderRadius: '50%',
-                                boxShadow: '0 4px 12px rgba(99, 102, 241, 0.3)'
-                            }}>
-                                <Plus size={32} color="white" />
-                            </div>
-                            <div style={{ textAlign: 'center' }}>
-                                <div style={{ fontWeight: '700', fontSize: '1.25rem', marginBottom: '0.25rem' }}>Create Quiz</div>
-                                <div style={{ fontSize: '0.875rem', color: 'var(--text-secondary)' }}>Questions with correct answers</div>
-                            </div>
-                        </button>
-
-                        <button
-                            onClick={() => navigate('/create-quiz', { state: { type: 'poll' } })}
-                            className="btn animate-fade-in create-card-btn"
-                            style={{
-                                background: 'linear-gradient(135deg, rgba(52, 211, 153, 0.1), rgba(16, 185, 129, 0.05))',
-                                border: '1px solid rgba(52, 211, 153, 0.2)',
-                                color: 'var(--text-primary)',
-                                animationDelay: '0.4s'
-                            }}
-                        >
-                            <div style={{
-                                background: 'linear-gradient(135deg, #34d399, #10b981)',
-                                padding: '1rem',
-                                borderRadius: '50%',
-                                boxShadow: '0 4px 12px rgba(16, 185, 129, 0.3)'
-                            }}>
-                                <Plus size={32} color="white" />
-                            </div>
-                            <div style={{ textAlign: 'center' }}>
-                                <div style={{ fontWeight: '700', fontSize: '1.25rem', marginBottom: '0.25rem' }}>Create Poll</div>
-                                <div style={{ fontSize: '0.875rem', color: 'var(--text-secondary)' }}>Collect opinions, no scoring</div>
-                            </div>
-                        </button>
-                    </div>
-                )}
 
                 {/* Search & Groups Toolbar */}
                 <div className="dashboard-toolbar animate-fade-in" style={{ animationDelay: '0.45s' }}>
