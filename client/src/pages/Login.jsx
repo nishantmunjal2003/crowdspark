@@ -4,6 +4,7 @@ import { LogIn, UserPlus, Mail, Lock, User, ArrowLeft, Zap, ShieldCheck, Refresh
 import { GoogleLogin } from '@react-oauth/google';
 import ThemeToggle from '../components/ThemeToggle';
 import Footer from '../components/Footer';
+import SEO from '../components/SEO';
 
 export default function Login() {
     const navigate = useNavigate();
@@ -283,6 +284,11 @@ export default function Login() {
 
     return (
         <div style={{ minHeight: '100vh', background: 'var(--bg-primary)', position: 'relative', display: 'flex', flexDirection: 'column' }}>
+            <SEO
+                title="Host Login & Registration - CrowdSpark"
+                description="Sign in or register for CrowdSpark to create AI quizzes, launch live interactive sessions, and track real-time analytics."
+                canonicalPath="/login"
+            />
             <style>{`
                 .login-nav { flex-wrap: wrap; gap: 0.75rem; }
                 .login-card { padding: 2rem 1.75rem; }

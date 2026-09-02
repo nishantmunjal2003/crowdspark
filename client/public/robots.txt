@@ -1,0 +1,61 @@
+# Robots.txt for CrowdSpark (https://crowdspark.nishantmunjal.com)
+# Optimized for Google, Bing, and Modern AI Crawlers (GPTBot, ClaudeBot, PerplexityBot, Gemini)
+
+User-agent: *
+Allow: /
+Allow: /about
+Allow: /how-it-works
+Allow: /pricing
+Allow: /login
+Allow: /terms
+Allow: /privacy
+Allow: /llms.txt
+Allow: /llms-full.txt
+Allow: /sitemap.xml
+
+# Disallow private user dashboards, live host rooms, and API routes
+Disallow: /api/
+Disallow: /admin
+Disallow: /dashboard
+Disallow: /create-quiz
+Disallow: /host/
+Disallow: /join/
+
+# AI Search & Large Language Model Crawlers
+User-agent: GPTBot
+Allow: /
+Allow: /llms.txt
+Disallow: /dashboard
+Disallow: /admin
+Disallow: /api/
+
+User-agent: ClaudeBot
+Allow: /
+Allow: /llms.txt
+Disallow: /dashboard
+Disallow: /admin
+Disallow: /api/
+
+User-agent: PerplexityBot
+Allow: /
+Allow: /llms.txt
+Disallow: /dashboard
+Disallow: /admin
+Disallow: /api/
+
+User-agent: Google-Extended
+Allow: /
+Allow: /llms.txt
+Disallow: /dashboard
+Disallow: /admin
+Disallow: /api/
+
+User-agent: Applebot-Extended
+Allow: /
+Allow: /llms.txt
+Disallow: /dashboard
+Disallow: /admin
+Disallow: /api/
+
+# Sitemap Location
+Sitemap: https://crowdspark.nishantmunjal.com/sitemap.xml

@@ -1,0 +1,36 @@
+# CrowdSpark Full Product Specification & System Documentation
+
+## Executive Overview
+CrowdSpark is an all-in-one interactive assessment, live polling, and educational gamification platform designed for the modern web. The platform bridges the gap between active presentations and audience understanding by turning traditional one-way talks into interactive, competitive, and data-driven experiences.
+
+## Technical Architecture
+- **Frontend**: React 18, Vite, Lucide Icons, Vanilla Modern CSS Design System, Responsive Mobile-First Architecture.
+- **Backend**: Node.js, Express REST API, Socket.io Real-Time Synchronization Engine.
+- **Database**: MongoDB with Mongoose ODM (Quizzes, Questions, Session History, User Accounts, OTP verifications, Analytics).
+- **Authentication**: JWT (JSON Web Tokens), Google OAuth 2.0, Secure Password Hashing with bcrypt, ZeptoMail / SMTP OTP Verification.
+- **AI Engine**: Integrated Large Language Model API for instant question generation with schema enforcement.
+
+## Product Modules & Workflow
+
+### 1. Host Dashboard & Quiz Creator
+- **Manual Creation**: Custom questions, customizable multiple-choice answers, time limits (10s to 90s), point values.
+- **AI Generator**: Enter any subject prompt (e.g. "Quantum Computing Basics", "World War II Timeline", "JavaScript Promises"), choose difficulty (Easy, Medium, Hard), and the engine constructs questions with 4 distractor options and answer validation.
+- **Quiz Library**: Hosts can edit, clone, delete, search, and launch any saved quiz into a live room.
+
+### 2. Live Game Engine
+- **Lobby**: Generates unique 6-digit numeric game PIN and animated QR code. Displays connected players with avatars in real time.
+- **Question Screen**: Synchronized countdown timer, media-rich question display, answer option grid with color coding.
+- **Live Aggregation**: Real-time bar chart showing participant answer distribution before revealing the correct answer.
+- **Leaderboard**: Top 5 podium calculation with streak bonuses and rank progression animations.
+
+### 3. Participant Client
+- **Lightweight Web App**: Zero friction login. Compatible with Safari, Chrome, Firefox, Edge on iOS, Android, macOS, Windows, ChromeOS, Linux.
+- **Interactive UI**: Big clickable color-coded answer pads corresponding to the host display screen.
+
+### 4. Post-Session Analytics
+- Host receives aggregate accuracy percentages, toughest questions identified, player rankings, and downloadable CSV/Excel export files.
+
+## Contact & Maintenance
+- **Author**: Nishant Munjal
+- **Repository**: https://github.com/nishantmunjal2003/crowdspark
+- **Website**: https://crowdspark.nishantmunjal.com

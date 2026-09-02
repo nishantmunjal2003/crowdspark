@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Zap, ArrowRight, Sparkles } from 'lucide-react';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
+import SEO from '../components/SEO';
 
 export default function Home() {
     const [sessionId, setSessionId] = useState('');
@@ -37,6 +38,11 @@ export default function Home() {
 
     return (
         <div className="hero-container">
+            <SEO
+                title="CrowdSpark - Interactive Live Quizzes, Polls & AI Audience Engagement"
+                description="Host thrilling live quizzes and assessments in seconds. Powered by AI question generation, real-time participant synchronization, live leaderboards, and instant grade exports."
+                canonicalPath="/"
+            />
             {/* Top Responsive Navigation */}
             <Navbar />
             {/* Background Effects (contained to prevent layout/scroll overflow) */}

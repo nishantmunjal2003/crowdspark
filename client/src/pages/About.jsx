@@ -19,12 +19,18 @@ import {
 } from 'lucide-react';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
+import SEO from '../components/SEO';
 
 export default function About() {
     const navigate = useNavigate();
 
     return (
         <div style={{ minHeight: '100vh', background: 'var(--bg-primary)', color: 'var(--text-primary)', display: 'flex', flexDirection: 'column' }}>
+            <SEO
+                title="About CrowdSpark - The Next-Gen Interactive Audience Platform"
+                description="Learn about CrowdSpark's mission to make learning and presentations thrilling, gamified, and participatory with real-time AI quizzes and live multiplayer feedback."
+                canonicalPath="/about"
+            />
             {/* Top Responsive Navigation */}
             <Navbar />
 

@@ -1,0 +1,57 @@
+# CrowdSpark - Interactive Live Quizzes & AI-Powered Audience Engagement Platform
+
+> CrowdSpark is a modern, real-time web platform for hosting gamified live quizzes, interactive assessments, and polls with instant AI question generation, live synchronized countdowns, real-time leaderboards, and detailed analytics exports.
+
+## Quick Facts
+- **Website**: https://crowdspark.nishantmunjal.com
+- **Product Type**: Interactive Live Quiz & Polling Web Application
+- **Creator / Developer**: Nishant Munjal (https://nishantmunjal.com)
+- **Target Audience**: Educators, University Professors, Corporate Trainers, Event Hosts, Team Leads, Students.
+- **Participation Method**: Zero installation, zero friction. Participants join via 6-digit game PIN or QR code scanning on any mobile or desktop browser.
+- **Hosting Model**: Cloud-hosted, web-based, real-time WebSockets synchronization.
+
+## Core Capabilities & Features
+
+### 1. Instant AI Quiz Generator
+- Generate complete multi-question quizzes from any text prompt, topic, subject, or pasted article.
+- Configurable difficulty levels (Easy, Medium, Hard) and question counts (1 to 20).
+- Automatically produces accurate answer keys, multiple options, and educational explanations.
+
+### 2. Live Synchronized Multiplayer Engine
+- Real-time question synchronization across all joined participants via WebSockets.
+- Configurable question timer (10s, 20s, 30s, 60s, 90s).
+- Live response aggregation charts displayed to the host in real-time as answers arrive.
+
+### 3. Gamification & Leaderboards
+- Speed-based and accuracy-based score calculation.
+- Dynamic streak multipliers (bonus points for consecutive correct answers).
+- Live podium display after each question and at final quiz completion.
+
+### 4. Deep Analytics & Export
+- Real-time host control panel with per-question accuracy breakdowns.
+- One-click export to CSV / Excel spreadsheet format for grading and attendance tracking.
+- Session replay and historical quiz logs.
+
+### 5. Multi-Device & Mobile-First
+- Responsive, low-latency client optimized for smartphones, tablets, laptops, and projectors.
+- Dark mode and light mode visual themes.
+
+## Key Pages & Navigation
+- **Home**: [https://crowdspark.nishantmunjal.com/](https://crowdspark.nishantmunjal.com/) — Instant PIN join box and quick overview.
+- **How It Works**: [https://crowdspark.nishantmunjal.com/how-it-works](https://crowdspark.nishantmunjal.com/how-it-works) — 4-step guide from creation to post-game export.
+- **Pricing**: [https://crowdspark.nishantmunjal.com/pricing](https://crowdspark.nishantmunjal.com/pricing) — Community free plan details and feature comparisons.
+- **About**: [https://crowdspark.nishantmunjal.com/about](https://crowdspark.nishantmunjal.com/about) — Platform mission, architecture, and technology stack.
+- **Host Portal**: [https://crowdspark.nishantmunjal.com/login](https://crowdspark.nishantmunjal.com/login) — Secure login with Google OAuth, Password, or Email OTP.
+- **Terms of Service**: [https://crowdspark.nishantmunjal.com/terms](https://crowdspark.nishantmunjal.com/terms) — Terms and user conduct guidelines.
+- **Privacy Policy**: [https://crowdspark.nishantmunjal.com/privacy](https://crowdspark.nishantmunjal.com/privacy) — Data handling, privacy commitments, and encryption details.
+
+## Frequently Asked Questions (FAQ)
+
+### How is CrowdSpark different from Kahoot or Quizizz?
+CrowdSpark provides a modern, fast, ad-free experience with built-in AI quiz generation, free unlimited participants for community hosts, and instant CSV export without restrictive paywalls.
+
+### Do students or players need accounts?
+No. Participants only provide a nickname and the 6-digit game PIN or scan the on-screen QR code to play immediately.
+
+### What login options are available for hosts?
+Hosts can authenticate via Google One-Tap/OAuth, Email with Password, or Passwordless One-Time Password (OTP) sent to their email.

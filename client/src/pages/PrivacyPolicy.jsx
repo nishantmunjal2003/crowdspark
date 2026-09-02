@@ -3,12 +3,18 @@ import { useNavigate } from 'react-router-dom';
 import { Zap, Shield, Lock, Eye, Database, CheckCircle, ArrowRight, UserCheck, Key } from 'lucide-react';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
+import SEO from '../components/SEO';
 
 export default function PrivacyPolicy() {
     const navigate = useNavigate();
 
     return (
         <div style={{ minHeight: '100vh', background: 'var(--bg-primary)', color: 'var(--text-primary)', display: 'flex', flexDirection: 'column' }}>
+            <SEO
+                title="Privacy Policy - CrowdSpark"
+                description="Read CrowdSpark's privacy policy. Learn about our data protection standards, encryption, and zero-selling data commitment."
+                canonicalPath="/privacy"
+            />
             <style>{`
                 .privacy-header {
                     padding: 4rem 1.5rem 2.5rem 1.5rem;

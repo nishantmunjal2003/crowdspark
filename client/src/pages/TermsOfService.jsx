@@ -3,12 +3,18 @@ import { useNavigate } from 'react-router-dom';
 import { Zap, Shield, FileText, CheckCircle, ArrowLeft, ArrowRight, Lock, AlertCircle, Scale, Globe } from 'lucide-react';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
+import SEO from '../components/SEO';
 
 export default function TermsOfService() {
     const navigate = useNavigate();
 
     return (
         <div style={{ minHeight: '100vh', background: 'var(--bg-primary)', color: 'var(--text-primary)', display: 'flex', flexDirection: 'column' }}>
+            <SEO
+                title="Terms of Service - CrowdSpark"
+                description="Review the terms and conditions for using the CrowdSpark interactive live quiz platform."
+                canonicalPath="/terms"
+            />
             <style>{`
                 .terms-header {
                     padding: 4rem 1.5rem 2.5rem 1.5rem;

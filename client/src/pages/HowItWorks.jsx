@@ -19,6 +19,7 @@ import {
 } from 'lucide-react';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
+import SEO from '../components/SEO';
 
 export default function HowItWorks() {
     const navigate = useNavigate();
@@ -169,6 +170,11 @@ export default function HowItWorks() {
             `}</style>
 
             {/* Top Responsive Navigation */}
+            <SEO
+                title="How CrowdSpark Works - Step-by-Step Live Quiz Guide"
+                description="Learn how CrowdSpark powers interactive presentations: create AI quizzes, launch live multiplayer sessions with QR codes, display real-time leaderboards, and export Excel reports."
+                canonicalPath="/how-it-works"
+            />
             <Navbar />
 
             {/* Hero Section */}

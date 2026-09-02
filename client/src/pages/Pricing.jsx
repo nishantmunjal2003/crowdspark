@@ -18,6 +18,7 @@ import {
 } from 'lucide-react';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
+import SEO from '../components/SEO';
 
 export default function Pricing() {
     const navigate = useNavigate();
@@ -46,8 +47,27 @@ export default function Pricing() {
         }
     ];
 
+    const pricingStructuredData = {
+        "@context": "https://schema.org",
+        "@type": "FAQPage",
+        "mainEntity": faqs.map(f => ({
+            "@type": "Question",
+            "name": f.q,
+            "acceptedAnswer": {
+                "@type": "Answer",
+                "text": f.a
+            }
+        }))
+    };
+
     return (
         <div style={{ minHeight: '100vh', background: 'var(--bg-primary)', color: 'var(--text-primary)', display: 'flex', flexDirection: 'column' }}>
+            <SEO
+                title="CrowdSpark Pricing - Free Community & Pro Educator Plans"
+                description="Explore CrowdSpark pricing plans. Start completely free with unlimited live quiz hosting, AI question tokens, real-time leaderboards, and CSV exports."
+                canonicalPath="/pricing"
+                structuredData={pricingStructuredData}
+            />
             {/* Top Responsive Navigation */}
             <Navbar />
 
