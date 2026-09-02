@@ -43,9 +43,10 @@ async function getDefaultAiTokens() {
 }
 
 // --- Security Middleware ---
-// 1. Helmet HTTP Security Headers (allows cross-origin images for uploaded quiz assets)
+// 1. Helmet HTTP Security Headers (configured to allow Google Identity Services OAuth popups and cross-origin assets)
 app.use(helmet({
-  crossOriginResourcePolicy: { policy: "cross-origin" }
+  crossOriginResourcePolicy: { policy: "cross-origin" },
+  crossOriginOpenerPolicy: { policy: "same-origin-allow-popups" }
 }));
 
 // 2. CORS policy configuration
