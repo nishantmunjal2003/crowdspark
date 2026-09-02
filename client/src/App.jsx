@@ -15,8 +15,10 @@ import HowItWorks from './pages/HowItWorks';
 
 import { GoogleOAuthProvider } from '@react-oauth/google';
 
+const DEFAULT_GOOGLE_CLIENT_ID = "12595231081-2qo4sal1hs1lbiv0i3mmtg59pun008pj.apps.googleusercontent.com";
+
 function App() {
-  const [googleClientId, setGoogleClientId] = useState(null);
+  const [googleClientId, setGoogleClientId] = useState(DEFAULT_GOOGLE_CLIENT_ID);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -29,13 +31,12 @@ function App() {
         return res.json();
       })
       .then(data => {
-        // Prefer server-provided client ID, fallback to build-time env var or default placeholder
-        setGoogleClientId(data.googleClientId || import.meta.env.VITE_GOOGLE_CLIENT_ID || "YOUR_GOOGLE_CLIENT_ID");
+        setGoogleClientId(data.googleClientId || import.meta.env.VITE_GOOGLE_CLIENT_ID || DEFAULT_GOOGLE_CLIENT_ID);
         setLoading(false);
       })
       .catch(err => {
-        console.error('Failed to load dynamic config, falling back:', err);
-        setGoogleClientId(import.meta.env.VITE_GOOGLE_CLIENT_ID || "YOUR_GOOGLE_CLIENT_ID");
+        console.warn('Config fetch fallback:', err);
+        setGoogleClientId(import.meta.env.VITE_GOOGLE_CLIENT_ID || DEFAULT_GOOGLE_CLIENT_ID);
         setLoading(false);
       });
   }, []);

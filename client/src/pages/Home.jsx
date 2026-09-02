@@ -1,9 +1,8 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Zap, ArrowRight, Sparkles } from 'lucide-react';
+import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
-
-import ThemeToggle from '../components/ThemeToggle';
 
 export default function Home() {
     const [sessionId, setSessionId] = useState('');
@@ -17,30 +16,9 @@ export default function Home() {
     };
 
     return (
-        <div className="hero-container">
-            {/* Navigation Bar */}
-            <nav style={{ position: 'absolute', top: 0, left: 0, right: 0, padding: '1rem 2rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', zIndex: 100 }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', cursor: 'pointer', transition: 'transform 0.3s' }} onClick={() => navigate('/')} onMouseEnter={e => e.currentTarget.style.transform = 'scale(1.05)'} onMouseLeave={e => e.currentTarget.style.transform = 'scale(1)'}>
-                    <div style={{
-                        background: 'linear-gradient(135deg, #fbbf24, #f59e0b)',
-                        padding: '0.45rem',
-                        borderRadius: '0.65rem',
-                        boxShadow: '0 4px 12px rgba(251, 191, 36, 0.3)',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center'
-                    }}>
-                        <Zap size={20} color="white" fill="white" />
-                    </div>
-                    <span style={{ fontSize: '1.35rem', fontWeight: '800', letterSpacing: '-0.02em', background: 'linear-gradient(135deg, var(--text-primary), var(--text-secondary))', backgroundClip: 'text', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>CrowdSpark</span>
-                </div>
-                <div style={{ display: 'flex', gap: '1.5rem', alignItems: 'center' }}>
-                    <span onClick={() => navigate('/how-it-works')} style={{ cursor: 'pointer', color: 'var(--text-secondary)', fontWeight: '600', transition: 'all 0.3s', fontSize: '0.9rem' }} onMouseOver={(e) => { e.target.style.color = 'var(--text-primary)'; e.target.style.transform = 'translateY(-2px)'; }} onMouseOut={(e) => { e.target.style.color = 'var(--text-secondary)'; e.target.style.transform = 'translateY(0)'; }}>How it Works</span>
-                    <span onClick={() => navigate('/about')} style={{ cursor: 'pointer', color: 'var(--text-secondary)', fontWeight: '600', transition: 'all 0.3s', fontSize: '0.9rem' }} onMouseOver={(e) => { e.target.style.color = 'var(--text-primary)'; e.target.style.transform = 'translateY(-2px)'; }} onMouseOut={(e) => { e.target.style.color = 'var(--text-secondary)'; e.target.style.transform = 'translateY(0)'; }}>About</span>
-                    <span onClick={() => navigate('/pricing')} style={{ cursor: 'pointer', color: 'var(--text-secondary)', fontWeight: '600', transition: 'all 0.3s', fontSize: '0.9rem' }} onMouseOver={(e) => { e.target.style.color = 'var(--text-primary)'; e.target.style.transform = 'translateY(-2px)'; }} onMouseOut={(e) => { e.target.style.color = 'var(--text-secondary)'; e.target.style.transform = 'translateY(0)'; }}>Pricing</span>
-                    <ThemeToggle />
-                </div>
-            </nav>
+        <div className="hero-container" style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
+            {/* Top Responsive Navigation */}
+            <Navbar />
             {/* Background Effects */}
             <div className="blob blob-1"></div>
             <div className="blob blob-2"></div>

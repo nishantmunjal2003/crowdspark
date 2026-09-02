@@ -108,6 +108,14 @@ app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ limit: '50mb', extended: true }));
 app.use('/uploads', express.static(path.join(__dirname, 'uploads'))); // Serve uploaded files
 
+// --- Public System Config ---
+app.get('/api/config', (req, res) => {
+  res.json({
+    googleClientId: process.env.GOOGLE_CLIENT_ID || '12595231081-2qo4sal1hs1lbiv0i3mmtg59pun008pj.apps.googleusercontent.com',
+    appUrl: process.env.APP_URL || ''
+  });
+});
+
 // --- Auth Endpoints ---
 
 // Send Signup OTP (protected with OTP rate limiter)
@@ -355,16 +363,40 @@ app.post('/api/auth/login', loginLimiter, async (req, res) => {
 // Google Sign-In
 app.post('/api/auth/google', async (req, res) => {
   try {
-    const { credential } = req.body;
-    if (!credential) return res.status(400).json({ error: 'Credential is required' });
+    const { credential, accessToken } = req.body;
+    if (!credential && !accessToken) return res.status(400).json({ error: 'Google credential or access token is required' });
 
-    // Verify Google Token
-    const ticket = await client.verifyIdToken({
-      idToken: credential,
-      audience: process.env.GOOGLE_CLIENT_ID
-    });
-    const payload = ticket.getPayload();
-    const { email, name, picture, sub: googleId } = payload;
+    let email, name, picture, googleId;
+
+    if (credential) {
+      // Verify Google ID Token
+      const ticket = await client.verifyIdToken({
+        idToken: credential,
+        audience: process.env.GOOGLE_CLIENT_ID
+      });
+      const payload = ticket.getPayload();
+      email = payload.email;
+      name = payload.name;
+      picture = payload.picture;
+      googleId = payload.sub;
+    } else if (accessToken) {
+      // Fetch Google Profile via UserInfo API
+      const response = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
+        headers: { Authorization: `Bearer ${accessToken}` }
+      });
+      if (!response.ok) {
+        return res.status(400).json({ error: 'Failed to authenticate with Google' });
+      }
+      const profile = await response.json();
+      email = profile.email;
+      name = profile.name;
+      picture = profile.picture;
+      googleId = profile.sub;
+    }
+
+    if (!email) {
+      return res.status(400).json({ error: 'Could not retrieve email from Google profile' });
+    }
 
     // Find or Create User
     let user = await User.findOne({ email });

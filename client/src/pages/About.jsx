@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
     Zap,
@@ -7,8 +7,6 @@ import {
     BarChart3,
     Smartphone,
     ArrowRight,
-    Menu,
-    X,
     Shield,
     GraduationCap,
     Building2,
@@ -19,125 +17,16 @@ import {
     Cpu,
     Radio
 } from 'lucide-react';
+import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
-import ThemeToggle from '../components/ThemeToggle';
 
 export default function About() {
     const navigate = useNavigate();
-    const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
     return (
         <div style={{ minHeight: '100vh', background: 'var(--bg-primary)', color: 'var(--text-primary)', display: 'flex', flexDirection: 'column' }}>
-            {/* Navigation Bar */}
-            <nav style={{
-                position: 'sticky',
-                top: 0,
-                zIndex: 100,
-                background: 'var(--bg-card)',
-                backdropFilter: 'blur(16px)',
-                WebkitBackdropFilter: 'blur(16px)',
-                borderBottom: '1px solid var(--border-color)',
-                padding: '1rem 2rem'
-            }}>
-                <div style={{ maxWidth: '1400px', margin: '0 auto', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <div
-                        style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', cursor: 'pointer' }}
-                        onClick={() => navigate('/')}
-                    >
-                        <div style={{
-                            background: 'linear-gradient(135deg, #fbbf24, #f59e0b)',
-                            padding: '0.5rem',
-                            borderRadius: '0.75rem',
-                            boxShadow: '0 4px 12px rgba(251, 191, 36, 0.3)',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center'
-                        }}>
-                            <Zap size={22} color="white" fill="white" />
-                        </div>
-                        <span style={{ fontSize: '1.35rem', fontWeight: '800', letterSpacing: '-0.02em', color: 'var(--text-primary)' }}>
-                            CrowdSpark
-                        </span>
-                    </div>
-
-                    {/* Desktop Navigation */}
-                    <div className="desktop-menu" style={{ display: 'flex', gap: '1.75rem', alignItems: 'center' }}>
-                        <span
-                            onClick={() => navigate('/')}
-                            style={{ cursor: 'pointer', color: 'var(--text-secondary)', fontWeight: '600', fontSize: '0.95rem', transition: 'color 0.2s' }}
-                            onMouseEnter={e => e.currentTarget.style.color = 'var(--text-primary)'}
-                            onMouseLeave={e => e.currentTarget.style.color = 'var(--text-secondary)'}
-                        >
-                            Home
-                        </span>
-                        <span
-                            style={{ cursor: 'pointer', color: 'var(--accent-primary)', fontWeight: '700', fontSize: '0.95rem' }}
-                        >
-                            About
-                        </span>
-                        <span
-                            onClick={() => navigate('/pricing')}
-                            style={{ cursor: 'pointer', color: 'var(--text-secondary)', fontWeight: '600', fontSize: '0.95rem', transition: 'color 0.2s' }}
-                            onMouseEnter={e => e.currentTarget.style.color = 'var(--text-primary)'}
-                            onMouseLeave={e => e.currentTarget.style.color = 'var(--text-secondary)'}
-                        >
-                            Pricing
-                        </span>
-                        <ThemeToggle />
-                        <button
-                            onClick={() => navigate('/login')}
-                            className="btn btn-secondary"
-                            style={{ padding: '0.5rem 1.15rem', fontSize: '0.9rem', borderRadius: '0.75rem' }}
-                        >
-                            Host Login
-                        </button>
-                        <button
-                            onClick={() => navigate('/')}
-                            className="btn btn-primary"
-                            style={{ padding: '0.5rem 1.25rem', fontSize: '0.9rem', borderRadius: '0.75rem' }}
-                        >
-                            Join Session
-                        </button>
-                    </div>
-
-                    {/* Mobile Menu Button */}
-                    <button
-                        className="mobile-menu-btn"
-                        onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-                        style={{ display: 'none', background: 'none', border: 'none', color: 'var(--text-primary)', cursor: 'pointer', padding: '0.5rem' }}
-                    >
-                        {mobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
-                    </button>
-                </div>
-            </nav>
-
-            {/* Mobile Dropdown Menu */}
-            {mobileMenuOpen && (
-                <div style={{
-                    position: 'fixed',
-                    top: '70px',
-                    left: 0,
-                    right: 0,
-                    background: 'var(--bg-card)',
-                    borderBottom: '1px solid var(--border-color)',
-                    padding: '1.5rem',
-                    zIndex: 99,
-                    display: 'flex',
-                    flexDirection: 'column',
-                    gap: '1rem',
-                    boxShadow: '0 10px 25px rgba(0,0,0,0.3)',
-                    backdropFilter: 'blur(20px)'
-                }}>
-                    <span onClick={() => { navigate('/'); setMobileMenuOpen(false); }} style={{ fontWeight: '600', padding: '0.5rem 0', color: 'var(--text-secondary)' }}>Home</span>
-                    <span onClick={() => setMobileMenuOpen(false)} style={{ color: 'var(--accent-primary)', fontWeight: '700', padding: '0.5rem 0' }}>About</span>
-                    <span onClick={() => { navigate('/pricing'); setMobileMenuOpen(false); }} style={{ fontWeight: '600', padding: '0.5rem 0', color: 'var(--text-secondary)' }}>Pricing</span>
-                    <div style={{ display: 'flex', justifyContent: 'center', padding: '0.5rem' }}>
-                        <ThemeToggle />
-                    </div>
-                    <button onClick={() => { navigate('/login'); setMobileMenuOpen(false); }} className="btn btn-secondary" style={{ width: '100%', padding: '0.75rem' }}>Host Login</button>
-                    <button onClick={() => { navigate('/'); setMobileMenuOpen(false); }} className="btn btn-primary" style={{ width: '100%', padding: '0.75rem' }}>Join Session</button>
-                </div>
-            )}
+            {/* Top Responsive Navigation */}
+            <Navbar />
 
             {/* Hero Section */}
             <header style={{ textAlign: 'center', padding: '4.5rem 1.5rem 3rem 1.5rem', position: 'relative', overflow: 'hidden' }}>
