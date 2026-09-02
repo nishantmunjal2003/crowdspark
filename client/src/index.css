@@ -516,7 +516,10 @@ textarea::placeholder,
   }
 
   .hero-content-wrapper {
-    padding: 2rem 1.25rem 2rem 1.25rem;
+    min-height: calc(100dvh - 65px);
+    min-height: calc(100svh - 65px);
+    min-height: calc(100vh - 65px);
+    padding: 2rem 1.25rem 2.5rem 1.25rem;
     justify-content: center;
   }
 
@@ -558,7 +561,10 @@ textarea::placeholder,
   }
 
   .hero-content-wrapper {
-    padding: 1.5rem 1rem 1.75rem 1rem;
+    min-height: calc(100dvh - 60px);
+    min-height: calc(100svh - 60px);
+    min-height: calc(100vh - 60px);
+    padding: 1.5rem 1rem 2rem 1rem;
   }
 
   .hero-content {

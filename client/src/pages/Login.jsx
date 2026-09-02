@@ -228,10 +228,23 @@ export default function Login() {
             <style>{`
                 .login-nav { flex-wrap: wrap; gap: 0.75rem; }
                 .login-card { padding: 2rem 1.75rem; }
+                @media (max-width: 768px) {
+                    .login-content-wrapper {
+                        min-height: calc(100dvh - 65px);
+                        min-height: calc(100svh - 65px);
+                        min-height: calc(100vh - 65px);
+                    }
+                }
                 @media (max-width: 480px) {
                     .login-nav { padding: 1rem 1rem !important; }
                     .login-nav-home-btn { display: none !important; }
                     .login-card { padding: 1.5rem 1.1rem !important; }
+                    .login-content-wrapper {
+                        min-height: calc(100dvh - 60px);
+                        min-height: calc(100svh - 60px);
+                        min-height: calc(100vh - 60px);
+                        padding: 1.5rem 1rem 2rem 1rem !important;
+                    }
                 }
             `}</style>
             {/* Top Navigation Bar */}
@@ -281,7 +294,7 @@ export default function Login() {
             </nav>
 
             {/* Main Content Card */}
-            <div style={{
+            <div className="login-content-wrapper" style={{
                 flex: 1,
                 display: 'flex',
                 flexDirection: 'column',
