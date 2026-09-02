@@ -36,13 +36,15 @@ export default function Home() {
     };
 
     return (
-        <div className="hero-container" style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
+        <div className="hero-container">
             {/* Top Responsive Navigation */}
             <Navbar />
-            {/* Background Effects */}
-            <div className="blob blob-1"></div>
-            <div className="blob blob-2"></div>
-            <div className="blob blob-3"></div>
+            {/* Background Effects (contained to prevent layout/scroll overflow) */}
+            <div style={{ position: 'absolute', inset: 0, overflow: 'hidden', pointerEvents: 'none', zIndex: 0 }}>
+                <div className="blob blob-1"></div>
+                <div className="blob blob-2"></div>
+                <div className="blob blob-3"></div>
+            </div>
 
             <div className="hero-content-wrapper">
                 <div className="hero-content animate-fade-in">

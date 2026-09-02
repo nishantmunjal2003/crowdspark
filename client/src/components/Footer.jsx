@@ -12,7 +12,7 @@ export default function Footer({ style }) {
                     background: var(--bg-secondary);
                     border-top: 1px solid var(--border-color);
                     color: var(--text-secondary);
-                    padding: 1.2rem 1.25rem;
+                    padding: 1.5rem 1.25rem max(1.5rem, env(safe-area-inset-bottom, 1.5rem));
                     width: 100%;
                     box-sizing: border-box;
                     margin-top: auto;
@@ -26,7 +26,7 @@ export default function Footer({ style }) {
                     display: flex;
                     flex-direction: column;
                     align-items: center;
-                    gap: 0.85rem;
+                    gap: 1rem;
                     text-align: center;
                 }
                 .footer-brand {
@@ -41,11 +41,12 @@ export default function Footer({ style }) {
                     align-items: center;
                     gap: 0.5rem;
                     cursor: pointer;
+                    user-select: none;
                 }
                 .footer-links {
                     display: flex;
                     align-items: center;
-                    gap: 0.6rem;
+                    gap: 0.75rem;
                     flex-wrap: wrap;
                     justify-content: center;
                 }
@@ -64,11 +65,14 @@ export default function Footer({ style }) {
                 }
                 .footer-link {
                     cursor: pointer;
-                    transition: color 0.15s ease;
+                    transition: all 0.2s ease;
                     white-space: nowrap;
+                    padding: 0.2rem 0.4rem;
+                    border-radius: 0.4rem;
                 }
                 .footer-link:hover {
                     color: var(--text-primary);
+                    background: rgba(99, 102, 241, 0.08);
                 }
                 .footer-author {
                     display: flex;
@@ -82,11 +86,44 @@ export default function Footer({ style }) {
                     color: var(--text-primary);
                     font-size: 0.72rem;
                     text-transform: uppercase;
-                    letter-spacing: 0.04em;
+                    letter-spacing: 0.05em;
                     white-space: nowrap;
+                    opacity: 0.85;
                 }
+
+                @media (max-width: 767px) {
+                    .footer-root {
+                        padding: 2rem 1.25rem max(2rem, env(safe-area-inset-bottom, 2rem));
+                    }
+                    .footer-inner {
+                        gap: 1.25rem;
+                    }
+                    .footer-divider-v {
+                        display: none;
+                    }
+                    .footer-links {
+                        flex-direction: column;
+                        gap: 0.85rem;
+                        width: 100%;
+                    }
+                    .footer-links-group {
+                        justify-content: center;
+                        gap: 0.5rem 0.75rem;
+                    }
+                    .footer-brand {
+                        flex-direction: column;
+                        gap: 0.35rem;
+                    }
+                    .footer-brand .footer-dot {
+                        display: none;
+                    }
+                }
+
                 /* Desktop: single compact row */
                 @media (min-width: 768px) {
+                    .footer-root {
+                        padding: 1.2rem 1.25rem;
+                    }
                     .footer-inner {
                         flex-direction: row;
                         justify-content: space-between;
@@ -122,7 +159,7 @@ export default function Footer({ style }) {
                                 CrowdSpark
                             </span>
                         </div>
-                        <span style={{ color: 'var(--text-muted)' }}>•</span>
+                        <span className="footer-dot" style={{ color: 'var(--text-muted)' }}>•</span>
                         <span>© {new Date().getFullYear()} All rights reserved.</span>
                     </div>
 

@@ -398,28 +398,6 @@ export default function Dashboard() {
                         </div>
                     </div>
                     <div className="dashboard-actions">
-                        {/* AI Tokens Indicator Chip */}
-                        <button
-                            onClick={() => setShowBuyTokensModal(true)}
-                            className="btn"
-                            style={{
-                                display: 'inline-flex',
-                                alignItems: 'center',
-                                gap: '0.45rem',
-                                background: (userTokens.aiTokens || 0) > 10 ? 'rgba(99, 102, 241, 0.15)' : 'rgba(239, 68, 68, 0.15)',
-                                color: (userTokens.aiTokens || 0) > 10 ? 'var(--accent-primary)' : 'var(--error)',
-                                border: `1px solid ${(userTokens.aiTokens || 0) > 10 ? 'rgba(99, 102, 241, 0.3)' : 'rgba(239, 68, 68, 0.3)'}`,
-                                padding: '0.5rem 0.9rem',
-                                fontSize: '0.85rem',
-                                fontWeight: 700,
-                                borderRadius: '0.75rem'
-                            }}
-                            title="Click to view AI Token Balance & Top Up"
-                        >
-                            <Zap size={16} fill="currentColor" />
-                            <span>{userTokens.aiTokens !== undefined ? userTokens.aiTokens : 50} AI Tokens</span>
-                        </button>
-
                         {/* Theme Toggle Button (Icon Only) */}
                         <button
                             onClick={toggleTheme}
@@ -452,12 +430,12 @@ export default function Dashboard() {
                                     <img
                                         src={user.picture}
                                         alt={user.name}
-                                        style={{ width: '30px', height: '30px', borderRadius: '50%', objectFit: 'cover' }}
+                                        style={{ width: '32px', height: '32px', borderRadius: '50%', objectFit: 'cover' }}
                                     />
                                 ) : (
                                     <div style={{
-                                        width: '30px',
-                                        height: '30px',
+                                        width: '32px',
+                                        height: '32px',
                                         borderRadius: '50%',
                                         background: 'linear-gradient(135deg, #6366f1, #8b5cf6)',
                                         color: 'white',
@@ -470,18 +448,20 @@ export default function Dashboard() {
                                         {user.name ? user.name.slice(0, 1).toUpperCase() : 'U'}
                                     </div>
                                 )}
-                                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', textAlign: 'left', lineHeight: 1.15 }}>
-                                    <span style={{ fontSize: '0.825rem', fontWeight: 700, color: 'var(--text-primary)', maxWidth: '130px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', textAlign: 'left', lineHeight: 1.2 }}>
+                                    <span style={{ fontSize: '0.825rem', fontWeight: 700, color: 'var(--text-primary)', maxWidth: '140px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                                         {user.name}
                                     </span>
                                     <span style={{
-                                        fontSize: '0.675rem',
+                                        fontSize: '0.7rem',
                                         fontWeight: 700,
-                                        textTransform: 'uppercase',
-                                        color: user.role === 'admin' ? '#ec4899' : '#818cf8',
-                                        letterSpacing: '0.03em'
+                                        color: (userTokens.aiTokens || 0) > 10 ? 'var(--accent-primary)' : 'var(--error)',
+                                        display: 'inline-flex',
+                                        alignItems: 'center',
+                                        gap: '0.2rem'
                                     }}>
-                                        {user.role === 'admin' ? '🛡️ Admin' : '👤 Host'}
+                                        <Zap size={11} fill="currentColor" />
+                                        {userTokens.aiTokens !== undefined ? userTokens.aiTokens : 50} AI Tokens
                                     </span>
                                 </div>
                                 <ChevronDown
@@ -567,7 +547,55 @@ export default function Dashboard() {
                                         <span>Profile</span>
                                     </button>
 
-                                    {/* Option 2: Role: Admin (Only shown if user is admin, otherwise hidden) */}
+                                    {/* Option 2: AI Tokens / Top Up */}
+                                    <button
+                                        onClick={() => {
+                                            setShowProfileDropdown(false);
+                                            setShowBuyTokensModal(true);
+                                        }}
+                                        className="btn"
+                                        style={{
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            justifyContent: 'space-between',
+                                            width: '100%',
+                                            padding: '0.65rem 0.85rem',
+                                            borderRadius: '0.75rem',
+                                            background: 'transparent',
+                                            border: 'none',
+                                            color: 'var(--text-primary)',
+                                            fontSize: '0.875rem',
+                                            fontWeight: 600,
+                                            cursor: 'pointer',
+                                            textAlign: 'left',
+                                            transition: 'all 0.15s ease'
+                                        }}
+                                        onMouseEnter={e => {
+                                            e.currentTarget.style.background = 'rgba(99, 102, 241, 0.12)';
+                                            e.currentTarget.style.color = '#818cf8';
+                                        }}
+                                        onMouseLeave={e => {
+                                            e.currentTarget.style.background = 'transparent';
+                                            e.currentTarget.style.color = 'var(--text-primary)';
+                                        }}
+                                    >
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                                            <Zap size={16} color="#818cf8" fill="#818cf8" />
+                                            <span>AI Tokens</span>
+                                        </div>
+                                        <span style={{
+                                            fontSize: '0.75rem',
+                                            fontWeight: 700,
+                                            padding: '0.15rem 0.45rem',
+                                            borderRadius: '0.4rem',
+                                            background: (userTokens.aiTokens || 0) > 10 ? 'rgba(99, 102, 241, 0.2)' : 'rgba(239, 68, 68, 0.2)',
+                                            color: (userTokens.aiTokens || 0) > 10 ? '#818cf8' : '#ef4444'
+                                        }}>
+                                            {userTokens.aiTokens !== undefined ? userTokens.aiTokens : 50}
+                                        </span>
+                                    </button>
+
+                                    {/* Option 3: Role: Admin (Only shown if user is admin, otherwise hidden) */}
                                     {user.role === 'admin' && (
                                         <button
                                             onClick={() => {
