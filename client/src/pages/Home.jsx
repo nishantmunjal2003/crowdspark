@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Zap, ArrowRight, Sparkles } from 'lucide-react';
 import Navbar from '../components/Navbar';
@@ -6,7 +6,27 @@ import Footer from '../components/Footer';
 
 export default function Home() {
     const [sessionId, setSessionId] = useState('');
+    const [isLoggedIn, setIsLoggedIn] = useState(() => {
+        try {
+            return !!localStorage.getItem('current_user');
+        } catch (e) {
+            return false;
+        }
+    });
     const navigate = useNavigate();
+
+    useEffect(() => {
+        const checkAuth = () => {
+            try {
+                setIsLoggedIn(!!localStorage.getItem('current_user'));
+            } catch (e) {
+                setIsLoggedIn(false);
+            }
+        };
+        checkAuth();
+        window.addEventListener('storage', checkAuth);
+        return () => window.removeEventListener('storage', checkAuth);
+    }, []);
 
     const handleJoin = (e) => {
         e.preventDefault();
@@ -87,8 +107,12 @@ export default function Home() {
                         </form>
                     </div>
 
-                    <div className="host-link" onClick={() => navigate('/login')}>
-                        Want to host a quiz? <span>Sign in →</span>
+                    <div className="host-link" onClick={() => navigate(isLoggedIn ? '/dashboard' : '/login')}>
+                        {isLoggedIn ? (
+                            <>Want to manage or host quizzes? <span>Go to Dashboard →</span></>
+                        ) : (
+                            <>Want to host a quiz? <span>Sign in →</span></>
+                        )}
                     </div>
                 </div>
             </div>

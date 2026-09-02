@@ -1,12 +1,32 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { Zap, Menu, X, ArrowRight, LogIn } from 'lucide-react';
+import { Zap, Menu, X, ArrowRight, LogIn, LayoutDashboard } from 'lucide-react';
 import ThemeToggle from './ThemeToggle';
 
 export default function Navbar({ transparent = false }) {
     const navigate = useNavigate();
     const location = useLocation();
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+    const [isLoggedIn, setIsLoggedIn] = useState(() => {
+        try {
+            return !!localStorage.getItem('current_user');
+        } catch (e) {
+            return false;
+        }
+    });
+
+    useEffect(() => {
+        const checkAuth = () => {
+            try {
+                setIsLoggedIn(!!localStorage.getItem('current_user'));
+            } catch (e) {
+                setIsLoggedIn(false);
+            }
+        };
+        checkAuth();
+        window.addEventListener('storage', checkAuth);
+        return () => window.removeEventListener('storage', checkAuth);
+    }, [location.pathname]);
 
     const navLinks = [
         { name: 'Home', path: '/' },
@@ -182,13 +202,23 @@ export default function Navbar({ transparent = false }) {
                             );
                         })}
                         <ThemeToggle />
-                        <button
-                            onClick={() => handleNavigate('/login')}
-                            className="btn btn-secondary"
-                            style={{ padding: '0.45rem 1rem', fontSize: '0.88rem', borderRadius: '0.65rem', display: 'flex', alignItems: 'center', gap: '0.35rem' }}
-                        >
-                            <LogIn size={15} /> Host Login
-                        </button>
+                        {isLoggedIn ? (
+                            <button
+                                onClick={() => handleNavigate('/dashboard')}
+                                className="btn btn-secondary"
+                                style={{ padding: '0.45rem 1rem', fontSize: '0.88rem', borderRadius: '0.65rem', display: 'flex', alignItems: 'center', gap: '0.35rem' }}
+                            >
+                                <LayoutDashboard size={15} /> Dashboard
+                            </button>
+                        ) : (
+                            <button
+                                onClick={() => handleNavigate('/login')}
+                                className="btn btn-secondary"
+                                style={{ padding: '0.45rem 1rem', fontSize: '0.88rem', borderRadius: '0.65rem', display: 'flex', alignItems: 'center', gap: '0.35rem' }}
+                            >
+                                <LogIn size={15} /> Host Login
+                            </button>
+                        )}
                         <button
                             onClick={() => handleNavigate('/')}
                             className="btn btn-primary"
@@ -230,13 +260,23 @@ export default function Navbar({ transparent = false }) {
                     })}
                     <div style={{ height: '1px', background: 'var(--border-color)', margin: '0.35rem 0' }} />
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '0.65rem' }}>
-                        <button
-                            onClick={() => handleNavigate('/login')}
-                            className="btn btn-secondary"
-                            style={{ width: '100%', padding: '0.75rem', fontSize: '0.95rem', borderRadius: '0.75rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.4rem' }}
-                        >
-                            <LogIn size={16} /> Host Login
-                        </button>
+                        {isLoggedIn ? (
+                            <button
+                                onClick={() => handleNavigate('/dashboard')}
+                                className="btn btn-secondary"
+                                style={{ width: '100%', padding: '0.75rem', fontSize: '0.95rem', borderRadius: '0.75rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.4rem' }}
+                            >
+                                <LayoutDashboard size={16} /> Dashboard
+                            </button>
+                        ) : (
+                            <button
+                                onClick={() => handleNavigate('/login')}
+                                className="btn btn-secondary"
+                                style={{ width: '100%', padding: '0.75rem', fontSize: '0.95rem', borderRadius: '0.75rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.4rem' }}
+                            >
+                                <LogIn size={16} /> Host Login
+                            </button>
+                        )}
                         <button
                             onClick={() => handleNavigate('/')}
                             className="btn btn-primary"

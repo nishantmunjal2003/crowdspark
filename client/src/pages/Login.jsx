@@ -20,6 +20,14 @@ export default function Login() {
     const [loading, setLoading] = useState(false);
     const [resendCooldown, setResendCooldown] = useState(0);
 
+    // Redirect if already logged in
+    useEffect(() => {
+        const currentUser = localStorage.getItem('current_user');
+        if (currentUser) {
+            navigate('/dashboard');
+        }
+    }, [navigate]);
+
     // Resend cooldown timer
     useEffect(() => {
         let timer;
