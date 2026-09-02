@@ -34,23 +34,7 @@ export default function About() {
                 <div className="blob blob-2" style={{ bottom: '10%', right: '15%', opacity: 0.12 }}></div>
 
                 <div style={{ position: 'relative', zIndex: 10, maxWidth: '900px', margin: '0 auto' }}>
-                    {/* Badge */}
-                    <div style={{
-                        display: 'inline-flex',
-                        alignItems: 'center',
-                        gap: '0.5rem',
-                        background: 'rgba(99, 102, 241, 0.12)',
-                        border: '1px solid rgba(99, 102, 241, 0.3)',
-                        padding: '0.45rem 1.15rem',
-                        borderRadius: '2rem',
-                        fontSize: '0.85rem',
-                        fontWeight: 700,
-                        color: 'var(--accent-primary)',
-                        marginBottom: '1.75rem'
-                    }}>
-                        <Sparkles size={16} /> The Next-Gen Interactive Audience Platform
-                    </div>
-
+                    {/* Hero Title */}
                     <h1 className="title" style={{ fontSize: 'clamp(2.5rem, 5.5vw, 4rem)', marginBottom: '1.5rem', lineHeight: 1.15 }}>
                         Spark Engagement in Real-Time
                     </h1>

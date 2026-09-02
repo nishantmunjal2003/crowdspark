@@ -103,17 +103,25 @@ async function sendMail({ to, toName = '', subject, html, text = '' }) {
 }
 
 /**
- * Send OTP Verification Email
+ * Send OTP Verification Email (for signup or login)
  */
-async function sendOtpEmail(toEmail, toName, otp) {
-    const subject = `${otp} is your CrowdSpark verification code`;
+async function sendOtpEmail(toEmail, toName, otp, type = 'signup') {
+    const isLogin = type === 'login';
+    const subject = isLogin 
+        ? `${otp} is your CrowdSpark sign-in code` 
+        : `${otp} is your CrowdSpark verification code`;
+    const heading = isLogin ? 'Sign In to CrowdSpark' : 'Verify Your Email';
+    const message = isLogin
+        ? `Hi <strong>${toName || 'there'}</strong>, use this 6-digit code to securely sign in to your CrowdSpark account:`
+        : `Hi <strong>${toName || 'there'}</strong>, thank you for joining CrowdSpark! Use this 6-digit code to complete your signup:`;
+
     const html = `
     <!DOCTYPE html>
     <html>
     <head>
       <meta charset="utf-8">
       <meta name="viewport" content="width=device-width, initial-scale=1.0">
-      <title>CrowdSpark Verification Code</title>
+      <title>${subject}</title>
     </head>
     <body style="margin: 0; padding: 24px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background-color: #f8fafc; color: #0f172a;">
       <div style="max-width: 500px; margin: 0 auto; background-color: #ffffff; border-radius: 16px; border: 1px solid #e2e8f0; padding: 36px 28px; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);">
@@ -127,10 +135,10 @@ async function sendOtpEmail(toEmail, toName, otp) {
 
         <!-- Heading -->
         <h1 style="font-size: 22px; font-weight: 800; color: #0f172a; text-align: center; margin: 0 0 10px 0;">
-          Verify Your Email
+          ${heading}
         </h1>
         <p style="font-size: 15px; color: #475569; line-height: 1.6; text-align: center; margin: 0 0 24px 0;">
-          Hi <strong>${toName || 'there'}</strong>, thank you for joining CrowdSpark! Use this 6-digit code to complete your signup:
+          ${message}
         </p>
 
         <!-- OTP Display Box -->

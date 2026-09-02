@@ -346,8 +346,10 @@ app.post('/api/auth/login', loginLimiter, async (req, res) => {
       return res.status(400).json({ error: 'Email and password are required' });
     }
 
+    const normalizedEmail = email.toLowerCase().trim();
+
     // Find user
-    const user = await User.findOne({ email });
+    const user = await User.findOne({ email: normalizedEmail });
     if (!user) {
       return res.status(400).json({ error: 'Invalid email or password' });
     }
@@ -359,7 +361,7 @@ app.post('/api/auth/login', loginLimiter, async (req, res) => {
 
     // Check if user has a password (might be Google-only user)
     if (!user.password) {
-      return res.status(400).json({ error: 'Please use Google Sign-In for this account' });
+      return res.status(400).json({ error: 'Please use Google Sign-In or Sign In with OTP for this account' });
     }
 
     // Verify password
@@ -399,6 +401,111 @@ app.post('/api/auth/login', loginLimiter, async (req, res) => {
   } catch (err) {
     console.error('Error logging in:', err);
     res.status(500).json({ error: 'Failed to login' });
+  }
+});
+
+// Send Login OTP (only if user exists, protected with OTP rate limiter)
+app.post('/api/auth/send-login-otp', otpLimiter, async (req, res) => {
+  try {
+    const { email } = req.body;
+    if (!email) {
+      return res.status(400).json({ error: 'Email address is required' });
+    }
+
+    const normalizedEmail = email.toLowerCase().trim();
+
+    // Check if user exists
+    const user = await User.findOne({ email: normalizedEmail });
+    if (!user) {
+      return res.status(400).json({ error: 'No account found with this email. Please sign up first.' });
+    }
+
+    // Check if user is active
+    if (!user.isActive) {
+      return res.status(403).json({ error: 'Your account has been deactivated. Please contact support.' });
+    }
+
+    // Generate 6-digit OTP
+    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+
+    // Store OTP in database (overwrites any previous OTP for this email)
+    await Otp.deleteMany({ email: normalizedEmail });
+    await Otp.create({ email: normalizedEmail, otp });
+
+    // Send verification email via ZeptoMail / SMTP
+    const mailResult = await sendOtpEmail(normalizedEmail, user.name, otp, 'login');
+    console.log(`[Login OTP] Email dispatch result for ${normalizedEmail}:`, mailResult);
+
+    res.json({
+      success: true,
+      message: 'Sign-in code sent to your email'
+    });
+  } catch (err) {
+    console.error('Error sending login OTP:', err);
+    res.status(500).json({ error: 'Failed to send sign-in code' });
+  }
+});
+
+// Verify Login OTP and Sign In
+app.post('/api/auth/verify-login-otp', loginLimiter, async (req, res) => {
+  try {
+    const { email, otp } = req.body;
+    if (!email || !otp) {
+      return res.status(400).json({ error: 'Email and verification code are required' });
+    }
+
+    const normalizedEmail = email.toLowerCase().trim();
+
+    // Verify OTP
+    const otpRecord = await Otp.findOne({ email: normalizedEmail, otp: otp.trim() });
+    if (!otpRecord) {
+      return res.status(400).json({ error: 'Invalid or expired verification code' });
+    }
+
+    // Find user
+    const user = await User.findOne({ email: normalizedEmail });
+    if (!user) {
+      return res.status(400).json({ error: 'No account found with this email. Please sign up first.' });
+    }
+
+    if (!user.isActive) {
+      return res.status(403).json({ error: 'Your account has been deactivated. Please contact support.' });
+    }
+
+    // Delete used OTP
+    await Otp.deleteMany({ email: normalizedEmail });
+
+    // Update last login
+    user.lastLogin = new Date();
+    await user.save();
+
+    // Log activity
+    await logActivity(user._id, user.email, user.name, 'login', { method: 'email_otp' }, req);
+
+    // Return user without password + signed JWT token
+    const userResponse = {
+      _id: user._id,
+      name: user.name,
+      email: user.email,
+      picture: user.picture,
+      role: user.role,
+      aiTokens: user.aiTokens !== undefined ? user.aiTokens : 50,
+      aiTokensUsed: user.aiTokensUsed || 0,
+      aiTokensTotal: user.aiTokensTotal || 50,
+      createdAt: user.createdAt
+    };
+
+    const token = generateToken(user);
+
+    res.json({
+      success: true,
+      message: 'Login successful',
+      token,
+      user: userResponse
+    });
+  } catch (err) {
+    console.error('Error verifying login OTP:', err);
+    res.status(500).json({ error: 'Failed to verify code and sign in' });
   }
 });
 

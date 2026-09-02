@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { LogIn, UserPlus, Mail, Lock, User, ArrowLeft, Zap, ShieldCheck, RefreshCw, CheckCircle, Edit3 } from 'lucide-react';
+import { LogIn, UserPlus, Mail, Lock, User, ArrowLeft, Zap, ShieldCheck, RefreshCw, CheckCircle, Edit3, KeyRound } from 'lucide-react';
 import { GoogleLogin } from '@react-oauth/google';
 import ThemeToggle from '../components/ThemeToggle';
 import Footer from '../components/Footer';
@@ -8,7 +8,8 @@ import Footer from '../components/Footer';
 export default function Login() {
     const navigate = useNavigate();
     const [isSignup, setIsSignup] = useState(false);
-    const [signupStep, setSignupStep] = useState('form'); // 'form' | 'otp'
+    const [authMethod, setAuthMethod] = useState('password'); // 'password' | 'otp' (for login)
+    const [step, setStep] = useState('form'); // 'form' | 'otp'
     const [formData, setFormData] = useState({
         name: '',
         email: '',
@@ -39,31 +40,33 @@ export default function Login() {
         return () => clearInterval(timer);
     }, [resendCooldown]);
 
-    // Handle initial form submit (Login or Signup Step 1)
+    // Handle initial form submit (Login with Password, Login with OTP, or Signup Step 1)
     const handleSubmit = async (e) => {
         e.preventDefault();
         setError('');
         setInfoMessage('');
 
-        if (!formData.email || !formData.password) {
-            setError('Email and password are required');
+        if (!formData.email.trim()) {
+            setError('Email address is required');
             return;
         }
 
-        if (isSignup && !formData.name.trim()) {
-            setError('Full name is required');
-            return;
-        }
+        if (isSignup) {
+            if (!formData.name.trim()) {
+                setError('Full name is required');
+                return;
+            }
+            if (!formData.password) {
+                setError('Password is required');
+                return;
+            }
+            if (formData.password.length < 6) {
+                setError('Password must be at least 6 characters');
+                return;
+            }
 
-        if (isSignup && formData.password.length < 6) {
-            setError('Password must be at least 6 characters');
-            return;
-        }
-
-        setLoading(true);
-
-        try {
-            if (isSignup) {
+            setLoading(true);
+            try {
                 // Step 1 of Signup: Send Email OTP
                 const res = await fetch('/api/auth/send-signup-otp', {
                     method: 'POST',
@@ -77,42 +80,81 @@ export default function Login() {
                 const data = await res.json();
 
                 if (res.ok) {
-                    setSignupStep('otp');
+                    setStep('otp');
                     setResendCooldown(60);
                     setInfoMessage(`We've sent a 6-digit verification code to ${formData.email.trim()}`);
                 } else {
                     setError(data.error || 'Failed to send verification code');
                 }
-            } else {
-                // Normal Login
-                const res = await fetch('/api/auth/login', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        email: formData.email.trim(),
-                        password: formData.password
-                    })
-                });
-                const data = await res.json();
+            } catch (err) {
+                setError('Network error. Please check your connection and try again.');
+            } finally {
+                setLoading(false);
+            }
+        } else {
+            // Sign In
+            if (authMethod === 'password') {
+                if (!formData.password) {
+                    setError('Password is required');
+                    return;
+                }
 
-                if (res.ok) {
-                    if (data.token) {
-                        localStorage.setItem('auth_token', data.token);
+                setLoading(true);
+                try {
+                    const res = await fetch('/api/auth/login', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            email: formData.email.trim(),
+                            password: formData.password
+                        })
+                    });
+                    const data = await res.json();
+
+                    if (res.ok) {
+                        if (data.token) {
+                            localStorage.setItem('auth_token', data.token);
+                        }
+                        localStorage.setItem('current_user', JSON.stringify({ ...data.user, token: data.token }));
+                        navigate('/dashboard');
+                    } else {
+                        setError(data.error || 'Invalid email or password');
                     }
-                    localStorage.setItem('current_user', JSON.stringify({ ...data.user, token: data.token }));
-                    navigate('/dashboard');
-                } else {
-                    setError(data.error || 'Invalid email or password');
+                } catch (err) {
+                    setError('Network error. Please check your connection and try again.');
+                } finally {
+                    setLoading(false);
+                }
+            } else {
+                // Sign In with OTP: Send Login OTP
+                setLoading(true);
+                try {
+                    const res = await fetch('/api/auth/send-login-otp', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            email: formData.email.trim()
+                        })
+                    });
+                    const data = await res.json();
+
+                    if (res.ok) {
+                        setStep('otp');
+                        setResendCooldown(60);
+                        setInfoMessage(`We've sent a 6-digit sign-in code to ${formData.email.trim()}`);
+                    } else {
+                        setError(data.error || 'Failed to send sign-in code');
+                    }
+                } catch (err) {
+                    setError('Network error. Please check your connection and try again.');
+                } finally {
+                    setLoading(false);
                 }
             }
-        } catch (err) {
-            setError('Network error. Please check your connection and try again.');
-        } finally {
-            setLoading(false);
         }
     };
 
-    // Handle Signup Step 2: Verify OTP
+    // Handle OTP Verification (Signup or Login)
     const handleVerifyOtp = async (e) => {
         e.preventDefault();
         setError('');
@@ -126,15 +168,23 @@ export default function Login() {
         setLoading(true);
 
         try {
-            const res = await fetch('/api/auth/verify-signup-otp', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
+            const endpoint = isSignup ? '/api/auth/verify-signup-otp' : '/api/auth/verify-login-otp';
+            const bodyPayload = isSignup
+                ? {
                     name: formData.name.trim(),
                     email: formData.email.trim(),
                     password: formData.password,
                     otp: otp.trim()
-                })
+                }
+                : {
+                    email: formData.email.trim(),
+                    otp: otp.trim()
+                };
+
+            const res = await fetch(endpoint, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(bodyPayload)
             });
             const data = await res.json();
 
@@ -162,14 +212,21 @@ export default function Login() {
         setLoading(true);
 
         try {
-            const res = await fetch('/api/auth/send-signup-otp', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
+            const endpoint = isSignup ? '/api/auth/send-signup-otp' : '/api/auth/send-login-otp';
+            const bodyPayload = isSignup
+                ? {
                     name: formData.name.trim(),
                     email: formData.email.trim(),
                     password: formData.password
-                })
+                }
+                : {
+                    email: formData.email.trim()
+                };
+
+            const res = await fetch(endpoint, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(bodyPayload)
             });
             const data = await res.json();
 
@@ -216,11 +273,12 @@ export default function Login() {
 
     const switchMode = (signupMode) => {
         setIsSignup(signupMode);
-        setSignupStep('form');
+        setStep('form');
         setError('');
         setInfoMessage('');
         setOtp('');
-        setFormData({ name: '', email: '', password: '' });
+        // Keep email for user convenience
+        setFormData(prev => ({ name: '', email: prev.email, password: '' }));
     };
 
     return (
@@ -228,6 +286,32 @@ export default function Login() {
             <style>{`
                 .login-nav { flex-wrap: wrap; gap: 0.75rem; }
                 .login-card { padding: 2rem 1.75rem; }
+                .auth-method-tab {
+                    flex: 1;
+                    padding: 0.6rem 0.75rem;
+                    border-radius: 0.6rem;
+                    border: none;
+                    font-size: 0.85rem;
+                    font-weight: 600;
+                    cursor: pointer;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    gap: 0.45rem;
+                    transition: all 0.2s ease;
+                }
+                .auth-method-tab.active {
+                    background: var(--bg-card);
+                    color: var(--text-primary);
+                    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+                }
+                .auth-method-tab:not(.active) {
+                    background: transparent;
+                    color: var(--text-secondary);
+                }
+                .auth-method-tab:not(.active):hover {
+                    color: var(--text-primary);
+                }
                 @media (max-width: 768px) {
                     .login-content-wrapper {
                         min-height: calc(100dvh - 65px);
@@ -247,6 +331,7 @@ export default function Login() {
                     }
                 }
             `}</style>
+
             {/* Top Navigation Bar */}
             <nav className="login-nav" style={{
                 padding: '1.25rem 2rem',
@@ -307,24 +392,28 @@ export default function Login() {
                 <div className="card animate-fade-in login-card" style={{ maxWidth: '440px', width: '100%', borderRadius: '1.25rem' }}>
                     
                     {/* VIEW 1: OTP VERIFICATION VIEW */}
-                    {isSignup && signupStep === 'otp' ? (
+                    {step === 'otp' ? (
                         <div>
                             <div style={{ textAlign: 'center', marginBottom: '1.5rem' }}>
                                 <div style={{
                                     width: '56px',
                                     height: '56px',
-                                    background: 'linear-gradient(135deg, #10b981, #059669)',
+                                    background: isSignup 
+                                        ? 'linear-gradient(135deg, #10b981, #059669)' 
+                                        : 'linear-gradient(135deg, #8b5cf6, #6366f1)',
                                     borderRadius: '50%',
                                     display: 'flex',
                                     alignItems: 'center',
                                     justifyContent: 'center',
                                     margin: '0 auto 0.75rem auto',
-                                    boxShadow: '0 8px 24px rgba(16, 185, 129, 0.25)'
+                                    boxShadow: isSignup 
+                                        ? '0 8px 24px rgba(16, 185, 129, 0.25)' 
+                                        : '0 8px 24px rgba(139, 92, 246, 0.25)'
                                 }}>
-                                    <ShieldCheck size={28} color="white" />
+                                    {isSignup ? <ShieldCheck size={28} color="white" /> : <KeyRound size={28} color="white" />}
                                 </div>
                                 <h1 className="title" style={{ fontSize: '1.65rem', marginBottom: '0.25rem' }}>
-                                    Verify Email
+                                    {isSignup ? 'Verify Email' : 'Sign In with Code'}
                                 </h1>
                                 <p style={{ color: 'var(--text-secondary)', fontSize: '0.875rem', lineHeight: 1.5, margin: 0 }}>
                                     Enter the 6-digit code sent to<br />
@@ -409,7 +498,7 @@ export default function Login() {
                                     disabled={loading || otp.length !== 6}
                                 >
                                     <CheckCircle size={20} />
-                                    {loading ? 'Verifying...' : 'Verify & Create Account'}
+                                    {loading ? 'Verifying...' : (isSignup ? 'Verify & Create Account' : 'Verify & Sign In')}
                                 </button>
                             </form>
 
@@ -438,7 +527,7 @@ export default function Login() {
                                 <button
                                     type="button"
                                     onClick={() => {
-                                        setSignupStep('form');
+                                        setStep('form');
                                         setError('');
                                         setInfoMessage('');
                                     }}
@@ -454,7 +543,7 @@ export default function Login() {
                                         gap: '0.35rem'
                                     }}
                                 >
-                                    <Edit3 size={14} /> Edit details or change email
+                                    <Edit3 size={14} /> Edit details or change method
                                 </button>
                             </div>
                         </div>
@@ -480,7 +569,9 @@ export default function Login() {
                                     {isSignup ? 'Create Account' : 'Welcome Back'}
                                 </h1>
                                 <p className="subtitle" style={{ fontSize: '0.875rem', margin: 0 }}>
-                                    {isSignup ? 'Sign up to create and host interactive quizzes' : 'Sign in to continue to your account'}
+                                    {isSignup 
+                                        ? 'Sign up to create and host interactive quizzes' 
+                                        : (authMethod === 'otp' ? 'Sign in using a one-time email code' : 'Sign in to continue to your account')}
                                 </p>
                             </div>
 
@@ -495,11 +586,48 @@ export default function Login() {
                                 />
                             </div>
 
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1.5rem' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1.25rem' }}>
                                 <div style={{ flex: 1, height: '1px', background: 'var(--border-color)' }}></div>
-                                <span style={{ color: 'var(--text-secondary)', fontSize: '0.8rem' }}>OR CONTINUE WITH EMAIL</span>
+                                <span style={{ color: 'var(--text-secondary)', fontSize: '0.8rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                                    OR CONTINUE WITH EMAIL
+                                </span>
                                 <div style={{ flex: 1, height: '1px', background: 'var(--border-color)' }}></div>
                             </div>
+
+                            {/* Sign In Auth Method Switcher (Password vs OTP) */}
+                            {!isSignup && (
+                                <div style={{
+                                    display: 'flex',
+                                    background: 'var(--bg-secondary)',
+                                    padding: '4px',
+                                    borderRadius: '0.75rem',
+                                    marginBottom: '1.25rem',
+                                    border: '1px solid var(--border-color)'
+                                }}>
+                                    <button
+                                        type="button"
+                                        className={`auth-method-tab ${authMethod === 'password' ? 'active' : ''}`}
+                                        onClick={() => {
+                                            setAuthMethod('password');
+                                            setError('');
+                                            setInfoMessage('');
+                                        }}
+                                    >
+                                        <Lock size={14} /> Password
+                                    </button>
+                                    <button
+                                        type="button"
+                                        className={`auth-method-tab ${authMethod === 'otp' ? 'active' : ''}`}
+                                        onClick={() => {
+                                            setAuthMethod('otp');
+                                            setError('');
+                                            setInfoMessage('');
+                                        }}
+                                    >
+                                        <Mail size={14} /> Email OTP
+                                    </button>
+                                </div>
+                            )}
 
                             {error && (
                                 <div style={{
@@ -513,6 +641,40 @@ export default function Login() {
                                     textAlign: 'center'
                                 }}>
                                     {error}
+                                    {error.includes('No account found') && (
+                                        <div style={{ marginTop: '0.4rem' }}>
+                                            <button
+                                                type="button"
+                                                onClick={() => switchMode(true)}
+                                                style={{
+                                                    background: 'none',
+                                                    border: 'none',
+                                                    color: 'var(--accent-primary, #8b5cf6)',
+                                                    fontWeight: '700',
+                                                    textDecoration: 'underline',
+                                                    cursor: 'pointer',
+                                                    fontSize: '0.85rem'
+                                                }}
+                                            >
+                                                Create a new account now &rarr;
+                                            </button>
+                                        </div>
+                                    )}
+                                </div>
+                            )}
+
+                            {infoMessage && (
+                                <div style={{
+                                    padding: '0.75rem 1rem',
+                                    background: 'rgba(16, 185, 129, 0.1)',
+                                    border: '1px solid rgba(16, 185, 129, 0.3)',
+                                    borderRadius: '0.75rem',
+                                    color: '#10b981',
+                                    fontSize: '0.875rem',
+                                    marginBottom: '1.25rem',
+                                    textAlign: 'center'
+                                }}>
+                                    {infoMessage}
                                 </div>
                             )}
 
@@ -566,39 +728,91 @@ export default function Login() {
                                             required
                                         />
                                     </div>
+                                    {!isSignup && authMethod === 'otp' && (
+                                        <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', marginTop: '0.4rem', lineHeight: 1.4 }}>
+                                            We'll check if your account exists and send a secure 6-digit login code.
+                                        </div>
+                                    )}
                                 </div>
 
-                                <div>
-                                    <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.875rem', fontWeight: '500' }}>
-                                        Password
-                                    </label>
-                                    <div style={{ position: 'relative' }}>
-                                        <Lock size={20} style={{
-                                            position: 'absolute',
-                                            left: '1rem',
-                                            top: '50%',
-                                            transform: 'translateY(-50%)',
-                                            color: 'var(--text-secondary)'
-                                        }} />
-                                        <input
-                                            className="input"
-                                            type="password"
-                                            placeholder="••••••••"
-                                            value={formData.password}
-                                            onChange={e => setFormData({ ...formData, password: e.target.value })}
-                                            style={{ paddingLeft: '3rem' }}
-                                            required
-                                        />
+                                {(isSignup || authMethod === 'password') && (
+                                    <div>
+                                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
+                                            <label style={{ fontSize: '0.875rem', fontWeight: '500', margin: 0 }}>
+                                                Password
+                                            </label>
+                                            {!isSignup && (
+                                                <button
+                                                    type="button"
+                                                    onClick={() => {
+                                                        setAuthMethod('otp');
+                                                        setError('');
+                                                    }}
+                                                    style={{
+                                                        background: 'none',
+                                                        border: 'none',
+                                                        color: 'var(--accent-primary, #8b5cf6)',
+                                                        fontSize: '0.8rem',
+                                                        cursor: 'pointer',
+                                                        padding: 0,
+                                                        fontWeight: 600
+                                                    }}
+                                                >
+                                                    Sign in with OTP
+                                                </button>
+                                            )}
+                                        </div>
+                                        <div style={{ position: 'relative' }}>
+                                            <Lock size={20} style={{
+                                                position: 'absolute',
+                                                left: '1rem',
+                                                top: '50%',
+                                                transform: 'translateY(-50%)',
+                                                color: 'var(--text-secondary)'
+                                            }} />
+                                            <input
+                                                className="input"
+                                                type="password"
+                                                placeholder="••••••••"
+                                                value={formData.password}
+                                                onChange={e => setFormData({ ...formData, password: e.target.value })}
+                                                style={{ paddingLeft: '3rem' }}
+                                                required
+                                            />
+                                        </div>
                                     </div>
-                                </div>
+                                )}
 
                                 <button
                                     type="submit"
                                     className="btn btn-primary"
-                                    style={{ width: '100%', padding: '1rem', fontSize: '1rem', opacity: loading ? 0.7 : 1 }}
+                                    style={{
+                                        width: '100%',
+                                        padding: '1rem',
+                                        fontSize: '1rem',
+                                        opacity: loading ? 0.7 : 1,
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'center',
+                                        gap: '0.5rem'
+                                    }}
                                     disabled={loading}
                                 >
-                                    {loading ? 'Processing...' : (isSignup ? 'Send Verification Code' : 'Sign In')}
+                                    {loading ? (
+                                        'Processing...'
+                                    ) : isSignup ? (
+                                        <>
+                                            <ShieldCheck size={18} /> Send Verification Code
+                                        </>
+                                    ) : authMethod === 'otp' ? (
+                                        <>
+                                            <Mail size={18} /> Send Sign-In Code
+                                        </>
+                                    ) : (
+                                        <>
+                                            <LogIn size={18} /> Sign In
+                                        </>
+                                    )}
                                 </button>
                             </form>
 

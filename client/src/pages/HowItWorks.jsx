@@ -173,22 +173,6 @@ export default function HowItWorks() {
 
             {/* Hero Section */}
             <header className="hiw-header">
-                <div style={{
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    gap: '0.5rem',
-                    padding: '0.4rem 1rem',
-                    borderRadius: '2rem',
-                    background: 'rgba(129, 140, 248, 0.1)',
-                    border: '1px solid rgba(129, 140, 248, 0.25)',
-                    color: '#818cf8',
-                    fontSize: '0.85rem',
-                    fontWeight: 700,
-                    marginBottom: '1.25rem'
-                }}>
-                    <Layers size={15} />
-                    STEP-BY-STEP PLATFORM GUIDE
-                </div>
                 <h1 style={{ fontSize: 'clamp(1.9rem, 5vw, 3.25rem)', fontWeight: 800, letterSpacing: '-0.03em', lineHeight: 1.15, marginBottom: '1.25rem' }}>
                     How <span style={{ background: 'linear-gradient(135deg, #fbbf24, #f59e0b)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>CrowdSpark</span> Works
                 </h1>

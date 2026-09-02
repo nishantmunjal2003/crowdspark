@@ -54,22 +54,6 @@ export default function PrivacyPolicy() {
 
             {/* Content Header */}
             <header className="privacy-header">
-                <div style={{
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    gap: '0.5rem',
-                    padding: '0.4rem 1rem',
-                    borderRadius: '2rem',
-                    background: 'rgba(16, 185, 129, 0.1)',
-                    border: '1px solid rgba(16, 185, 129, 0.25)',
-                    color: '#10b981',
-                    fontSize: '0.85rem',
-                    fontWeight: 700,
-                    marginBottom: '1.25rem'
-                }}>
-                    <Lock size={15} />
-                    DATA PRIVACY & PROTECTION
-                </div>
                 <h1 style={{ fontSize: 'clamp(1.9rem, 4.5vw, 3rem)', fontWeight: 800, letterSpacing: '-0.03em', lineHeight: 1.2, marginBottom: '1rem' }}>
                     Privacy Policy
                 </h1>
