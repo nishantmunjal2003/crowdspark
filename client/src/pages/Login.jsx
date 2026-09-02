@@ -464,18 +464,13 @@ export default function Login() {
                             </div>
 
                             {/* Google Sign-In Button */}
-                            <div style={{ marginBottom: '1.5rem', width: '100%', display: 'flex', justifyContent: 'center', minHeight: '44px' }}>
+                            <div style={{ marginBottom: '1.5rem', width: '100%', display: 'flex', justifyContent: 'center' }}>
                                 <GoogleLogin
                                     onSuccess={handleGoogleSuccess}
-                                    onError={() => {
-                                        console.error('Google Sign-In Error');
-                                        setError('Google sign-in was unsuccessful. Please check your network and Google Cloud origins.');
-                                    }}
-                                    theme="outline"
-                                    size="large"
-                                    shape="rectangular"
-                                    text="continue_with"
-                                    width="100%"
+                                    onError={() => setError('Google Login Failed')}
+                                    theme="filled_black"
+                                    shape="pill"
+                                    width="300"
                                 />
                             </div>
 
