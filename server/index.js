@@ -46,7 +46,48 @@ async function getDefaultAiTokens() {
 // 1. Helmet HTTP Security Headers (configured to allow Google Identity Services OAuth popups and cross-origin assets)
 app.use(helmet({
   crossOriginResourcePolicy: { policy: "cross-origin" },
-  crossOriginOpenerPolicy: { policy: "same-origin-allow-popups" }
+  crossOriginOpenerPolicy: { policy: "same-origin-allow-popups" },
+  contentSecurityPolicy: {
+    directives: {
+      defaultSrc: ["'self'"],
+      scriptSrc: [
+        "'self'",
+        "'unsafe-inline'",
+        "https://accounts.google.com",
+        "https://apis.google.com",
+      ],
+      styleSrc: [
+        "'self'",
+        "'unsafe-inline'",
+        "https://fonts.googleapis.com",
+        "https://accounts.google.com",
+      ],
+      fontSrc: [
+        "'self'",
+        "https://fonts.gstatic.com",
+      ],
+      imgSrc: [
+        "'self'",
+        "data:",
+        "blob:",
+        "https:",
+      ],
+      connectSrc: [
+        "'self'",
+        "https://accounts.google.com",
+        "https://oauth2.googleapis.com",
+        "wss:",
+        "ws:",
+      ],
+      frameSrc: [
+        "'self'",
+        "https://accounts.google.com",
+      ],
+      frameAncestors: ["'none'"],
+      objectSrc: ["'none'"],
+      baseUri: ["'self'"],
+    },
+  },
 }));
 
 // 2. CORS policy configuration
@@ -607,12 +648,8 @@ app.get('/api/health', (req, res) => {
   });
 });
 
-// Config endpoint for client-side settings
-app.get('/api/config', (req, res) => {
-  res.json({
-    googleClientId: process.env.GOOGLE_CLIENT_ID || ""
-  });
-});
+
+
 
 // Get user AI token balance
 app.get('/api/users/:id/tokens', async (req, res) => {
