@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="100%" height="100%">
+  <defs>
+    <linearGradient id="csGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FBBF24" />
+      <stop offset="100%" stop-color="#F59E0B" />
+    </linearGradient>
+  </defs>
+  
+  <!-- Crisp Rounded Square / Squircle -->
+  <rect x="16" y="16" width="480" height="480" rx="112" ry="112" fill="url(#csGradient)" />
+  
+  <!-- Lucide Zap Icon in pure white with clean rounded joints -->
+  <g transform="translate(68, 68) scale(15.67)">
+    <path 
+      d="M4 14a1 1 0 0 1-.78-1.63l9.9-10.2a.5.5 0 0 1 .86.46l-1.92 6.02A1 1 0 0 0 13 10h7a1 1 0 0 1 .78 1.63l-9.9 10.2a.5.5 0 0 1-.86-.46l1.92-6.02A1 1 0 0 0 11 14z" 
+      fill="#FFFFFF" 
+      stroke="#FFFFFF" 
+      stroke-width="1.8" 
+      stroke-linecap="round" 
+      stroke-linejoin="round"
+    />
+  </g>
+</svg>
